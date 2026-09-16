@@ -529,7 +529,6 @@ function appendCurrencyHistoryPoint(code, value) {
     }
 }
 
-// Генерирует синтетическую историю для первых запусков
 function generateSyntheticHistory(currentValue, days = 30) {
     if (currentValue === null || currentValue === undefined) return [];
 
@@ -820,11 +819,10 @@ function initCurrencies() {
 }
 
 // ============================================================
-//  ПРИВЕТСТВЕННЫЙ ЭКРАН + ЗАГРУЗКА ЦИТАТ ИЗ API
+//  ПРИВЕТСТВЕННЫЙ ЭКРАН
 // ============================================================
 const WELCOME_USERNAME_KEY = 'welcomeUsername';
 
-// Фолбэк — используется, если API недоступен
 const WELCOME_QUOTES_FALLBACK = [
     { text: 'Успех — это способность идти от неудачи к неудаче, не теряя энтузиазма.', author: 'Уинстон Черчилль' },
     { text: 'Лучший способ предсказать будущее — создать его.', author: 'Питер Друкер' },
@@ -836,18 +834,13 @@ const WELCOME_QUOTES_FALLBACK = [
     { text: 'Терпение — горько, но его плоды сладки.', author: 'Жан-Жак Руссо' },
 ];
 
-// Флаг: пришли ли цитаты из API (чтобы не запрашивать дважды)
 let welcomeQuoteFetched = false;
 let welcomeQuoteData = null;
 
-// ------------------------------------------------------------
-//  Загрузка цитаты из API
-// ------------------------------------------------------------
 async function fetchWelcomeQuote() {
     if (welcomeQuoteFetched) return welcomeQuoteData;
 
     try {
-        // Earth API от DevelNext — русские цитаты, HTTPS, без авторизации
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 3000);
 
@@ -880,7 +873,6 @@ async function fetchWelcomeQuote() {
     }
 }
 
-// Случайная цитата из фолбэка
 function getFallbackQuote() {
     return WELCOME_QUOTES_FALLBACK[Math.floor(Math.random() * WELCOME_QUOTES_FALLBACK.length)];
 }
@@ -909,40 +901,33 @@ async function showWelcomeScreen() {
     const subtitleEl = document.getElementById('welcomeSubtitle');
     const startBtn = document.getElementById('welcomeBtn');
 
-    // Приветствие по времени
     const { text, emoji } = getGreetingByTime();
     greetingEl.textContent = text;
     emojiEl.textContent = emoji;
 
-    // Имя пользователя
     let name = localStorage.getItem(WELCOME_USERNAME_KEY);
     if (!name) name = 'Гость';
     nameEl.textContent = name;
 
-    // Сначала показываем фолбэк-цитату (мгновенно)
     const fallback = getFallbackQuote();
     subtitleEl.outerHTML = `
         <div class="welcome-quote" id="welcomeSubtitle">${fallback.text}</div>
         <div class="welcome-quote-author">${fallback.author}</div>
     `;
 
-    // Показываем экран сразу
     requestAnimationFrame(() => {
         requestAnimationFrame(() => {
             screen.classList.add('visible');
         });
     });
 
-    // Параллельно запрашиваем цитату из API
     fetchWelcomeQuote().then(quote => {
-        if (!quote) return; // остаёмся на фолбэке
+        if (!quote) return;
 
-        // Заменяем цитату на загруженную из API
         const currentQuote = document.getElementById('welcomeSubtitle');
         const currentAuthor = document.querySelector('.welcome-quote-author');
 
         if (currentQuote && currentAuthor) {
-            // Плавная замена
             currentQuote.style.opacity = '0';
             currentAuthor.style.opacity = '0';
             currentQuote.style.transition = 'opacity 0.3s';
@@ -1159,188 +1144,3 @@ window.addEventListener('load', () => {
     });
     popup.addEventListener('mouseleave', scheduleClose);
 });
-// ============================================================
-//  ПАНОРАМИРОВАНИЕ РАБОЧЕГО СТОЛА (мобильная версия)
-// ============================================================
-(function initPanning() {
-
-    const isMobile = () => window.matchMedia('(max-width: 768px)').matches;
-
-    // Состояние панорамирования
-    let panX = 0;
-    let panY = 0;
-    let startX = 0;
-    let startY = 0;
-    let startPanX = 0;
-    let startPanY = 0;
-    let panning = false;
-    let moved = false; // отсекаем клики при свайпе
-
-    let desktopEl = null;
-    let hintEl = null;
-    let controlsEl = null;
-
-    // Границы панорамирования (мягкие — с запасом)
-    const MAX_PAN = 2000; // максимум смещения в px в каждую сторону
-
-    function applyTransform() {
-        if (!desktopEl) return;
-        desktopEl.style.transform = `translate3d(${panX}px, ${panY}px, 0)`;
-    }
-
-    function resetPan() {
-        panX = 0;
-        panY = 0;
-        desktopEl?.classList.remove('panning');
-        applyTransform();
-    }
-
-    function showHint(text = 'Свайпайте, чтобы перемещаться по рабочему столу', duration = 3000) {
-        if (!hintEl) return;
-        hintEl.textContent = text;
-        hintEl.classList.add('visible');
-        clearTimeout(hintEl._timer);
-        hintEl._timer = setTimeout(() => {
-            hintEl.classList.remove('visible');
-        }, duration);
-    }
-
-    function isInteractive(el) {
-        // Не перехватываем тач по элементам, которые должны работать сами
-        if (!el) return false;
-        // Кнопки внутри окна, инпуты, contenteditable
-        if (el.closest('button, input, textarea, [contenteditable="true"]')) return true;
-        // Меню-бар
-        if (el.closest('#menu-bar')) return true;
-        // Кнопки управления окном (закрыть/свернуть/развернуть)
-        if (el.closest('.window-controls')) return true;
-        // Кнопки панорамирования
-        if (el.closest('.pan-controls')) return true;
-        // Тултипы, модалки, уведомления
-        if (el.closest('.notifications, .notif-center, .clock-popup, .currency-modal, .welcome-screen, #welcome-screen, #boot-screen')) return true;
-        return false;
-    }
-
-    function onTouchStart(e) {
-        if (!isMobile()) return;
-        if (e.touches.length !== 1) return;
-
-        const touch = e.touches[0];
-        const target = e.target;
-
-        // Если касание по интерактивному элементу — не панорамируем
-        if (isInteractive(target)) return;
-
-        panning = true;
-        moved = false;
-        startX = touch.clientX;
-        startY = touch.clientY;
-        startPanX = panX;
-        startPanY = panY;
-
-        desktopEl?.classList.add('panning');
-    }
-
-    function onTouchMove(e) {
-        if (!panning || e.touches.length !== 1) return;
-
-        const touch = e.touches[0];
-        let dx = touch.clientX - startX;
-        let dy = touch.clientY - startY;
-
-        // Определяем, был ли это свайп (а не тап)
-        if (!moved && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) {
-            moved = true;
-        }
-
-        // Ограничение панорамирования
-        let newPanX = startPanX + dx;
-        let newPanY = startPanY + dy;
-
-        // Мягкие границы с сопротивлением
-        if (newPanX > MAX_PAN) newPanX = MAX_PAN + (newPanX - MAX_PAN) * 0.2;
-        if (newPanX < -MAX_PAN) newPanX = -MAX_PAN + (newPanX + MAX_PAN) * 0.2;
-        if (newPanY > MAX_PAN) newPanY = MAX_PAN + (newPanY - MAX_PAN) * 0.2;
-        if (newPanY < -MAX_PAN) newPanY = -MAX_PAN + (newPanY + MAX_PAN) * 0.2;
-
-        panX = newPanX;
-        panY = newPanY;
-
-        applyTransform();
-        if (e.cancelable) e.preventDefault();
-    }
-
-    function onTouchEnd() {
-        if (!panning) return;
-        panning = false;
-        desktopEl?.classList.remove('panning');
-
-        // Если пользователь свайпнул — показать подсказку о кнопке сброса
-        if (moved && (Math.abs(panX) > 100 || Math.abs(panY) > 100)) {
-            showHint('Нажмите ⤾ для возврата в центр', 2500);
-        }
-    }
-
-    // Блокируем клики после свайпа (чтобы не открывались приложения)
-    function onClickCapture(e) {
-        if (moved) {
-            e.stopPropagation();
-            e.preventDefault();
-            moved = false;
-        }
-    }
-
-    // ---------- Инициализация ----------
-    function setup() {
-        desktopEl = document.getElementById('desktop');
-        if (!desktopEl) return;
-
-        // Подсказка
-        hintEl = document.createElement('div');
-        hintEl.className = 'pan-hint';
-        hintEl.textContent = 'Свайпайте, чтобы перемещаться по рабочему столу';
-        document.body.appendChild(hintEl);
-
-        // Кнопка сброса
-        controlsEl = document.createElement('div');
-        controlsEl.className = 'pan-controls';
-        controlsEl.innerHTML = `
-            <button class="pan-btn reset" id="panResetBtn" title="Вернуться в центр">⤾</button>
-        `;
-        document.body.appendChild(controlsEl);
-
-        const resetBtn = controlsEl.querySelector('#panResetBtn');
-        resetBtn.addEventListener('click', () => {
-            resetPan();
-            showHint('Вернулись в центр', 1500);
-        });
-
-        // Слушатели
-        document.addEventListener('touchstart', onTouchStart, { passive: true });
-        document.addEventListener('touchmove', onTouchMove, { passive: false });
-        document.addEventListener('touchend', onTouchEnd);
-        document.addEventListener('touchcancel', onTouchEnd);
-
-        // Отсекаем клик после свайпа
-        document.addEventListener('click', onClickCapture, true);
-
-        // При смене ориентации — сбрасываем
-        window.addEventListener('orientationchange', () => {
-            setTimeout(resetPan, 300);
-        });
-
-        // Показываем подсказку при первом заходе
-        if (isMobile()) {
-            setTimeout(() => {
-                showHint('👆 Свайпайте по экрану, чтобы перемещаться', 4000);
-            }, 3500);
-        }
-    }
-
-    // Запуск после загрузки
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', setup);
-    } else {
-        setup();
-    }
-})();
