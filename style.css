@@ -1,15 +1,18 @@
 /* ============================================================
-   ТЕМЫ — переменные
+   ТЕМЫ — ЕДИНЫЕ ПЕРЕМЕННЫЕ
    ============================================================ */
 :root {
+    /* ----- СВЕТЛАЯ ТЕМА (по умолчанию) ----- */
     --menubar-bg: #ffffff;
-    --menubar-border: rgba(0, 0, 0, 0.06);
+    --menubar-border: rgba(0, 0, 0, 0.08);
     --menubar-text: #1c1c1e;
     --menubar-hover: rgba(0, 0, 0, 0.06);
     --menubar-active: rgba(0, 0, 0, 0.1);
 
+    /* Рабочий стол — градиент по умолчанию (светлый) */
     --desktop-bg: linear-gradient(135deg, #a8c0ff 0%, #d4a5e8 50%, #f5b8c8 100%);
 
+    /* Окна */
     --window-bg: #ffffff;
     --window-header-bg: #f5f5f7;
     --window-body-bg: #ffffff;
@@ -17,7 +20,8 @@
     --window-text: #1c1c1e;
     --window-title: rgba(0, 0, 0, 0.75);
 
-    --popup-bg: rgba(250, 250, 252, 0.95);
+    /* Popup / календарь */
+    --popup-bg: #ffffff;
     --popup-border: rgba(0, 0, 0, 0.08);
     --popup-text: #1c1c1e;
     --popup-text-muted: rgba(0, 0, 0, 0.55);
@@ -30,25 +34,54 @@
     --cal-nav-bg: rgba(0, 0, 0, 0.05);
     --cal-nav-bg-hover: rgba(0, 0, 0, 0.12);
 
+    /* Валюты */
     --currency-bg: rgba(0, 0, 0, 0.04);
     --currency-hover: rgba(0, 0, 0, 0.08);
     --currency-value: #1c1c1e;
     --currency-positive: #34c759;
     --currency-negative: #ff3b30;
 
-    --notif-bg: rgba(255, 255, 255, 0.95);
+    /* Уведомления */
+    --notif-bg: #ffffff;
     --notif-border: rgba(0, 0, 0, 0.08);
     --notif-text: #1c1c1e;
     --notif-text-muted: rgba(0, 0, 0, 0.55);
+
+    /* Универсальные для приложений */
+    --app-bg: #f5f5f7;
+    --app-card-bg: rgba(0, 0, 0, 0.04);
+    --app-card-border: rgba(0, 0, 0, 0.08);
+    --app-card-hover: rgba(0, 0, 0, 0.08);
+    --app-card-label: rgba(0, 0, 0, 0.55);
+    --app-card-value: #1c1c1e;
+    --app-border: rgba(0, 0, 0, 0.08);
+    --app-input-bg: rgba(0, 0, 0, 0.04);
+    --app-input-border: rgba(0, 0, 0, 0.1);
+    --app-input-text: #1c1c1e;
+    --app-btn-bg: rgba(0, 0, 0, 0.06);
+    --app-btn-hover: rgba(0, 0, 0, 0.12);
+    --app-btn-text: #1c1c1e;
+    --app-table-header-bg: rgba(0, 0, 0, 0.05);
+    --app-table-header-text: rgba(0, 0, 0, 0.6);
+    --app-table-row-hover: rgba(0, 0, 0, 0.03);
+    --app-table-cell: #1c1c1e;
+    --app-table-border: rgba(0, 0, 0, 0.06);
+    --app-chart-bg: rgba(0, 0, 0, 0.04);
+    --app-chart-grid: rgba(0, 0, 0, 0.08);
+    --app-chart-ticks: rgba(0, 0, 0, 0.6);
+    --app-analysis-bg: rgba(0, 0, 0, 0.03);
+    --app-positive: #34c759;
+    --app-negative: #ff3b30;
 }
 
 @media (prefers-color-scheme: dark) {
     :root {
-        --menubar-bg: rgba(30, 30, 30, 0.55);
+        /* ----- ТЁМНАЯ ТЕМА ----- */
+        --menubar-bg: #1c1c1e;
         --menubar-border: rgba(255, 255, 255, 0.08);
-        --menubar-text: #fff;
-        --menubar-hover: rgba(255, 255, 255, 0.15);
-        --menubar-active: rgba(255, 255, 255, 0.22);
+        --menubar-text: #ffffff;
+        --menubar-hover: rgba(255, 255, 255, 0.12);
+        --menubar-active: rgba(255, 255, 255, 0.2);
 
         --desktop-bg: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #7e57c2 100%);
 
@@ -56,12 +89,12 @@
         --window-header-bg: #2c2c2e;
         --window-body-bg: #1c1c1e;
         --window-border: rgba(255, 255, 255, 0.1);
-        --window-text: #fff;
+        --window-text: #ffffff;
         --window-title: rgba(255, 255, 255, 0.85);
 
-        --popup-bg: rgba(40, 40, 42, 0.95);
+        --popup-bg: #2c2c2e;
         --popup-border: rgba(255, 255, 255, 0.1);
-        --popup-text: #fff;
+        --popup-text: #ffffff;
         --popup-text-muted: rgba(255, 255, 255, 0.6);
         --popup-text-light: rgba(255, 255, 255, 0.45);
 
@@ -74,14 +107,39 @@
 
         --currency-bg: rgba(255, 255, 255, 0.06);
         --currency-hover: rgba(255, 255, 255, 0.12);
-        --currency-value: #fff;
+        --currency-value: #ffffff;
         --currency-positive: #34c759;
         --currency-negative: #ff5f57;
 
-        --notif-bg: rgba(40, 40, 42, 0.95);
+        --notif-bg: #2c2c2e;
         --notif-border: rgba(255, 255, 255, 0.1);
-        --notif-text: #fff;
+        --notif-text: #ffffff;
         --notif-text-muted: rgba(255, 255, 255, 0.6);
+
+        --app-bg: #1c1c1e;
+        --app-card-bg: rgba(255, 255, 255, 0.05);
+        --app-card-border: rgba(255, 255, 255, 0.08);
+        --app-card-hover: rgba(255, 255, 255, 0.12);
+        --app-card-label: rgba(255, 255, 255, 0.5);
+        --app-card-value: #ffffff;
+        --app-border: rgba(255, 255, 255, 0.1);
+        --app-input-bg: rgba(255, 255, 255, 0.08);
+        --app-input-border: rgba(255, 255, 255, 0.12);
+        --app-input-text: #ffffff;
+        --app-btn-bg: rgba(255, 255, 255, 0.08);
+        --app-btn-hover: rgba(255, 255, 255, 0.15);
+        --app-btn-text: #ffffff;
+        --app-table-header-bg: rgba(255, 255, 255, 0.06);
+        --app-table-header-text: rgba(255, 255, 255, 0.7);
+        --app-table-row-hover: rgba(255, 255, 255, 0.04);
+        --app-table-cell: #ffffff;
+        --app-table-border: rgba(255, 255, 255, 0.06);
+        --app-chart-bg: rgba(0, 0, 0, 0.2);
+        --app-chart-grid: rgba(255, 255, 255, 0.06);
+        --app-chart-ticks: rgba(255, 255, 255, 0.6);
+        --app-analysis-bg: rgba(0, 0, 0, 0.15);
+        --app-positive: #34c759;
+        --app-negative: #ff3b30;
     }
 }
 
@@ -98,11 +156,12 @@
     -webkit-touch-callout: none;
 }
 
-body {
-    height: 100vh;
+html, body {
+    height: 100%;
     overflow: hidden;
     background: #000;
-    transition: background 0.3s ease;
+    color: var(--window-text);
+    transition: background 0.3s ease, color 0.3s ease;
 }
 
 /* ============================================================
@@ -171,8 +230,7 @@ body {
     color: #fff;
     max-width: 460px;
     width: 100%;
-    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4),
-                0 0 0 1px rgba(255, 255, 255, 0.08);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.08);
     transform: scale(0.9) translateY(20px);
     transition: transform 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.1);
 }
@@ -293,7 +351,7 @@ body {
 .welcome-btn:active { transform: scale(0.97); }
 
 /* ============================================================
-   MENU BAR
+   MENU BAR — авто по теме
    ============================================================ */
 #menu-bar {
     position: fixed;
@@ -302,17 +360,15 @@ body {
     right: 0;
     height: 36px;
     background: var(--menubar-bg);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 0 14px;
     font-size: 13px;
     color: var(--menubar-text);
-    z-index: 1000;
+    z-index: 10000;
     border-bottom: 1px solid var(--menubar-border);
-    transition: background 0.3s ease, color 0.3s ease;
+    transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
 .menu-left { display: flex; align-items: center; gap: 8px; }
@@ -444,8 +500,6 @@ body {
     width: 340px;
     max-height: 420px;
     background: var(--popup-bg);
-    backdrop-filter: blur(30px);
-    -webkit-backdrop-filter: blur(30px);
     border-radius: 14px;
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), 0 0 0 1px var(--popup-border);
     border: 1px solid var(--popup-border);
@@ -458,7 +512,7 @@ body {
     visibility: hidden;
     transform: translateY(-6px);
     pointer-events: none;
-    transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s;
+    transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s, background 0.3s ease;
 }
 
 .notif-bell-container.open .notif-center {
@@ -488,9 +542,9 @@ body {
     cursor: pointer;
     padding: 3px 8px;
     border-radius: 6px;
-    transition: background 0.15s;
     font-family: inherit;
     font-weight: 500;
+    transition: background 0.15s;
 }
 
 .notif-clear:hover { background: rgba(74, 158, 255, 0.12); }
@@ -503,9 +557,6 @@ body {
     flex-direction: column;
     gap: 4px;
 }
-
-.notif-center-list::-webkit-scrollbar { width: 6px; }
-.notif-center-list::-webkit-scrollbar-thumb { background: var(--popup-border); border-radius: 3px; }
 
 .notif-empty {
     padding: 40px 20px;
@@ -520,27 +571,13 @@ body {
     gap: 10px;
     padding: 10px 12px;
     border-radius: 10px;
-    background: transparent;
-    transition: background 0.15s;
-    cursor: default;
-    position: relative;
     align-items: flex-start;
+    position: relative;
+    transition: background 0.15s;
 }
 
 .notif-history-item:hover { background: var(--cal-day-hover); }
 .notif-history-item.unread { background: rgba(74, 158, 255, 0.08); }
-
-.notif-history-item.unread::before {
-    content: '';
-    position: absolute;
-    left: 4px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 6px;
-    height: 6px;
-    background: #4a9eff;
-    border-radius: 50%;
-}
 
 .notif-history-icon {
     width: 32px;
@@ -554,10 +591,6 @@ body {
     flex-shrink: 0;
 }
 
-.notif-history-item.success .notif-history-icon { background: rgba(52, 199, 89, 0.15); }
-.notif-history-item.warning .notif-history-icon { background: rgba(255, 204, 0, 0.2); }
-.notif-history-item.error .notif-history-icon { background: rgba(255, 59, 48, 0.15); }
-
 .notif-history-content { flex: 1; min-width: 0; }
 
 .notif-history-title {
@@ -565,20 +598,12 @@ body {
     font-weight: 600;
     color: var(--popup-text);
     margin-bottom: 2px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .notif-history-message {
     font-size: 11px;
     color: var(--popup-text-muted);
     line-height: 1.35;
-    word-wrap: break-word;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
 }
 
 .notif-history-time {
@@ -599,6 +624,7 @@ body {
     padding: 4px 8px;
     border-radius: 6px;
     cursor: default;
+    color: var(--menubar-text);
 }
 
 #clock:hover { background: var(--menubar-hover); }
@@ -609,10 +635,8 @@ body {
     right: 0;
     width: 320px;
     background: var(--popup-bg);
-    backdrop-filter: blur(30px);
-    -webkit-backdrop-filter: blur(30px);
     border-radius: 12px;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35), 0 0 0 1px var(--popup-border);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
     border: 1px solid var(--popup-border);
     padding: 18px 18px 16px;
     color: var(--popup-text);
@@ -621,17 +645,7 @@ body {
     visibility: hidden;
     transform: translateY(-6px);
     pointer-events: none;
-    transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s, background 0.3s ease, color 0.3s ease;
-}
-
-.clock-popup::before {
-    content: '';
-    position: absolute;
-    top: -10px;
-    left: 0;
-    right: 0;
-    height: 10px;
-    background: transparent;
+    transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s, background 0.3s ease;
 }
 
 .clock-container:hover .clock-popup,
@@ -648,8 +662,8 @@ body {
     letter-spacing: -0.5px;
     text-align: center;
     font-variant-numeric: tabular-nums;
-    margin-bottom: 2px;
     color: var(--popup-text);
+    margin-bottom: 2px;
 }
 
 .clock-popup-date {
@@ -684,7 +698,6 @@ body {
 }
 
 .cal-nav-btn:hover { background: var(--cal-nav-bg-hover); }
-.cal-nav-btn:active { transform: scale(0.92); }
 
 .cal-weekdays {
     display: grid;
@@ -700,7 +713,6 @@ body {
     text-align: center;
     padding: 4px 0;
     text-transform: uppercase;
-    letter-spacing: 0.3px;
 }
 
 .cal-weekday.weekend { color: var(--cal-day-weekend); opacity: 0.8; }
@@ -717,7 +729,6 @@ body {
     border-radius: 50%;
     cursor: pointer;
     transition: background 0.15s, color 0.3s ease;
-    user-select: none;
     font-variant-numeric: tabular-nums;
 }
 
@@ -775,7 +786,6 @@ body {
     color: #4a9eff;
     text-align: center;
     margin-bottom: 4px;
-    text-transform: capitalize;
 }
 
 .cal-today-btn {
@@ -794,7 +804,6 @@ body {
 }
 
 .cal-today-btn:hover { background: rgba(74, 158, 255, 0.25); border-color: #4a9eff; }
-.cal-today-btn:active { transform: scale(0.98); }
 
 /* ============================================================
    РАБОЧИЙ СТОЛ
@@ -810,7 +819,7 @@ body {
 }
 
 /* ============================================================
-   УВЕДОМЛЕНИЯ (всплывающие)
+   УВЕДОМЛЕНИЯ
    ============================================================ */
 .notifications {
     position: fixed;
@@ -826,11 +835,9 @@ body {
 
 .notification {
     background: var(--notif-bg);
-    backdrop-filter: blur(30px);
-    -webkit-backdrop-filter: blur(30px);
     border: 1px solid var(--notif-border);
     border-radius: 14px;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25), 0 0 0 1px var(--notif-border);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
     padding: 12px 16px;
     display: flex;
     align-items: flex-start;
@@ -841,7 +848,7 @@ body {
     pointer-events: auto;
     opacity: 0;
     transform: translateX(120%);
-    transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s ease;
 }
 
 .notification.show { opacity: 1; transform: translateX(0); }
@@ -865,20 +872,8 @@ body {
 .notification.error .notification-icon { background: rgba(255, 59, 48, 0.15); }
 
 .notification-content { flex: 1; min-width: 0; }
-
-.notification-title {
-    font-weight: 600;
-    font-size: 13px;
-    margin-bottom: 2px;
-    color: var(--notif-text);
-}
-
-.notification-message {
-    font-size: 12px;
-    color: var(--notif-text-muted);
-    line-height: 1.35;
-    word-wrap: break-word;
-}
+.notification-title { font-weight: 600; font-size: 13px; margin-bottom: 2px; color: var(--notif-text); }
+.notification-message { font-size: 12px; color: var(--notif-text-muted); line-height: 1.35; }
 
 .notification-close {
     background: transparent;
@@ -887,7 +882,6 @@ body {
     font-size: 16px;
     cursor: pointer;
     padding: 0 4px;
-    line-height: 1;
     border-radius: 4px;
     transition: background 0.15s;
 }
@@ -902,8 +896,6 @@ body {
     min-width: 320px;
     min-height: 200px;
     background: var(--window-bg);
-    backdrop-filter: blur(30px);
-    -webkit-backdrop-filter: blur(30px);
     border-radius: 12px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35), 0 0 0 1px var(--window-border);
     overflow: hidden;
@@ -911,7 +903,7 @@ body {
     flex-direction: column;
     color: var(--window-text);
     font-size: 13px;
-    transition: opacity 0.2s, transform 0.2s, background 0.3s ease, color 0.3s ease;
+    transition: opacity 0.2s, transform 0.2s, background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
     animation: windowOpen 0.25s cubic-bezier(0.2, 0.9, 0.3, 1.2);
 }
 
@@ -933,6 +925,7 @@ body {
     cursor: grab;
     flex-shrink: 0;
     position: relative;
+    transition: background 0.3s ease;
 }
 
 .window-header:active { cursor: grabbing; }
@@ -988,6 +981,7 @@ body {
     padding: 16px;
     background: var(--window-body-bg);
     -webkit-overflow-scrolling: touch;
+    transition: background 0.3s ease;
 }
 
 .resizer { position: absolute; z-index: 10; }
@@ -1004,11 +998,11 @@ body {
     box-shadow: 0 25px 70px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--window-border);
 }
 
-.window:not(.focused) .window-header { opacity: 0.6; }
+.window:not(.focused) .window-header { opacity: 0.7; }
 .window.maximized { border-radius: 0; }
 
 /* ============================================================
-   КАЛЬКУЛЯТОР
+   КАЛЬКУЛЯТОР — всегда тёмный (стиль iOS)
    ============================================================ */
 .calculator {
     display: flex;
@@ -1039,13 +1033,7 @@ body {
     user-select: text;
 }
 
-.calc-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-    flex: 0 0 auto;
-    width: 100%;
-}
+.calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; flex: 0 0 auto; width: 100%; }
 
 .calc-btn {
     position: relative;
@@ -1090,47 +1078,26 @@ body {
 }
 
 /* ============================================================
-   CLOUD BACKUP — СЛЕДУЕТ ТЕМЕ СИСТЕМЫ
+   CLOUD — следует теме системы
    ============================================================ */
-
-/* --- Светлая тема --- */
 .cloud-panel {
     --cl-bg: transparent;
     --cl-text: var(--window-text);
     --cl-muted: var(--popup-text-muted);
     --cl-light: var(--popup-text-light);
     --cl-border: var(--window-border);
-    --cl-card-bg: rgba(0, 0, 0, 0.04);
-    --cl-card-border: rgba(0, 0, 0, 0.08);
-    --cl-card-hover: rgba(0, 0, 0, 0.08);
-    --cl-input-bg: rgba(0, 0, 0, 0.04);
-    --cl-input-border: rgba(0, 0, 0, 0.1);
-    --cl-input-text: var(--window-text);
+    --cl-card-bg: var(--app-card-bg);
+    --cl-card-border: var(--app-card-border);
+    --cl-card-hover: var(--app-card-hover);
+    --cl-input-bg: var(--app-input-bg);
+    --cl-input-border: var(--app-input-border);
+    --cl-input-text: var(--app-input-text);
     --cl-section-title: var(--popup-text-muted);
-
     color: var(--cl-text);
 }
 
-/* --- Тёмная тема --- */
-@media (prefers-color-scheme: dark) {
-    .cloud-panel {
-        --cl-bg: transparent;
-        --cl-text: #ffffff;
-        --cl-muted: rgba(255, 255, 255, 0.6);
-        --cl-light: rgba(255, 255, 255, 0.45);
-        --cl-border: rgba(255, 255, 255, 0.1);
-        --cl-card-bg: rgba(255, 255, 255, 0.05);
-        --cl-card-border: rgba(255, 255, 255, 0.08);
-        --cl-card-hover: rgba(255, 255, 255, 0.12);
-        --cl-input-bg: rgba(255, 255, 255, 0.08);
-        --cl-input-border: rgba(255, 255, 255, 0.12);
-        --cl-input-text: #ffffff;
-        --cl-section-title: rgba(255, 255, 255, 0.5);
-    }
-}
-
 .settings-panel#panel-cloud {
-    background: var(--cl-bg, transparent);
+    background: var(--cl-bg);
     color: var(--cl-text);
 }
 
@@ -1146,21 +1113,11 @@ body {
 }
 
 .cloud-panel .cloud-input::placeholder { color: var(--cl-light); }
+.cloud-panel .cloud-input:focus { border-color: #4a9eff; background: var(--cl-card-hover); }
 
-.cloud-panel .cloud-input:focus {
-    border-color: #4a9eff;
-    background: var(--cl-card-hover);
-}
-
-.cloud-panel .cloud-btn.primary {
-    background: #4a9eff;
-    color: #ffffff;
-}
-
-.cloud-panel .cloud-btn.primary:hover:not(:disabled) { background: #3a8eef; }
-
-.cloud-panel .cloud-btn.success { background: #34c759; color: #ffffff; }
-.cloud-panel .cloud-btn.danger { background: #ff3b30; color: #ffffff; }
+.cloud-panel .cloud-btn.primary { background: #4a9eff; color: #fff; }
+.cloud-panel .cloud-btn.success { background: #34c759; color: #fff; }
+.cloud-panel .cloud-btn.danger { background: #ff3b30; color: #fff; }
 
 .cloud-panel .cloud-btn.secondary {
     background: var(--cl-card-bg);
@@ -1178,10 +1135,7 @@ body {
 
 .cloud-panel .cloud-action-btn:hover:not(:disabled) {
     background: var(--cl-card-hover);
-    border-color: var(--cl-border);
 }
-
-.cloud-panel .cloud-action-btn span:not(.icon) { color: var(--cl-text); }
 
 .cloud-panel .cloud-status {
     background: var(--cl-card-bg);
@@ -1225,19 +1179,7 @@ body {
 .cloud-panel .cloud-hint { color: var(--cl-muted); }
 .cloud-panel .cloud-hint a { color: #4a9eff; }
 
-/* Общие стили Cloud */
-.cloud-app {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    padding: 20px 24px 24px;
-    background: var(--window-bg);
-    color: var(--window-text);
-    gap: 18px;
-    overflow-y: auto;
-    font-size: 13px;
-}
-
+/* Общие */
 .cloud-header {
     display: flex;
     align-items: center;
@@ -1269,19 +1211,18 @@ body {
     text-transform: uppercase;
     letter-spacing: 0.5px;
     color: var(--popup-text-muted);
-    margin-bottom: 2px;
 }
 
 .cloud-token-row { display: flex; gap: 8px; align-items: stretch; }
 
 .cloud-input {
     flex: 1;
-    background: var(--cal-nav-bg);
-    border: 1px solid var(--window-border);
+    background: var(--app-input-bg);
+    border: 1px solid var(--app-input-border);
     border-radius: 8px;
     padding: 9px 12px;
     font-size: 12px;
-    color: var(--window-text);
+    color: var(--app-input-text);
     outline: none;
     transition: border-color 0.15s, background 0.15s;
     font-family: inherit;
@@ -1289,7 +1230,7 @@ body {
 }
 
 .cloud-input::placeholder { color: var(--popup-text-light); }
-.cloud-input:focus { border-color: #4a9eff; background: var(--cal-nav-bg-hover); }
+.cloud-input:focus { border-color: #4a9eff; background: var(--app-card-hover); }
 
 .cloud-btn {
     border: none;
@@ -1317,8 +1258,8 @@ body {
 .cloud-action-btn {
     padding: 16px 14px;
     border-radius: 12px;
-    border: 1px solid var(--window-border);
-    background: var(--cal-nav-bg);
+    border: 1px solid var(--app-card-border);
+    background: var(--app-card-bg);
     color: var(--window-text);
     cursor: pointer;
     display: flex;
@@ -1332,8 +1273,7 @@ body {
 }
 
 .cloud-action-btn:hover:not(:disabled) {
-    background: var(--cal-nav-bg-hover);
-    border-color: var(--window-border);
+    background: var(--app-card-hover);
     transform: translateY(-1px);
 }
 
@@ -1342,7 +1282,7 @@ body {
 .cloud-action-btn .icon { font-size: 24px; }
 
 .cloud-status {
-    background: var(--cal-nav-bg);
+    background: var(--app-card-bg);
     border-radius: 10px;
     padding: 12px 14px;
     font-size: 11px;
@@ -1350,7 +1290,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 6px;
-    border: 1px solid var(--window-border);
+    border: 1px solid var(--app-card-border);
 }
 
 .cloud-status-row { display: flex; justify-content: space-between; gap: 10px; }
@@ -1363,8 +1303,6 @@ body {
     left: 50%;
     transform: translateX(-50%) translateY(20px);
     background: var(--popup-bg);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
     color: var(--popup-text);
     padding: 10px 18px;
     border-radius: 10px;
@@ -1392,8 +1330,8 @@ body {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    background: var(--cal-nav-bg);
-    border: 1px solid var(--window-border);
+    background: var(--app-card-bg);
+    border: 1px solid var(--app-card-border);
     border-radius: 10px;
     padding: 12px 14px;
 }
@@ -1437,31 +1375,24 @@ body {
 .cloud-switch input:checked + .slider::before { transform: translateX(16px); }
 .cloud-switch input:disabled + .slider { opacity: 0.5; cursor: not-allowed; }
 
-.cloud-interval-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    transition: opacity 0.2s;
-}
-
+.cloud-interval-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .cloud-interval-row.disabled { opacity: 0.4; pointer-events: none; }
 .cloud-interval-row label { font-size: 12px; color: var(--popup-text-muted); }
 
 .cloud-select {
-    background: var(--cal-nav-bg);
-    border: 1px solid var(--window-border);
+    background: var(--app-input-bg);
+    border: 1px solid var(--app-input-border);
     border-radius: 8px;
     padding: 6px 10px;
     font-size: 12px;
-    color: var(--window-text);
+    color: var(--app-input-text);
     outline: none;
     cursor: pointer;
     font-family: inherit;
     transition: background 0.15s, border-color 0.15s;
 }
 
-.cloud-select:hover { background: var(--cal-nav-bg-hover); }
+.cloud-select:hover { background: var(--app-card-hover); }
 .cloud-select:focus { border-color: #4a9eff; }
 .cloud-select option { background: var(--window-bg); color: var(--window-text); }
 
@@ -1476,7 +1407,6 @@ body {
 }
 
 .cloud-next-sync .countdown { color: #4a9eff; font-weight: 600; font-variant-numeric: tabular-nums; }
-
 .cloud-next-sync .dot {
     width: 6px;
     height: 6px;
@@ -1495,18 +1425,17 @@ body {
 }
 
 /* ============================================================
-   SETTINGS — вкладки
+   SETTINGS — следует теме системы
    ============================================================ */
 .settings-app {
     display: flex;
     flex-direction: column;
     height: 100%;
     background: var(--window-bg);
-    backdrop-filter: blur(30px);
-    -webkit-backdrop-filter: blur(30px);
     color: var(--window-text);
     font-size: 13px;
     overflow: hidden;
+    transition: background 0.3s ease, color 0.3s ease;
 }
 
 .settings-tabs {
@@ -1516,6 +1445,7 @@ body {
     border-bottom: 1px solid var(--window-border);
     flex-shrink: 0;
     background: var(--window-header-bg);
+    transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 .settings-tab {
@@ -1558,7 +1488,6 @@ body {
     text-transform: uppercase;
     letter-spacing: 0.5px;
     color: var(--popup-text-muted);
-    margin-bottom: 2px;
 }
 
 .wallpapers-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
@@ -1593,7 +1522,6 @@ body {
     justify-content: center;
     font-size: 12px;
     font-weight: 700;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 
 .wallpaper-label {
@@ -1607,7 +1535,6 @@ body {
     font-size: 10px;
     font-weight: 500;
     text-align: center;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .wallpaper-mode-row { display: flex; gap: 10px; margin-bottom: 8px; }
@@ -1617,7 +1544,7 @@ body {
     padding: 10px 14px;
     border-radius: 10px;
     border: 1.5px solid var(--window-border);
-    background: var(--cal-nav-bg);
+    background: var(--app-btn-bg);
     color: var(--window-text);
     font-size: 12px;
     font-weight: 500;
@@ -1626,7 +1553,7 @@ body {
     transition: all 0.15s;
 }
 
-.wallpaper-mode-btn:hover { background: var(--cal-nav-bg-hover); transform: translateY(-1px); }
+.wallpaper-mode-btn:hover { background: var(--app-btn-hover); transform: translateY(-1px); }
 
 .wallpaper-mode-btn.active {
     border-color: #4a9eff;
@@ -1635,129 +1562,27 @@ body {
     font-weight: 600;
 }
 
-.wallpaper-mode-btn:active { transform: scale(0.98); }
-
 .wallpaper-mode-hint {
     font-size: 11px;
     color: var(--popup-text-muted);
     line-height: 1.4;
     padding: 6px 10px;
-    background: var(--cal-nav-bg);
+    background: var(--app-btn-bg);
     border-radius: 8px;
 }
 
 /* ============================================================
-   ПРИЛОЖЕНИЕ «ЗАРПЛАТА»
+   ПРИЛОЖЕНИЕ «ЗАРПЛАТА» — следует теме системы
    ============================================================ */
 .salary-app {
     display: flex;
     flex-direction: column;
     height: 100%;
-    background: var(--sal-bg);
-    color: var(--sal-text);
+    background: var(--app-bg);
+    color: var(--app-card-value);
     font-size: 13px;
     overflow: hidden;
     transition: background 0.3s ease, color 0.3s ease;
-
-    --sal-bg: #f5f5f7;
-    --sal-text: #1c1c1e;
-    --sal-border: rgba(0, 0, 0, 0.08);
-
-    --sal-toolbar-bg: rgba(255, 255, 255, 0.6);
-    --sal-card-bg: rgba(0, 0, 0, 0.04);
-    --sal-card-border: rgba(0, 0, 0, 0.06);
-    --sal-card-hover: rgba(0, 0, 0, 0.08);
-    --sal-card-label: rgba(0, 0, 0, 0.5);
-    --sal-card-value: #1c1c1e;
-
-    --sal-btn-bg: rgba(0, 0, 0, 0.06);
-    --sal-btn-hover: rgba(0, 0, 0, 0.12);
-    --sal-btn-text: #1c1c1e;
-
-    --sal-input-bg: rgba(0, 0, 0, 0.04);
-    --sal-input-border: rgba(0, 0, 0, 0.1);
-    --sal-input-text: #1c1c1e;
-
-    --sal-table-header-bg: rgba(0, 0, 0, 0.05);
-    --sal-table-header-text: rgba(0, 0, 0, 0.6);
-    --sal-table-row-hover: rgba(0, 0, 0, 0.03);
-    --sal-table-cell: #1c1c1e;
-    --sal-table-month: rgba(0, 0, 0, 0.85);
-    --sal-table-border: rgba(0, 0, 0, 0.06);
-    --sal-editable-hover: rgba(0, 0, 0, 0.06);
-    --sal-editable-focus: rgba(0, 0, 0, 0.08);
-    --sal-total-color: #4a9eff;
-    --sal-dash-color: rgba(0, 0, 0, 0.3);
-
-    --sal-quarter-bg: rgba(74, 158, 255, 0.08);
-    --sal-quarter-border: rgba(74, 158, 255, 0.25);
-    --sal-quarter-td-border: rgba(74, 158, 255, 0.15);
-    --sal-quarter-label: #4a9eff;
-
-    --sal-footer-bg: rgba(0, 0, 0, 0.05);
-    --sal-footer-border: rgba(0, 0, 0, 0.1);
-
-    --sal-analysis-bg: rgba(0, 0, 0, 0.03);
-    --sal-chart-bg: rgba(0, 0, 0, 0.04);
-    --sal-chart-grid: rgba(0, 0, 0, 0.08);
-    --sal-chart-ticks: rgba(0, 0, 0, 0.6);
-
-    --sal-highlight-row: rgba(74, 158, 255, 0.2);
-
-    --sal-positive: #34c759;
-    --sal-negative: #ff3b30;
-}
-
-@media (prefers-color-scheme: dark) {
-    .salary-app {
-        --sal-bg: #1c1c1e;
-        --sal-text: #ffffff;
-        --sal-border: rgba(255, 255, 255, 0.08);
-
-        --sal-toolbar-bg: rgba(255, 255, 255, 0.04);
-        --sal-card-bg: rgba(255, 255, 255, 0.05);
-        --sal-card-border: rgba(255, 255, 255, 0.06);
-        --sal-card-hover: rgba(255, 255, 255, 0.1);
-        --sal-card-label: rgba(255, 255, 255, 0.45);
-        --sal-card-value: #ffffff;
-
-        --sal-btn-bg: rgba(255, 255, 255, 0.08);
-        --sal-btn-hover: rgba(255, 255, 255, 0.15);
-        --sal-btn-text: #ffffff;
-
-        --sal-input-bg: rgba(255, 255, 255, 0.08);
-        --sal-input-border: rgba(255, 255, 255, 0.12);
-        --sal-input-text: #ffffff;
-
-        --sal-table-header-bg: rgba(255, 255, 255, 0.06);
-        --sal-table-header-text: rgba(255, 255, 255, 0.7);
-        --sal-table-row-hover: rgba(255, 255, 255, 0.04);
-        --sal-table-cell: #ffffff;
-        --sal-table-month: rgba(255, 255, 255, 0.85);
-        --sal-table-border: rgba(255, 255, 255, 0.06);
-        --sal-editable-hover: rgba(255, 255, 255, 0.08);
-        --sal-editable-focus: rgba(255, 255, 255, 0.12);
-        --sal-total-color: #4a9eff;
-        --sal-dash-color: rgba(255, 255, 255, 0.3);
-
-        --sal-quarter-bg: rgba(74, 158, 255, 0.08);
-        --sal-quarter-border: rgba(74, 158, 255, 0.25);
-        --sal-quarter-td-border: rgba(74, 158, 255, 0.15);
-        --sal-quarter-label: #4a9eff;
-
-        --sal-footer-bg: rgba(255, 255, 255, 0.06);
-        --sal-footer-border: rgba(255, 255, 255, 0.12);
-
-        --sal-analysis-bg: rgba(0, 0, 0, 0.15);
-        --sal-chart-bg: rgba(0, 0, 0, 0.2);
-        --sal-chart-grid: rgba(255, 255, 255, 0.06);
-        --sal-chart-ticks: rgba(255, 255, 255, 0.6);
-
-        --sal-highlight-row: rgba(74, 158, 255, 0.2);
-
-        --sal-positive: #34c759;
-        --sal-negative: #ff3b30;
-    }
 }
 
 .salary-toolbar {
@@ -1765,31 +1590,30 @@ body {
     align-items: center;
     gap: 10px;
     padding: 12px 16px;
-    border-bottom: 1px solid var(--sal-border);
+    border-bottom: 1px solid var(--app-border);
     flex-shrink: 0;
     flex-wrap: wrap;
-    background: var(--sal-toolbar-bg);
+    background: var(--window-bg);
     transition: background 0.3s ease, border-color 0.3s ease;
 }
 
-.salary-year-label { font-size: 12px; color: var(--sal-card-label); margin-right: 2px; }
+.salary-year-label { font-size: 12px; color: var(--app-card-label); margin-right: 2px; }
 
 .salary-select {
-    background: var(--sal-input-bg);
-    border: 1px solid var(--sal-input-border);
+    background: var(--app-input-bg);
+    border: 1px solid var(--app-input-border);
     border-radius: 8px;
     padding: 6px 10px;
     font-size: 12px;
-    color: var(--sal-input-text);
+    color: var(--app-input-text);
     outline: none;
     cursor: pointer;
     font-family: inherit;
-    transition: background 0.15s, border-color 0.15s;
 }
 
-.salary-select:hover { background: var(--sal-btn-hover); }
+.salary-select:hover { background: var(--app-btn-hover); }
 .salary-select:focus { border-color: #4a9eff; }
-.salary-select option { background: var(--sal-bg); color: var(--sal-text); }
+.salary-select option { background: var(--window-bg); color: var(--window-text); }
 
 .salary-btn {
     border: none;
@@ -1799,15 +1623,15 @@ body {
     font-weight: 500;
     cursor: pointer;
     font-family: inherit;
-    color: var(--sal-btn-text);
-    background: var(--sal-btn-bg);
+    color: var(--app-btn-text);
+    background: var(--app-btn-bg);
     transition: background 0.15s, transform 0.05s;
     display: inline-flex;
     align-items: center;
     gap: 5px;
 }
 
-.salary-btn:hover { background: var(--sal-btn-hover); }
+.salary-btn:hover { background: var(--app-btn-hover); }
 .salary-btn:active { transform: scale(0.97); }
 .salary-btn.add { background: #34c759; color: #fff; }
 .salary-btn.add:hover { background: #2fb350; }
@@ -1838,9 +1662,10 @@ body {
     100% { transform: translateX(100%); }
 }
 
-.salary-save-status {
+.salary-save-status,
+.salary-session-timer {
     font-size: 11px;
-    color: var(--sal-card-label);
+    color: var(--app-card-label);
     white-space: nowrap;
     margin-left: 6px;
     font-variant-numeric: tabular-nums;
@@ -1848,15 +1673,6 @@ body {
 
 .salary-save-status.ok { color: #34c759; }
 .salary-save-status.error { color: #ff3b30; }
-
-.salary-session-timer {
-    font-size: 11px;
-    color: var(--sal-card-label);
-    white-space: nowrap;
-    margin-left: 6px;
-    font-variant-numeric: tabular-nums;
-}
-
 .salary-session-timer.warning { color: #ffcc00; }
 .salary-session-timer.danger { color: #ff3b30; animation: sessionPulse 1s ease-in-out infinite; }
 
@@ -1875,28 +1691,27 @@ body {
     grid-template-columns: repeat(5, 1fr);
     gap: 10px;
     padding: 14px 16px;
-    border-bottom: 1px solid var(--sal-border);
+    border-bottom: 1px solid var(--app-border);
     flex-shrink: 0;
 }
 
 .salary-card {
-    background: var(--sal-card-bg);
-    border: 1px solid var(--sal-card-border);
+    background: var(--app-card-bg);
+    border: 1px solid var(--app-card-border);
     border-radius: 10px;
     padding: 10px 12px;
     text-align: center;
-    transition: background 0.15s, transform 0.1s;
+    transition: background 0.15s, transform 0.1s, border-color 0.3s ease;
 }
 
 .salary-card.clickable { cursor: pointer; }
-.salary-card.clickable:hover { background: var(--sal-card-hover); transform: translateY(-1px); }
-.salary-card.clickable:active { transform: scale(0.98); }
+.salary-card.clickable:hover { background: var(--app-card-hover); transform: translateY(-1px); }
 
 .salary-card-label {
     font-size: 10px;
     text-transform: uppercase;
     letter-spacing: 0.4px;
-    color: var(--sal-card-label);
+    color: var(--app-card-label);
     margin-bottom: 4px;
     white-space: nowrap;
     overflow: hidden;
@@ -1906,7 +1721,7 @@ body {
 .salary-card-value {
     font-size: 13px;
     font-weight: 600;
-    color: var(--sal-card-value);
+    color: var(--app-card-value);
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
     overflow: hidden;
@@ -1921,10 +1736,6 @@ body {
     -webkit-overflow-scrolling: touch;
 }
 
-.salary-table-wrapper::-webkit-scrollbar { width: 8px; height: 8px; }
-.salary-table-wrapper::-webkit-scrollbar-thumb { background: var(--sal-border); border-radius: 4px; }
-.salary-table-wrapper::-webkit-scrollbar-track { background: transparent; }
-
 table.sal-table {
     width: 100%;
     border-collapse: collapse;
@@ -1933,30 +1744,29 @@ table.sal-table {
 }
 
 .sal-table thead th {
-    background: var(--sal-table-header-bg);
-    color: var(--sal-table-header-text);
+    background: var(--app-table-header-bg);
+    color: var(--app-table-header-text);
     font-weight: 600;
     padding: 8px 10px;
     text-align: left;
-    border-bottom: 2px solid var(--sal-border);
+    border-bottom: 2px solid var(--app-border);
     white-space: nowrap;
     position: sticky;
     top: 0;
     z-index: 2;
     font-size: 11px;
     text-transform: uppercase;
-    letter-spacing: 0.3px;
 }
 
 .sal-table tbody td {
     padding: 6px 10px;
-    border-bottom: 1px solid var(--sal-table-border);
-    color: var(--sal-table-cell);
+    border-bottom: 1px solid var(--app-table-border);
+    color: var(--app-table-cell);
     vertical-align: middle;
     font-size: 12px;
 }
 
-.sal-table tbody tr:hover td { background: var(--sal-table-row-hover); }
+.sal-table tbody tr:hover td { background: var(--app-table-row-hover); }
 
 .sal-table .editable {
     cursor: text;
@@ -1968,48 +1778,48 @@ table.sal-table {
     font-variant-numeric: tabular-nums;
 }
 
-.sal-table .editable:hover { background: var(--sal-editable-hover); }
-.sal-table .editable:focus { background: var(--sal-editable-focus); box-shadow: 0 0 0 1.5px #4a9eff; }
+.sal-table .editable:hover { background: var(--app-btn-bg); }
+.sal-table .editable:focus { background: var(--app-btn-hover); box-shadow: 0 0 0 1.5px #4a9eff; }
 
-.sal-table .month-label { font-weight: 500; color: var(--sal-table-month); white-space: nowrap; }
+.sal-table .month-label { font-weight: 500; color: var(--app-card-value); white-space: nowrap; }
 .sal-table .money-cell { font-weight: 500; text-align: right; }
-.sal-table .total-cell { font-weight: 600; text-align: right; color: var(--sal-total-color); }
-.sal-table .dash { color: var(--sal-dash-color); }
+.sal-table .total-cell { font-weight: 600; text-align: right; color: #4a9eff; }
+.sal-table .dash { color: var(--app-card-label); }
 
 .sal-table .quarter-row {
-    background: var(--sal-quarter-bg);
-    border-top: 2px solid var(--sal-quarter-border);
-    border-bottom: 2px solid var(--sal-quarter-border);
+    background: rgba(74, 158, 255, 0.08);
+    border-top: 2px solid rgba(74, 158, 255, 0.25);
+    border-bottom: 2px solid rgba(74, 158, 255, 0.25);
 }
 
 .sal-table .quarter-row td {
     font-weight: 600;
-    color: var(--sal-table-cell);
+    color: var(--app-card-value);
     padding: 6px 10px;
-    border-bottom: 1px solid var(--sal-quarter-td-border);
+    border-bottom: 1px solid rgba(74, 158, 255, 0.15);
 }
 
-.sal-table .quarter-label { font-weight: 700; color: var(--sal-quarter-label); white-space: nowrap; }
+.sal-table .quarter-label { font-weight: 700; color: #4a9eff; white-space: nowrap; }
 
-.sal-table tfoot .total-row { background: var(--sal-footer-bg); }
+.sal-table tfoot .total-row { background: var(--app-table-header-bg); }
 
 .sal-table tfoot .total-row td {
     font-weight: 600;
-    color: var(--sal-table-cell);
-    border-top: 2px solid var(--sal-footer-border);
+    color: var(--app-card-value);
+    border-top: 2px solid var(--app-border);
     padding: 8px 10px;
     text-align: right;
 }
 
 .sal-table tfoot .total-row td:first-child {
     text-align: right;
-    color: var(--sal-card-label);
+    color: var(--app-card-label);
     font-size: 11px;
     text-transform: uppercase;
 }
 
 .sal-table tr.highlight-row td {
-    background: var(--sal-highlight-row) !important;
+    background: rgba(74, 158, 255, 0.2) !important;
     animation: salHighlight 2s ease;
 }
 
@@ -2019,24 +1829,24 @@ table.sal-table {
 }
 
 .salary-analysis-panel {
-    border-top: 1px solid var(--sal-border);
+    border-top: 1px solid var(--app-border);
     padding: 14px 16px;
-    background: var(--sal-analysis-bg);
+    background: var(--app-analysis-bg);
     display: none;
     flex-shrink: 0;
 }
 
 .salary-analysis-panel.visible { display: block; }
 
-.salary-analysis-title { font-size: 13px; font-weight: 600; color: var(--sal-text); margin-bottom: 10px; }
+.salary-analysis-title { font-size: 13px; font-weight: 600; color: var(--app-card-value); margin-bottom: 10px; }
 
 .salary-year-compare-card {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     gap: 10px;
     padding: 10px 12px;
-    background: var(--sal-card-bg);
-    border: 1px solid var(--sal-card-border);
+    background: var(--app-card-bg);
+    border: 1px solid var(--app-card-border);
     border-radius: 10px;
     margin-bottom: 10px;
 }
@@ -2047,7 +1857,7 @@ table.sal-table {
     font-size: 9px;
     text-transform: uppercase;
     letter-spacing: 0.4px;
-    color: var(--sal-card-label);
+    color: var(--app-card-label);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -2056,7 +1866,7 @@ table.sal-table {
 .salary-year-compare-item .yc-value {
     font-size: 13px;
     font-weight: 700;
-    color: var(--sal-card-value);
+    color: var(--app-card-value);
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
     overflow: hidden;
@@ -2065,93 +1875,70 @@ table.sal-table {
 
 .salary-year-compare-item .yc-note {
     font-size: 10px;
-    color: var(--sal-card-label);
+    color: var(--app-card-label);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 .salary-year-compare-item.positive .yc-value,
-.salary-year-compare-item.positive .yc-note { color: var(--sal-positive); }
+.salary-year-compare-item.positive .yc-note { color: var(--app-positive); }
 
 .salary-year-compare-item.negative .yc-value,
-.salary-year-compare-item.negative .yc-note { color: var(--sal-negative); }
+.salary-year-compare-item.negative .yc-note { color: var(--app-negative); }
 
 .salary-compare-bar {
     display: flex;
     align-items: center;
     gap: 10px;
     padding: 0 0 10px 0;
-    border-bottom: 1px solid var(--sal-border);
+    border-bottom: 1px solid var(--app-border);
     margin-bottom: 10px;
     flex-wrap: wrap;
 }
 
-.salary-compare-label { font-size: 11px; color: var(--sal-card-label); font-weight: 500; white-space: nowrap; }
-
+.salary-compare-label { font-size: 11px; color: var(--app-card-label); font-weight: 500; white-space: nowrap; }
 .salary-compare-chips { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; min-width: 0; }
 
 .salary-year-chip {
-    background: var(--sal-btn-bg);
+    background: var(--app-btn-bg);
     border: 1px solid transparent;
     border-radius: 8px;
     padding: 5px 10px;
     font-size: 11px;
     font-weight: 500;
-    color: var(--sal-btn-text);
+    color: var(--app-btn-text);
     cursor: pointer;
     font-family: inherit;
-    transition: background 0.15s, border-color 0.15s, transform 0.1s;
+    transition: background 0.15s, border-color 0.15s;
     display: inline-flex;
     align-items: center;
     gap: 5px;
     white-space: nowrap;
 }
 
-.salary-year-chip:hover { background: var(--sal-btn-hover); }
-.salary-year-chip:active { transform: scale(0.97); }
+.salary-year-chip:hover { background: var(--app-btn-hover); }
+.salary-year-chip.current { background: rgba(74, 158, 255, 0.15); color: #4a9eff; font-weight: 600; cursor: default; }
+.salary-year-chip.active { background: rgba(74, 158, 255, 0.2); color: #4a9eff; border-color: #4a9eff; font-weight: 600; }
 
-.salary-year-chip.current {
-    cursor: default;
-    opacity: 0.85;
-    background: rgba(74, 158, 255, 0.15);
-    color: #4a9eff;
-    font-weight: 600;
-}
-
-.salary-year-chip.active {
-    background: rgba(74, 158, 255, 0.2);
-    color: #4a9eff;
-    border-color: #4a9eff;
-    font-weight: 600;
-}
-
-.salary-year-chip .chip-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    flex-shrink: 0;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-}
+.salary-year-chip .chip-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 
 .salary-avg-toggle {
     display: inline-flex;
     align-items: center;
     gap: 6px;
     padding: 5px 10px;
-    background: var(--sal-btn-bg);
+    background: var(--app-btn-bg);
     border: 1px solid transparent;
     border-radius: 8px;
     font-size: 11px;
     font-weight: 500;
-    color: var(--sal-btn-text);
+    color: var(--app-btn-text);
     cursor: pointer;
     font-family: inherit;
-    white-space: nowrap;
 }
 
-.salary-avg-toggle:hover { background: var(--sal-btn-hover); }
-.salary-avg-toggle:active { transform: scale(0.97); }
+.salary-avg-toggle:hover { background: var(--app-btn-hover); }
 
 .salary-avg-toggle.active {
     background: rgba(255, 159, 64, 0.2);
@@ -2160,23 +1947,15 @@ table.sal-table {
     font-weight: 600;
 }
 
-.salary-avg-toggle .chip-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #ff9f40;
-    flex-shrink: 0;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-}
+.salary-avg-toggle .chip-dot { width: 8px; height: 8px; border-radius: 50%; background: #ff9f40; flex-shrink: 0; }
 
 .salary-compare-counter {
     font-size: 10px;
-    color: var(--sal-card-label);
+    color: var(--app-card-label);
     padding: 4px 8px;
-    background: var(--sal-btn-bg);
+    background: var(--app-btn-bg);
     border-radius: 6px;
     font-variant-numeric: tabular-nums;
-    white-space: nowrap;
 }
 
 .salary-compare-counter.warning { color: #ffcc00; background: rgba(255, 204, 0, 0.12); }
@@ -2184,25 +1963,24 @@ table.sal-table {
 
 .salary-compare-clear {
     background: transparent;
-    border: 1px solid var(--sal-card-border);
+    border: 1px solid var(--app-card-border);
     border-radius: 8px;
     padding: 5px 10px;
     font-size: 11px;
-    color: var(--sal-card-label);
+    color: var(--app-card-label);
     cursor: pointer;
     font-family: inherit;
-    white-space: nowrap;
     display: none;
 }
 
 .salary-compare-clear.visible { display: inline-flex; align-items: center; gap: 4px; }
-.salary-compare-clear:hover { background: var(--sal-card-hover); color: var(--sal-text); }
+.salary-compare-clear:hover { background: var(--app-card-hover); color: var(--window-text); }
 
 .salary-analysis-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 12px; }
 
 .salary-analysis-card {
-    background: var(--sal-card-bg);
-    border: 1px solid var(--sal-card-border);
+    background: var(--app-card-bg);
+    border: 1px solid var(--app-card-border);
     border-radius: 10px;
     padding: 8px 10px;
     min-width: 0;
@@ -2213,7 +1991,7 @@ table.sal-table {
     font-size: 9px;
     text-transform: uppercase;
     letter-spacing: 0.4px;
-    color: var(--sal-card-label);
+    color: var(--app-card-label);
     margin-bottom: 4px;
     white-space: nowrap;
     overflow: hidden;
@@ -2224,32 +2002,30 @@ table.sal-table {
     display: block;
     font-size: 12px;
     font-weight: 700;
-    color: var(--sal-card-value);
+    color: var(--app-card-value);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-.salary-analysis-card.positive .analysis-value { color: var(--sal-positive); }
-.salary-analysis-card.negative .analysis-value { color: var(--sal-negative); }
+.salary-analysis-card.positive .analysis-value { color: var(--app-positive); }
+.salary-analysis-card.negative .analysis-value { color: var(--app-negative); }
 
 .salary-chart-container {
     position: relative;
     height: 200px;
-    background: var(--sal-chart-bg);
+    background: var(--app-chart-bg);
     border-radius: 10px;
     padding: 8px;
 }
 
 .salary-chart-container canvas { width: 100% !important; height: 100% !important; }
 
-/* ============================================================
-   АВТОРИЗАЦИЯ ЗАРПЛАТЫ
-   ============================================================ */
+/* Авторизация зарплаты */
 .salary-lock {
     position: absolute;
     inset: 0;
-    background: var(--sal-bg, #1c1c1e);
+    background: var(--app-bg);
     display: none;
     align-items: center;
     justify-content: center;
@@ -2262,8 +2038,8 @@ table.sal-table {
 .salary-lock-card {
     width: 100%;
     max-width: 340px;
-    background: var(--sal-card-bg, rgba(255, 255, 255, 0.05));
-    border: 1px solid var(--sal-card-border, rgba(255, 255, 255, 0.06));
+    background: var(--window-bg);
+    border: 1px solid var(--window-border);
     border-radius: 16px;
     padding: 24px 22px 22px;
     text-align: center;
@@ -2280,7 +2056,7 @@ table.sal-table {
     border-radius: 50%;
     background: transparent;
     border: none;
-    color: var(--sal-card-label, rgba(255, 255, 255, 0.5));
+    color: var(--popup-text-muted);
     font-size: 18px;
     cursor: pointer;
     display: flex;
@@ -2289,11 +2065,10 @@ table.sal-table {
     font-family: inherit;
     line-height: 1;
     padding: 0;
-    transition: background 0.15s, color 0.15s, transform 0.1s;
+    transition: background 0.15s, color 0.15s;
 }
 
 .salary-lock-close:hover { background: rgba(255, 59, 48, 0.15); color: #ff3b30; }
-.salary-lock-close:active { transform: scale(0.9); }
 
 .salary-lock-icon {
     width: 60px;
@@ -2308,28 +2083,27 @@ table.sal-table {
     box-shadow: 0 6px 16px rgba(74, 158, 255, 0.35);
 }
 
-.salary-lock-title { font-size: 15px; font-weight: 600; color: var(--sal-text, #fff); margin-bottom: 4px; }
-.salary-lock-subtitle { font-size: 11px; color: var(--sal-card-label, rgba(255, 255, 255, 0.5)); margin-bottom: 18px; line-height: 1.4; }
+.salary-lock-title { font-size: 15px; font-weight: 600; color: var(--window-text); margin-bottom: 4px; }
+.salary-lock-subtitle { font-size: 11px; color: var(--popup-text-muted); margin-bottom: 18px; line-height: 1.4; }
 
 .salary-lock-input {
     width: 100%;
-    background: var(--sal-input-bg, rgba(255, 255, 255, 0.08));
-    border: 1px solid var(--sal-input-border, rgba(255, 255, 255, 0.12));
+    background: var(--app-input-bg);
+    border: 1px solid var(--app-input-border);
     border-radius: 10px;
     padding: 10px 14px;
     font-size: 14px;
-    color: var(--sal-input-text, #fff);
+    color: var(--app-input-text);
     outline: none;
     text-align: center;
     font-family: inherit;
     letter-spacing: 2px;
-    transition: border-color 0.15s, background 0.15s;
     margin-bottom: 10px;
     user-select: text;
 }
 
-.salary-lock-input::placeholder { color: var(--sal-card-label, rgba(255, 255, 255, 0.35)); letter-spacing: normal; }
-.salary-lock-input:focus { border-color: #4a9eff; background: var(--sal-editable-focus, rgba(255, 255, 255, 0.12)); }
+.salary-lock-input::placeholder { color: var(--popup-text-light); letter-spacing: normal; }
+.salary-lock-input:focus { border-color: #4a9eff; background: var(--app-card-hover); }
 
 .salary-lock-error { font-size: 11px; color: #ff3b30; min-height: 16px; margin-bottom: 10px; visibility: hidden; }
 .salary-lock-error.visible { visibility: visible; }
@@ -2345,25 +2119,21 @@ table.sal-table {
     font-weight: 600;
     cursor: pointer;
     font-family: inherit;
-    transition: background 0.15s, transform 0.05s;
 }
 
 .salary-lock-btn:hover:not(:disabled) { background: #3a8eef; }
-.salary-lock-btn:active:not(:disabled) { transform: scale(0.98); }
 .salary-lock-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.salary-lock-hint { font-size: 10px; color: var(--sal-card-label, rgba(255, 255, 255, 0.4)); margin-top: 12px; line-height: 1.4; }
+.salary-lock-hint { font-size: 10px; color: var(--popup-text-light); margin-top: 12px; line-height: 1.4; }
 
 /* ============================================================
-   ПРИЛОЖЕНИЕ «ИГРЫ»
+   ПРИЛОЖЕНИЕ «ИГРЫ» — следует теме системы
    ============================================================ */
 .games-app {
     display: flex;
     flex-direction: column;
     height: 100%;
     background: var(--window-bg);
-    backdrop-filter: blur(30px);
-    -webkit-backdrop-filter: blur(30px);
     color: var(--window-text);
     font-size: 13px;
     overflow: hidden;
@@ -2389,7 +2159,6 @@ table.sal-table {
     font-family: inherit;
     border-bottom: 2px solid transparent;
     margin-bottom: -1px;
-    transition: color 0.15s, border-color 0.15s;
     display: flex;
     align-items: center;
     gap: 5px;
@@ -2420,7 +2189,7 @@ table.sal-table {
 .game-header-spacer { flex: 1; }
 
 .game-btn {
-    background: var(--cal-nav-bg);
+    background: var(--app-btn-bg);
     border: 1px solid var(--window-border);
     border-radius: 8px;
     padding: 7px 14px;
@@ -2429,16 +2198,14 @@ table.sal-table {
     color: var(--window-text);
     cursor: pointer;
     font-family: inherit;
-    transition: background 0.15s, transform 0.05s;
     display: inline-flex;
     align-items: center;
     gap: 5px;
     white-space: nowrap;
 }
 
-.game-btn:hover { background: var(--cal-nav-bg-hover); }
-.game-btn:active { transform: scale(0.97); }
-.game-btn.primary { background: #4a9eff; color: #fff; }
+.game-btn:hover { background: var(--app-btn-hover); }
+.game-btn.primary { background: #4a9eff; color: #fff; border-color: transparent; }
 .game-btn.primary:hover { background: #3a8eef; }
 
 .game-board-wrapper {
@@ -2452,12 +2219,12 @@ table.sal-table {
     -webkit-overflow-scrolling: touch;
 }
 
-/* САПЁР */
+/* Сапёр */
 .minesweeper-wrapper { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; }
 .minesweeper-difficulty { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
 
 .diff-btn {
-    background: var(--cal-nav-bg);
+    background: var(--app-btn-bg);
     border: 1px solid var(--window-border);
     border-radius: 8px;
     padding: 6px 12px;
@@ -2466,14 +2233,9 @@ table.sal-table {
     color: var(--window-text);
     cursor: pointer;
     font-family: inherit;
-    transition: background 0.15s, transform 0.05s;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
 }
 
-.diff-btn:hover { background: var(--cal-nav-bg-hover); }
-.diff-btn:active { transform: scale(0.97); }
+.diff-btn:hover { background: var(--app-btn-hover); }
 .diff-btn.active { background: rgba(74, 158, 255, 0.15); color: #4a9eff; border-color: #4a9eff; font-weight: 600; }
 
 .minesweeper-board {
@@ -2482,7 +2244,6 @@ table.sal-table {
     background: var(--window-border);
     padding: 3px;
     border-radius: 8px;
-    user-select: none;
     touch-action: manipulation;
 }
 
@@ -2496,17 +2257,14 @@ table.sal-table {
     font-weight: 700;
     font-family: inherit;
     color: var(--window-text);
-    background: var(--cal-nav-bg);
+    background: var(--app-btn-bg);
     border: none;
     border-radius: 4px;
     cursor: pointer;
-    transition: background 0.1s, transform 0.05s;
-    padding: 0;
     font-variant-numeric: tabular-nums;
 }
 
-.ms-cell:hover:not(.open):not(.flagged) { background: var(--cal-nav-bg-hover); }
-.ms-cell:active:not(.open) { transform: scale(0.94); }
+.ms-cell:hover:not(.open):not(.flagged) { background: var(--app-btn-hover); }
 .ms-cell.open { background: var(--window-bg); cursor: default; border: 1px solid var(--window-border); }
 .ms-cell.flagged { background: rgba(255, 204, 0, 0.2); }
 .ms-cell.mine { background: rgba(255, 59, 48, 0.3); }
@@ -2521,7 +2279,7 @@ table.sal-table {
 .ms-cell.n7 { color: var(--window-text); }
 .ms-cell.n8 { color: var(--popup-text-muted); }
 
-/* ПЯТНАШКИ */
+/* Пятнашки */
 .puzzle-wrapper { display: flex; flex-direction: column; align-items: center; gap: 16px; width: 100%; }
 
 .puzzle-board {
@@ -2534,7 +2292,6 @@ table.sal-table {
     aspect-ratio: 1 / 1;
     max-width: min(100%, 380px);
     width: 100%;
-    user-select: none;
 }
 
 .puzzle-tile {
@@ -2549,23 +2306,18 @@ table.sal-table {
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    transition: transform 0.15s, background 0.15s, box-shadow 0.15s;
     box-shadow: 0 4px 8px rgba(74, 158, 255, 0.3);
     font-variant-numeric: tabular-nums;
     padding: 0;
+    transition: transform 0.15s, box-shadow 0.15s;
 }
 
-.puzzle-tile:hover:not(.empty) {
-    background: linear-gradient(135deg, #3a8eef 0%, #0055bb 100%);
-    box-shadow: 0 6px 12px rgba(74, 158, 255, 0.4);
-    transform: translateY(-2px);
-}
-
+.puzzle-tile:hover:not(.empty) { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(74, 158, 255, 0.4); }
 .puzzle-tile:active:not(.empty) { transform: scale(0.95); }
 .puzzle-tile.empty { background: transparent; cursor: default; box-shadow: none; pointer-events: none; }
 .puzzle-tile.correct { background: linear-gradient(135deg, #34c759 0%, #2fb350 100%); box-shadow: 0 4px 8px rgba(52, 199, 89, 0.3); }
 
-/* СУДОКУ */
+/* Судоку */
 .sudoku-wrapper { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; }
 .sudoku-difficulty { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
 
@@ -2580,7 +2332,6 @@ table.sal-table {
     aspect-ratio: 1 / 1;
     max-width: min(100%, 460px);
     width: 100%;
-    user-select: none;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
 
@@ -2594,21 +2345,20 @@ table.sal-table {
     background: var(--window-bg);
     border: none;
     cursor: pointer;
-    transition: background 0.1s, color 0.1s;
     padding: 0;
     font-variant-numeric: tabular-nums;
     position: relative;
     color: var(--window-text);
+    transition: background 0.1s;
 }
 
 .sudoku-cell:hover:not(.given):not(.locked) { background: rgba(74, 158, 255, 0.18); }
-.sudoku-cell.given { background: rgba(127, 127, 127, 0.15); font-weight: 700; cursor: default; color: var(--window-text); }
+.sudoku-cell.given { background: var(--app-btn-bg); font-weight: 700; cursor: default; }
 .sudoku-cell.user { color: #4a9eff; font-weight: 600; }
 .sudoku-cell.user.wrong { color: #ff3b30; background: rgba(255, 59, 48, 0.18); }
 .sudoku-cell.selected { background: rgba(74, 158, 255, 0.4) !important; color: #fff !important; }
 .sudoku-cell.highlighted { background: rgba(74, 158, 255, 0.12); }
 .sudoku-cell.highlighted-same { background: rgba(74, 158, 255, 0.22); }
-.sudoku-cell.locked { cursor: default; }
 .sudoku-cell.correct { background: rgba(52, 199, 89, 0.15); }
 .sudoku-cell.border-right { border-right: 2px solid #4a9eff; }
 .sudoku-cell.border-bottom { border-bottom: 2px solid #4a9eff; }
@@ -2631,18 +2381,16 @@ table.sal-table {
     font-weight: 700;
     font-family: inherit;
     color: var(--window-text);
-    background: var(--cal-nav-bg);
+    background: var(--app-btn-bg);
     border: 1px solid var(--window-border);
     border-radius: 8px;
     cursor: pointer;
-    transition: background 0.1s, transform 0.05s;
     padding: 0;
     font-variant-numeric: tabular-nums;
     position: relative;
 }
 
-.sudoku-key:hover { background: var(--cal-nav-bg-hover); }
-.sudoku-key:active { transform: scale(0.94); }
+.sudoku-key:hover { background: var(--app-btn-hover); }
 .sudoku-key:disabled,
 .sudoku-key.depleted { opacity: 0.3; cursor: not-allowed; }
 
@@ -2665,13 +2413,11 @@ table.sal-table {
     width: 100%;
 }
 
-/* OVERLAY ПОБЕДЫ */
+/* Overlay победы */
 .game-win-overlay {
     position: absolute;
     inset: 0;
     background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2704,7 +2450,7 @@ table.sal-table {
 }
 
 .game-win-icon { font-size: 48px; margin-bottom: 8px; }
-.game-win-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; color: var(--window-text); }
+.game-win-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
 .game-win-message { font-size: 13px; color: var(--popup-text-muted); margin-bottom: 16px; line-height: 1.5; }
 
 .game-win-record {
@@ -2730,7 +2476,6 @@ table.sal-table {
     max-height: 180px;
     overflow-y: auto;
     display: none;
-    -webkit-overflow-scrolling: touch;
 }
 
 .game-history-panel.visible { display: block; }
@@ -2739,11 +2484,9 @@ table.sal-table {
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.4px;
     color: var(--popup-text-muted);
     margin-bottom: 8px;
     display: flex;
-    align-items: center;
     justify-content: space-between;
 }
 
@@ -2756,36 +2499,31 @@ table.sal-table {
     padding: 2px 6px;
     border-radius: 5px;
     font-family: inherit;
-    transition: background 0.15s;
 }
 
-.game-history-clear:hover { background: rgba(255, 59, 48, 0.12); }
 .game-history-list { display: flex; flex-direction: column; gap: 4px; }
-.game-history-empty { padding: 12px; text-align: center; font-size: 11px; color: var(--popup-text-light); font-style: italic; }
+
+.game-history-empty {
+    padding: 12px;
+    text-align: center;
+    font-size: 11px;
+    color: var(--popup-text-light);
+    font-style: italic;
+}
 
 .game-history-item {
     display: flex;
     align-items: center;
     gap: 10px;
     padding: 6px 10px;
-    background: var(--cal-nav-bg);
+    background: var(--app-btn-bg);
     border-radius: 8px;
     font-size: 11px;
-    transition: background 0.15s;
 }
 
-.game-history-item:hover { background: var(--cal-nav-bg-hover); }
-.game-history-item .gh-medal { font-size: 16px; flex-shrink: 0; }
-.game-history-item .gh-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
-
-.game-history-item .gh-result {
-    font-weight: 600;
-    color: var(--window-text);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
+.game-history-item .gh-medal { font-size: 16px; }
+.game-history-item .gh-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.game-history-item .gh-result { font-weight: 600; color: var(--window-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .game-history-item .gh-date { font-size: 10px; color: var(--popup-text-light); }
 
 .game-history-item .gh-badge {
@@ -2795,17 +2533,10 @@ table.sal-table {
     font-weight: 600;
     background: rgba(74, 158, 255, 0.15);
     color: #4a9eff;
-    white-space: nowrap;
 }
 
 .game-history-item.record .gh-badge { background: rgba(255, 204, 0, 0.2); color: #ffcc00; }
-
-.game-history-item .gh-time {
-    font-size: 10px;
-    color: var(--popup-text-muted);
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-}
+.game-history-item .gh-time { font-size: 10px; color: var(--popup-text-muted); font-variant-numeric: tabular-nums; }
 
 /* ============================================================
    МОДАЛЬНОЕ ОКНО ГРАФИКА ВАЛЮТЫ
@@ -2814,8 +2545,6 @@ table.sal-table {
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
     z-index: 5000;
     display: flex;
     align-items: center;
@@ -2830,10 +2559,8 @@ table.sal-table {
 
 .currency-modal-content {
     background: var(--popup-bg);
-    backdrop-filter: blur(30px);
-    -webkit-backdrop-filter: blur(30px);
     border-radius: 18px;
-    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--popup-border);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
     border: 1px solid var(--popup-border);
     width: 100%;
     max-width: 640px;
@@ -2843,7 +2570,7 @@ table.sal-table {
     flex-direction: column;
     overflow: hidden;
     transform: scale(0.92);
-    transition: transform 0.25s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+    transition: transform 0.25s, background 0.3s ease;
 }
 
 .currency-modal.open .currency-modal-content { transform: scale(1); }
@@ -2857,7 +2584,7 @@ table.sal-table {
     flex-shrink: 0;
 }
 
-.currency-modal-title { font-size: 16px; font-weight: 600; color: var(--popup-text); }
+.currency-modal-title { font-size: 16px; font-weight: 600; }
 
 .currency-modal-close {
     width: 28px;
@@ -2871,12 +2598,10 @@ table.sal-table {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.15s, transform 0.1s;
     font-family: inherit;
 }
 
 .currency-modal-close:hover { background: var(--cal-nav-bg-hover); }
-.currency-modal-close:active { transform: scale(0.92); }
 
 .currency-modal-stats {
     display: grid;
@@ -2898,7 +2623,6 @@ table.sal-table {
 .currency-stat-label {
     font-size: 10px;
     text-transform: uppercase;
-    letter-spacing: 0.4px;
     color: var(--popup-text-light);
     font-weight: 600;
 }
@@ -2933,7 +2657,6 @@ table.sal-table {
     .menu-left {
         gap: 2px;
         overflow-x: auto;
-        overflow-y: hidden;
         scrollbar-width: none;
         flex: 1;
         -webkit-overflow-scrolling: touch;
@@ -2960,7 +2683,6 @@ table.sal-table {
         inset: 52px 0 0 0 !important;
         overflow: hidden !important;
         transform: none !important;
-        transition: none !important;
     }
 
     .window {
@@ -3008,7 +2730,7 @@ table.sal-table {
     }
 
     .window-btn.close::before { display: none; }
-    .window-body { padding: 14px; -webkit-overflow-scrolling: touch; }
+    .window-body { padding: 14px; }
 
     .calculator { padding: 16px; gap: 12px; }
     .calc-display { font-size: 68px !important; padding: 16px 20px; }
@@ -3024,21 +2746,19 @@ table.sal-table {
     select,
     textarea { font-size: 16px !important; }
 
-    .salary-toolbar { padding: 10px 12px; gap: 6px; flex-wrap: wrap; }
+    .salary-toolbar { padding: 10px 12px; gap: 6px; }
     .salary-year-label,
     .salary-select,
     .salary-btn { font-size: 12px; }
     .salary-btn { padding: 8px 12px; min-height: 36px; }
-
     .salary-dashboard { grid-template-columns: repeat(2, 1fr); padding: 10px 12px; gap: 8px; }
     .salary-card { padding: 10px 12px; }
     .salary-card-value { font-size: 15px; }
 
-    .salary-table-wrapper { padding: 0 12px 12px; -webkit-overflow-scrolling: touch; }
+    .salary-table-wrapper { padding: 0 12px 12px; }
     table.sal-table { min-width: 720px; }
     .sal-table tbody td,
     .sal-table thead th { padding: 8px 8px; font-size: 12px; }
-    .sal-table .quarter-row td { padding: 8px; }
 
     .salary-analysis-panel { padding: 12px; }
     .salary-year-compare-card { grid-template-columns: 1fr; gap: 8px; }
@@ -3046,19 +2766,11 @@ table.sal-table {
     .salary-chart-container { height: 240px; }
     .salary-compare-bar { gap: 6px; }
     .salary-compare-label { width: 100%; margin-bottom: 4px; }
-
     .salary-year-chip { padding: 6px 10px; font-size: 11px; min-height: 32px; }
 
     .settings-app { padding: 12px; }
     .settings-tabs { padding: 0 8px; }
-
-    .settings-tab {
-        padding: 10px 12px;
-        font-size: 12px;
-        flex: 1;
-        justify-content: center;
-    }
-
+    .settings-tab { padding: 10px 12px; font-size: 12px; flex: 1; justify-content: center; }
     .settings-panel { padding: 14px 12px 20px; }
     .wallpapers-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
 
@@ -3068,12 +2780,10 @@ table.sal-table {
     .game-stat { min-width: 52px; }
     .game-stat-value { font-size: 14px; }
     .game-btn { padding: 8px 12px; font-size: 12px; min-height: 36px; }
-
     .ms-cell { width: 32px; height: 32px; font-size: 16px; }
     .sudoku-cell { font-size: 18px; }
     .sudoku-key { min-width: 0; font-size: 18px; }
     .puzzle-board { max-width: 100%; }
-    .game-win-card { padding: 20px 24px; }
 
     .clock-popup { width: calc(100vw - 20px); max-width: 340px; right: -10px; padding: 16px; }
 
@@ -3097,24 +2807,18 @@ table.sal-table {
     .salary-lock-card { max-width: 90vw; padding: 24px 20px; }
     .salary-lock-btn { padding: 14px 16px; font-size: 15px; min-height: 48px; }
 
-    /* CLOUD в мобильной версии */
+    /* Cloud — мобильный */
     .settings-panel#panel-cloud { padding: 16px 14px 20px; }
-
     #panel-cloud .cloud-token-row { flex-direction: column; gap: 10px; }
     #panel-cloud .cloud-token-row .cloud-btn { width: 100%; min-height: 44px; font-size: 14px; }
-
     #panel-cloud .cloud-actions { grid-template-columns: 1fr; gap: 10px; }
     #panel-cloud .cloud-action-btn { min-height: 70px; padding: 16px 14px; }
     #panel-cloud .cloud-action-btn .icon { font-size: 26px; }
-
     #panel-cloud .cloud-btn { min-height: 44px; font-size: 14px; border-radius: 10px; }
     #panel-cloud .cloud-input { font-size: 16px !important; padding: 12px 14px; min-height: 44px; border-radius: 10px; }
     #panel-cloud .cloud-select { font-size: 14px !important; min-height: 40px; padding: 10px 12px; }
-
     #panel-cloud .cloud-status { padding: 14px 16px; font-size: 12px; }
     #panel-cloud .cloud-status-row { gap: 12px; flex-wrap: wrap; }
-    #panel-cloud .cloud-status-row .value { word-break: break-word; }
-
     #panel-cloud .cloud-switch { width: 48px; height: 28px; }
     #panel-cloud .cloud-switch .slider::before { height: 22px; width: 22px; }
     #panel-cloud .cloud-switch input:checked + .slider::before { transform: translateX(20px); }
@@ -3122,7 +2826,6 @@ table.sal-table {
 
 @media (max-width: 480px) {
     .wallpapers-grid { grid-template-columns: 1fr; }
-    .salary-dashboard { grid-template-columns: 1fr 1fr; }
     .salary-analysis-grid { grid-template-columns: 1fr 1fr; }
     .salary-analysis-card .analysis-value { font-size: 11px; }
     .ms-cell { width: 28px; height: 28px; font-size: 14px; }
@@ -3130,11 +2833,7 @@ table.sal-table {
 }
 
 @media (max-height: 500px) and (orientation: landscape) {
-    .window {
-        min-height: 100vh !important;
-        height: 100vh !important;
-        top: 0 !important;
-    }
+    .window { min-height: 100vh !important; height: 100vh !important; top: 0 !important; }
     #menu-bar { height: 44px; }
     #desktop { inset: 44px 0 0 0 !important; }
 }

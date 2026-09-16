@@ -60,7 +60,7 @@ const WALLPAPERS = [
 ];
 
 const WALLPAPER_STORAGE_KEY = 'desktopWallpaperId';
-const WALLPAPER_MANUAL_KEY = 'desktopWallpaperManual'; // '1' — пользователь выбрал вручную
+const WALLPAPER_MANUAL_KEY = 'desktopWallpaperManual';
 
 // ------------------------------------------------------------
 //  Получить текущие обои
@@ -97,18 +97,13 @@ function applyWallpaper(id) {
     return true;
 }
 
-/**
- * Обои по умолчанию для текущей темы системы
- */
+// Обои по умолчанию для текущей темы системы
 function getDefaultWallpaperId() {
     const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     return isDark ? 'default-dark' : 'default-light';
 }
 
-/**
- * Применить обои при смене системной темы.
- * Работает ТОЛЬКО если пользователь не выбирал вручную.
- */
+// Реакция на смену системной темы (только если не выбран ручной режим)
 function handleSystemThemeChange(e) {
     if (isWallpaperManual()) return;
 
@@ -127,9 +122,7 @@ function handleSystemThemeChange(e) {
     }
 }
 
-/**
- * Установить обои вручную (из Settings)
- */
+// Установить обои вручную (из Settings)
 function setWallpaperManually(id) {
     const result = applyWallpaper(id);
     if (result) {
@@ -138,21 +131,17 @@ function setWallpaperManually(id) {
     return result;
 }
 
-/**
- * Сбросить ручной выбор — вернуться к авто-режиму
- */
+// Сбросить на авто
 function resetWallpaperToAuto() {
     setWallpaperManual(false);
     applyWallpaper(getDefaultWallpaperId());
 }
 
-/**
- * Инициализация
- */
+// Инициализация
 function initWallpaper() {
     let savedId = getCurrentWallpaperId();
 
-    // Если сохранённых нет ИЛИ ручного выбора нет — берём под тему
+    // Если нет сохранённых ИЛИ пользователь не выбрал вручную — берём под тему
     if (!savedId || !getWallpaperById(savedId) || !isWallpaperManual()) {
         savedId = getDefaultWallpaperId();
     }
@@ -160,7 +149,8 @@ function initWallpaper() {
     applyWallpaper(savedId);
 
     // Слушаем смену системной темы
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', handleSystemThemeChange);
+    window.matchMedia('(prefers-color-scheme: dark)')
+        .addEventListener('change', handleSystemThemeChange);
 }
 
 window.addEventListener('load', initWallpaper);
