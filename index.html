@@ -2,17 +2,37 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#1c1c1e">
     <title>macOS Web</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231c1c1e'/%3E%3Crect x='6' y='9' width='20' height='14' rx='2' fill='none' stroke='%234a9eff' stroke-width='1.5'/%3E%3Ccircle cx='16' cy='16' r='3' fill='%2334c759'/%3E%3Cpath d='M6 13 L11 15 L16 13 L21 16 L26 13' fill='none' stroke='%234a9eff' stroke-width='1.2'/%3E%3C/svg%3E">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+    <!-- Экран загрузки -->
     <div id="boot-screen">
         <div class="boot-progress"><div class="boot-progress-bar"></div></div>
     </div>
 
+    <!-- Приветственный экран -->
+    <div id="welcome-screen">
+        <div class="welcome-card">
+            <div class="welcome-emoji" id="welcomeEmoji">👋</div>
+            <div class="welcome-greeting" id="welcomeGreeting">Доброе утро</div>
+            <div class="welcome-name" id="welcomeName">Гость</div>
+            <div class="welcome-subtitle" id="welcomeSubtitle">—</div>
+            <div class="welcome-hint">
+                Нажмите на любое приложение в верхней панели или начните работать
+            </div>
+            <button class="welcome-btn" id="welcomeBtn">Начать работу</button>
+        </div>
+    </div>
+
+    <!-- Menu Bar -->
     <div id="menu-bar">
         <div class="menu-left">
             <button class="app-btn" data-app="calculator">Калькулятор</button>
@@ -63,21 +83,14 @@
             </div>
         </div>
     </div>
-    <div id="welcome-screen">
-        <div class="welcome-card">
-            <div class="welcome-emoji" id="welcomeEmoji">👋</div>
-            <div class="welcome-greeting" id="welcomeGreeting">Доброе утро</div>
-            <div class="welcome-name" id="welcomeName">Гость</div>
-            <div class="welcome-subtitle" id="welcomeSubtitle">—</div>
-            <div class="welcome-hint">
-                Нажмите на любое приложение в верхней панели или начните работать
-            </div>
-            <button class="welcome-btn" id="welcomeBtn">Начать работу</button>
-        </div>
-    </div>
+
+    <!-- Рабочий стол -->
     <div id="desktop"></div>
+
+    <!-- Контейнер всплывающих уведомлений -->
     <div id="notifications" class="notifications"></div>
 
+    <!-- Модальное окно с графиком валюты -->
     <div class="currency-modal" id="currencyModal">
         <div class="currency-modal-content">
             <div class="currency-modal-header">
@@ -96,6 +109,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
+    <!-- ⚠️ ВАЖЕН ПОРЯДОК ⚠️ -->
     <script src="windows.js"></script>
     <script src="calculator.js"></script>
     <script src="cloud.js"></script>

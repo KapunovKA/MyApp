@@ -422,9 +422,43 @@ function initGamesApp(win) {
             btn.className = 'ms-cell';
             btn.dataset.i = i;
             btn.addEventListener('click', () => msReveal(i));
+            // ПКМ (мышь) — флажок
             btn.addEventListener('contextmenu', (e) => {
                 e.preventDefault();
                 msFlag(i);
+            });
+
+            // Долгое нажатие (тач) — флажок
+            let touchTimer = null;
+            let touchMoved = false;
+            let startX = 0, startY = 0;
+
+            btn.addEventListener('touchstart', (e) => {
+                const t = e.touches[0];
+                startX = t.clientX;
+                startY = t.clientY;
+                touchMoved = false;
+
+                touchTimer = setTimeout(() => {
+                    if (!touchMoved) {
+                        if (navigator.vibrate) navigator.vibrate(15);
+                        msFlag(i);
+                    }
+                }, 500);
+            }, { passive: true });
+
+            btn.addEventListener('touchmove', (e) => {
+                const t = e.touches[0];
+                const dx = Math.abs(t.clientX - startX);
+                const dy = Math.abs(t.clientY - startY);
+                if (dx > 10 || dy > 10) {
+                    touchMoved = true;
+                    clearTimeout(touchTimer);
+                }
+            }, { passive: true });
+
+            btn.addEventListener('touchend', () => {
+                clearTimeout(touchTimer);
             });
             msBoardEl.appendChild(btn);
         });

@@ -4,19 +4,34 @@
 
 let zIndexCounter = 100;
 
+// Определяем мобильное устройство
+function isMobileDevice() {
+    return window.matchMedia('(max-width: 768px)').matches;
+}
+
 // ---------- Создание окна ----------
 function createWindow({ title = 'Окно', width = 600, height = 400, content = '' } = {}) {
     const win = document.createElement('div');
     win.className = 'window focused';
 
-    const offset = (document.querySelectorAll('.window').length * 30) % 200;
-    const x = 100 + offset;
-    const y = 80 + offset;
+    const mobile = isMobileDevice();
 
-    win.style.left = x + 'px';
-    win.style.top = y + 'px';
-    win.style.width = width + 'px';
-    win.style.height = height + 'px';
+    if (mobile) {
+        win.style.left = '0';
+        win.style.top = '0';
+        win.style.width = '100vw';
+        win.style.height = 'calc(100vh - 52px)';
+    } else {
+        const offset = (document.querySelectorAll('.window').length * 30) % 200;
+        const x = 100 + offset;
+        const y = 80 + offset;
+
+        win.style.left = x + 'px';
+        win.style.top = y + 'px';
+        win.style.width = width + 'px';
+        win.style.height = height + 'px';
+    }
+
     win.style.zIndex = ++zIndexCounter;
 
     win.innerHTML = `
@@ -41,7 +56,9 @@ function createWindow({ title = 'Окно', width = 600, height = 400, content =
 
     document.getElementById('desktop').appendChild(win);
 
+    // Фокус — и мышь, и тач
     win.addEventListener('mousedown', () => focusWindow(win));
+    win.addEventListener('touchstart', () => focusWindow(win), { passive: true });
 
     win.querySelector('.close').addEventListener('click', (e) => {
         e.stopPropagation();
@@ -76,7 +93,6 @@ function closeWindow(win) {
     setTimeout(() => {
         const app = win.dataset.app;
         win.remove();
-        // Снять подсветку с кнопки в Menu Bar, если это было единственное окно
         if (app) {
             const stillOpen = [...document.querySelectorAll('.window')].some(
                 w => w.dataset.app === app
@@ -96,8 +112,9 @@ function minimizeWindow(win) {
 
 // ---------- Разворачивание ----------
 function toggleMaximize(win) {
+    if (isMobileDevice()) return; // на мобильном окно и так на весь экран
+
     if (win.dataset.maximized === 'true') {
-        // Восстанавливаем размеры
         Object.assign(win.style, {
             left: win.dataset.oldLeft,
             top: win.dataset.oldTop,
@@ -107,14 +124,10 @@ function toggleMaximize(win) {
         win.classList.remove('maximized');
         win.dataset.maximized = 'false';
 
-        // 🔧 Форсируем пересчёт layout — иначе кнопки остаются раздутыми
         void win.offsetWidth;
         void win.offsetHeight;
-
-        // Триггерим resize для вложенных canvas/observer, если есть
         window.dispatchEvent(new Event('resize'));
     } else {
-        // Сохраняем текущие размеры
         win.dataset.oldLeft = win.style.left;
         win.dataset.oldTop = win.style.top;
         win.dataset.oldWidth = win.style.width;
@@ -129,35 +142,35 @@ function toggleMaximize(win) {
         win.classList.add('maximized');
         win.dataset.maximized = 'true';
 
-        // 🔧 Тоже форсируем пересчёт после maximize
         void win.offsetWidth;
         void win.offsetHeight;
         window.dispatchEvent(new Event('resize'));
     }
 }
 
-// ---------- Перетаскивание ----------
+// ---------- Перетаскивание (мышь + тач) ----------
 function makeDraggable(win) {
     const header = win.querySelector('.window-header');
     let startX, startY, startLeft, startTop, dragging = false;
 
-    header.addEventListener('mousedown', (e) => {
+    function onStart(clientX, clientY, e) {
         if (e.target.closest('.window-controls')) return;
+        if (isMobileDevice()) return; // на мобильном окно на весь экран — drag не нужен
 
         dragging = true;
-        startX = e.clientX;
-        startY = e.clientY;
+        startX = clientX;
+        startY = clientY;
         startLeft = win.offsetLeft;
         startTop = win.offsetTop;
 
         document.body.style.cursor = 'grabbing';
-        e.preventDefault();
-    });
+        if (e.cancelable) e.preventDefault();
+    }
 
-    document.addEventListener('mousemove', (e) => {
+    function onMove(clientX, clientY) {
         if (!dragging) return;
-        const dx = e.clientX - startX;
-        const dy = e.clientY - startY;
+        const dx = clientX - startX;
+        const dy = clientY - startY;
 
         let newLeft = startLeft + dx;
         let newTop = startTop + dy;
@@ -170,20 +183,45 @@ function makeDraggable(win) {
 
         win.style.left = newLeft + 'px';
         win.style.top = newTop + 'px';
-    });
+    }
 
-    document.addEventListener('mouseup', () => {
+    function onEnd() {
         if (dragging) {
             dragging = false;
             document.body.style.cursor = '';
         }
-    });
+    }
+
+    // Мышь
+    header.addEventListener('mousedown', (e) => onStart(e.clientX, e.clientY, e));
+    document.addEventListener('mousemove', (e) => onMove(e.clientX, e.clientY));
+    document.addEventListener('mouseup', onEnd);
+
+    // Тач
+    header.addEventListener('touchstart', (e) => {
+        if (e.touches.length !== 1) return;
+        const t = e.touches[0];
+        onStart(t.clientX, t.clientY, e);
+    }, { passive: false });
+
+    document.addEventListener('touchmove', (e) => {
+        if (!dragging || e.touches.length !== 1) return;
+        const t = e.touches[0];
+        onMove(t.clientX, t.clientY);
+        if (e.cancelable) e.preventDefault();
+    }, { passive: false });
+
+    document.addEventListener('touchend', onEnd);
+    document.addEventListener('touchcancel', onEnd);
 }
 
-// ---------- Изменение размера ----------
+// ---------- Изменение размера (только мышь) ----------
 function makeResizable(win) {
     const MIN_W = 320;
     const MIN_H = 200;
+
+    // На мобильных ресайз отключён
+    if (isMobileDevice()) return;
 
     win.querySelectorAll('.resizer').forEach(handle => {
         handle.addEventListener('mousedown', (e) => {
