@@ -3659,3 +3659,116 @@ table.sal-table {
     #menu-bar { height: 40px; }
     #desktop { inset: 40px 0 0 0; }
 }
+/* ============================================================
+   ПАНОРАМИРОВАНИЕ РАБОЧЕГО СТОЛА (мобильная версия)
+   ============================================================ */
+@media (max-width: 768px) {
+
+    /* Desktop становится «бесконечным» холстом */
+    #desktop {
+        overflow: visible !important;
+        /* transform задаётся из JS */
+        transition: transform 0.15s ease-out;
+        will-change: transform;
+    }
+
+    /* Пока идёт свайп — отключаем анимацию, чтобы было плавно */
+    #desktop.panning {
+        transition: none;
+    }
+
+    /* Окна внутри desktop сохраняют свою позицию */
+    .window {
+        /* На мобильном окно больше не форсируется на весь экран.
+           Размер задаётся через JS по умолчанию (width/height из createWindow) */
+        position: absolute !important;
+        border-radius: 12px !important;
+        min-width: 320px !important;
+        min-height: 200px !important;
+        max-width: none !important;
+        max-height: none !important;
+        transform: none !important;
+    }
+
+    /* Индикатор панорамирования — маленькая подсказка */
+    .pan-hint {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        color: #fff;
+        padding: 8px 16px;
+        border-radius: 100px;
+        font-size: 12px;
+        font-weight: 500;
+        z-index: 950;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.4s, visibility 0.4s;
+        pointer-events: none;
+        white-space: nowrap;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    }
+
+    .pan-hint.visible {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    /* Кнопки внизу экрана для быстрого перемещения по canvas */
+    .pan-controls {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        z-index: 960;
+        opacity: 1;
+        transition: opacity 0.3s;
+    }
+
+    .pan-controls.hidden {
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .pan-btn {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: #fff;
+        font-size: 18px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: inherit;
+        padding: 0;
+        transition: transform 0.15s, background 0.15s;
+        -webkit-tap-highlight-color: transparent;
+        user-select: none;
+    }
+
+    .pan-btn:active {
+        transform: scale(0.9);
+        background: rgba(0, 0, 0, 0.8);
+    }
+
+    /* Кнопка «Сброс позиции» — возвращает в центр */
+    .pan-btn.reset {
+        background: rgba(74, 158, 255, 0.85);
+        font-size: 16px;
+    }
+
+    .pan-btn.reset:active {
+        background: rgba(74, 158, 255, 1);
+    }
+}

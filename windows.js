@@ -17,10 +17,24 @@ function createWindow({ title = 'Окно', width = 600, height = 400, content =
     const mobile = isMobileDevice();
 
     if (mobile) {
-        win.style.left = '0';
-        win.style.top = '0';
-        win.style.width = '100vw';
-        win.style.height = 'calc(100vh - 52px)';
+        // На мобильном — окно сохраняет свои размеры,
+        // но имеет минимальные, чтобы влезть в экран телефона
+        const screenW = window.innerWidth;
+        const screenH = window.innerHeight - 52;
+
+        // Берём минимум из заданной ширины и 90% экрана
+        const w = Math.min(width, screenW - 20);
+        const h = Math.min(height, screenH - 20);
+
+        // Позиционируем окно с отступом
+        // Если окон несколько — размещаем каскадом
+        const openCount = document.querySelectorAll('.window').length;
+        const offset = (openCount * 30) % 200;
+
+        win.style.left = (20 + offset) + 'px';
+        win.style.top = (20 + offset) + 'px';
+        win.style.width = w + 'px';
+        win.style.height = h + 'px';
     } else {
         const offset = (document.querySelectorAll('.window').length * 30) % 200;
         const x = 100 + offset;
@@ -56,7 +70,6 @@ function createWindow({ title = 'Окно', width = 600, height = 400, content =
 
     document.getElementById('desktop').appendChild(win);
 
-    // Фокус — и мышь, и тач
     win.addEventListener('mousedown', () => focusWindow(win));
     win.addEventListener('touchstart', () => focusWindow(win), { passive: true });
 
