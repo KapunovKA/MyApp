@@ -3475,3 +3475,58 @@ table.sal-table {
 .background-mode-btn .bg-label {
     font-size: 12px;
 }
+/* ============================================================
+   АДАПТАЦИЯ КАРТЫ ПОД МОБИЛЬНЫЕ
+   ============================================================ */
+
+/* По умолчанию карта занимает весь canvas */
+#world-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* На мобильных — ограничиваем высоту карты
+   чтобы она не растягивалась на всю высоту экрана */
+@media (max-width: 768px) {
+    /* Карта занимает верхние 60% экрана */
+    #desktop {
+        position: absolute;
+        inset: 52px 0 0 0 !important;
+        overflow: hidden !important;
+    }
+
+    #world-canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        /* Ограничиваем высоту canvas — карта не растягивается */
+        height: 55%;
+    }
+
+    /* Панель часов прижимается к низу, а не к canvas */
+    .world-clock-panel {
+        position: absolute;
+        left: 50%;
+        bottom: 12px;
+        transform: translateX(-50%);
+        max-width: calc(100% - 16px);
+    }
+}
+
+/* На очень узких экранах — ещё компактнее */
+@media (max-width: 480px) {
+    #world-canvas {
+        height: 50%;
+    }
+}
+
+/* Ландшафтная ориентация телефона */
+@media (max-width: 900px) and (orientation: landscape) {
+    #world-canvas {
+        height: 100%;
+    }
+}

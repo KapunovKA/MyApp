@@ -1,6 +1,7 @@
 // ============================================================
-//  ЖИВАЯ ЗАСТАВКА: КАРТА МИРА + ТЕРМИНАТОР v3
-//  + города, часы, погода (Open-Meteo), сумерки
+//  ЖИВАЯ ЗАСТАВКА: КАРТА МИРА ИЗ ТОЧЕК (в стиле Apple Watch)
+//  + день/ночь, терминатор, города, часы, погода (Open-Meteo)
+//  + адаптация под мобильные (обрезка по долготе)
 // ============================================================
 
 (function initWorldMap() {
@@ -12,9 +13,9 @@
     let clockPanel = null;
 
     let isMapVisible = true;
-    let weatherData = {}; // { cityName: { temp, icon, desc, ts, ... } }
+    let weatherData = {};
     let weatherTimer = null;
-    const WEATHER_CACHE_TTL = 10 * 60 * 1000; // 10 минут
+    const WEATHER_CACHE_TTL = 10 * 60 * 1000;
 
     // --------------------------------------------------------
     //  ГОРОДА — сохраняются в localStorage
@@ -39,9 +40,7 @@
             const saved = localStorage.getItem(CITIES_STORAGE_KEY);
             if (saved) {
                 const parsed = JSON.parse(saved);
-                if (Array.isArray(parsed) && parsed.length > 0) {
-                    return parsed;
-                }
+                if (Array.isArray(parsed) && parsed.length > 0) return parsed;
             }
         } catch (e) {}
         return JSON.parse(JSON.stringify(DEFAULT_CITIES));
@@ -53,7 +52,6 @@
         } catch (e) {}
     }
 
-    // Публичные API для settings.js
     function getCitiesList() {
         return JSON.parse(JSON.stringify(CITIES));
     }
@@ -62,11 +60,8 @@
         CITIES = Array.isArray(cities) ? cities : [];
         saveCities(CITIES);
         rebuildClockPanel();
-        // Сбросим кеш погоды для удалённых городов
         Object.keys(weatherData).forEach(name => {
-            if (!CITIES.find(c => c.name === name)) {
-                delete weatherData[name];
-            }
+            if (!CITIES.find(c => c.name === name)) delete weatherData[name];
         });
     }
 
@@ -74,10 +69,10 @@
     window.setCitiesList = setCitiesList;
 
     // --------------------------------------------------------
-    //  Детальные контуры континентов
+    //  ПОЛИГОНЫ КОНТИНЕНТОВ (для генерации точек)
     // --------------------------------------------------------
-    const CONTINENTS = [
-        // ─── Северная Америка ───
+    const CONTINENT_POLYGONS = [
+        // ─── СЕВЕРНАЯ АМЕРИКА ───
         [
             [-168,65],[-166,62],[-164,60],[-161,59],[-158,57],[-155,58],[-152,58],[-150,60],
             [-148,60],[-145,60],[-142,60],[-140,60],[-137,59],[-134,56],[-131,53],[-128,52],
@@ -93,7 +88,7 @@
             [-135,70],[-140,70],[-145,70],[-150,71],[-155,71],[-160,70],[-165,69],[-168,67],
             [-168,65]
         ],
-        // ─── Гренландия ───
+        // ─── ГРЕНЛАНДИЯ ───
         [
             [-73,78],[-70,79],[-67,80],[-63,81],[-58,82],[-52,82],[-48,83],[-42,83],
             [-37,83],[-32,82],[-28,81],[-25,80],[-23,78],[-21,76],[-20,74],[-22,72],
@@ -101,7 +96,7 @@
             [-50,60],[-52,62],[-55,64],[-58,66],[-61,68],[-64,70],[-67,72],[-70,74],
             [-73,78]
         ],
-        // ─── Южная Америка ───
+        // ─── ЮЖНАЯ АМЕРИКА ───
         [
             [-81,-4],[-80,-2],[-79,1],[-78,4],[-77,7],[-75,10],[-73,11],[-71,12],
             [-68,12],[-65,11],[-63,11],[-61,10],[-60,7],[-59,4],[-56,3],[-53,4],
@@ -113,54 +108,81 @@
             [-71,-26],[-71,-23],[-71,-20],[-71,-18],[-73,-16],[-75,-15],[-76,-14],[-78,-12],
             [-79,-10],[-80,-8],[-80,-6],[-81,-4]
         ],
-        // ─── Евразия ───
+        // ─── ЕВРАЗИЯ (полный замкнутый обход) ───
         [
-            [5,58],[7,60],[9,62],[11,63],[14,65],[17,67],[20,68],[23,69],
-            [26,70],[29,70],[32,70],[35,70],[38,68],[41,67],[44,66],[47,67],
-            [50,68],[53,69],[56,69],[59,69],[62,70],[65,71],[68,72],[71,72],
-            [74,72],[77,73],[80,74],[84,74],[88,75],[92,76],[96,76],[100,77],
-            [104,77],[108,76],[112,75],[116,74],[120,73],[124,73],[128,72],[132,72],
-            [136,72],[140,73],[144,72],[148,71],[152,70],[156,70],[160,69],[164,68],
-            [168,68],[172,67],[176,66],[180,65],[180,62],[178,60],[175,59],[172,58],
-            [168,57],[164,56],[160,56],[156,57],[152,59],[148,60],[144,60],[140,59],
-            [137,57],[135,55],[133,53],[131,50],[129,48],[127,46],[125,44],[123,42],
-            [121,40],[119,37],[117,35],[115,33],[113,30],[111,28],[109,25],[107,22],
-            [105,20],[103,17],[101,15],[100,12],[99,10],[98,8],[99,7],[100,8],
-            [101,10],[102,13],[102,16],[101,18],[99,20],[97,21],[95,22],[93,23],
-            [91,24],[89,26],[87,27],[85,28],[83,30],[81,31],[79,33],[77,35],
-            [75,37],[73,39],[71,40],[69,41],[67,42],[65,42],[63,41],[61,41],
-            [59,42],[57,42],[55,41],[53,41],[51,40],[49,39],[47,38],[45,38],
-            [43,38],[41,39],[39,40],[37,40],[35,40],[33,40],[31,40],[29,40],
-            [27,38],[25,36],[23,37],[21,38],[19,39],[17,41],[15,42],[13,43],
-            [11,44],[9,44],[7,44],[5,44],[3,43],[1,43],[-1,43],[-3,42],
-            [-5,42],[-7,42],[-9,42],[-9,40],[-9,38],[-9,36],[-7,36],[-5,36],
-            [-3,36],[-1,37],[1,38],[3,40],[5,42],[7,44],[9,46],[11,47],
-            [13,46],[15,45],[17,44],[19,43],[21,43],[23,45],[25,46],[27,47],
-            [29,47],[31,47],[33,48],[35,49],[37,50],[39,50],[41,49],[43,48],
-            [45,47],[47,46],[49,47],[51,48],[53,49],[55,50],[57,51],[59,52],
-            [61,53],[63,54],[65,55],[67,56],[69,57],[71,58],[73,59],[75,60],
-            [77,61],[79,62],[81,63],[83,64],[85,65],[87,66],[89,66],[91,66],
-            [93,66],[95,66],[97,67],[99,67],[101,68],[103,68],[105,68],[107,68],
-            [109,68],[111,68],[113,68],[115,68],[117,68],[119,68],[121,68],[123,68],
-            [125,68],[127,68],[129,68],[131,68],[133,68],[135,68],[137,67],[139,67],
-            [141,66],[143,65],[145,64],[147,63],[149,62],[151,61],[153,60],[155,59],
-            [157,58],[159,57],[161,56],[163,55],[165,54],[167,53],[169,52],[171,51],
-            [173,50],[175,50],[177,50],[179,50],[180,50]
+            [-9,43],[-8,44],[-7,44],[-5,44],[-3,43],[-1,43],[0,43],[2,43],
+            [1,46],[-1,46],[-3,48],[-5,48],[-1,49],[0,50],
+            [2,51],[4,52],[6,53],[8,54],[10,54],[12,54],
+            [14,54],[16,54],[18,55],[20,55],[22,56],
+            [24,58],[26,59],[28,60],[30,60],[28,62],[26,64],[25,66],[24,68],[26,69],
+            [30,70],[35,70],[40,70],[45,68],[50,69],[55,70],[60,70],[65,71],
+            [70,72],[75,72],[80,74],[85,75],[90,76],[95,77],[100,77],[105,77],
+            [110,76],[115,75],[120,74],[125,73],[130,73],[135,72],[140,73],
+            [145,72],[150,71],[155,70],[160,70],[165,69],[170,68],[175,67],
+            [180,66],[180,64],[178,63],[175,62],[172,61],[170,60],
+            [168,58],[165,56],[162,55],[160,54],[158,52],[156,51],[155,50],
+            [150,48],[147,47],[145,46],[143,45],[140,44],
+            [141,42],[140,40],[139,37],[138,35],[136,34],[134,34],[132,33],
+            [129,34],[127,34],[126,35],[125,37],[124,38],[122,38],
+            [120,36],[118,34],[116,32],[114,30],[112,28],
+            [110,22],[108,20],[106,18],[105,15],[107,12],[109,10],
+            [106,8],[104,6],[102,6],[100,8],[98,10],[96,12],[94,14],[92,16],
+            [90,22],[88,22],[86,20],[84,18],[82,16],[80,14],
+            [78,10],[77,8],[75,10],[73,15],[72,18],[70,22],
+            [68,24],[66,26],[62,27],[58,26],[56,25],[52,27],
+            [50,27],[48,29],[50,25],[54,24],[56,22],[58,18],[56,14],[54,12],
+            [50,12],[48,14],[44,12],[42,16],[39,21],[37,24],[35,28],
+            [34,30],[35,32],[36,36],[32,36],[28,36],[26,38],[25,40],[24,38],
+            [22,40],[20,39],[18,40],[16,38],[14,40],[12,44],
+            [13,42],[15,40],[17,38],[16,36],[14,38],[12,42],
+            [8,44],[3,42],[0,40],[-3,37],[-5,36],[-7,37],
+            [-9,38],[-9,40],[-9,43]
         ],
-        // ─── Индия ───
+        // ─── АРАВИЙСКИЙ ПОЛУОСТРОВ ───
         [
-            [68,24],[70,23],[72,22],[74,21],[76,20],[78,18],[80,16],[82,14],
-            [84,12],[86,11],[88,10],[89,11],[90,13],[90,16],[90,19],[89,22],
-            [88,23],[86,24],[84,25],[82,26],[80,27],[78,28],[76,29],[74,30],
-            [72,30],[70,28],[69,26],[68,24]
+            [34,28],[36,28],[38,26],[40,24],[43,22],[46,20],[48,18],[50,17],
+            [52,17],[55,22],[56,24],[54,24],[52,26],[48,28],[44,30],[42,30],
+            [40,30],[38,30],[36,30],[34,28]
         ],
-        // ─── Юго-Восточная Азия ───
+        // ─── ИНДОСТАН ───
         [
-            [95,20],[97,20],[99,20],[101,21],[103,22],[105,22],[107,21],[109,20],
-            [109,17],[108,15],[107,13],[106,11],[105,9],[104,7],[103,5],[102,3],
-            [101,2],[100,4],[99,6],[98,9],[97,12],[96,15],[95,18],[95,20]
+            [68,22],[70,22],[72,20],[74,18],[76,14],[77,10],[78,8],[80,10],
+            [82,14],[84,16],[86,18],[88,20],[90,22],[88,24],[86,24],[84,24],
+            [82,26],[80,26],[78,26],[76,26],[74,24],[72,24],[70,26],[68,24],
+            [68,22]
         ],
-        // ─── Африка ───
+        // ─── ЮГО-ВОСТОЧНАЯ АЗИЯ ───
+        [
+            [95,22],[97,22],[99,22],[101,22],[103,22],[105,22],[107,22],[109,20],
+            [109,18],[108,16],[107,14],[106,12],[105,10],[104,8],[103,6],[102,4],
+            [100,6],[98,8],[96,12],[95,16],[95,20],[95,22]
+        ],
+        // ─── СУМАТРА ───
+        [
+            [95,5],[97,5],[100,3],[103,1],[105,-2],[106,-5],[104,-6],[102,-5],
+            [100,-3],[98,-1],[96,2],[95,5]
+        ],
+        // ─── ЯВА ───
+        [
+            [105,-6],[107,-6],[110,-7],[113,-8],[114,-8],[113,-7],[110,-7],
+            [107,-6],[105,-6]
+        ],
+        // ─── КАЛИМАНТАН ───
+        [
+            [109,2],[111,2],[114,2],[116,2],[118,4],[118,6],[116,7],[112,7],
+            [110,6],[108,4],[109,2]
+        ],
+        // ─── СУЛАВЕСИ ───
+        [
+            [119,1],[121,1],[123,2],[125,2],[124,0],[123,-2],[121,-4],[120,-5],
+            [119,-3],[118,-1],[119,1]
+        ],
+        // ─── НОВАЯ ГВИНЕЯ ───
+        [
+            [131,-1],[134,-1],[138,-1],[141,-2],[145,-5],[148,-8],[150,-10],
+            [147,-9],[144,-8],[141,-7],[138,-6],[135,-4],[132,-3],[131,-1]
+        ],
+        // ─── АФРИКА ───
         [
             [-17,15],[-17,17],[-16,19],[-16,21],[-15,23],[-14,25],[-13,27],[-12,29],
             [-11,31],[-9,33],[-7,34],[-5,35],[-3,36],[-1,36],[1,36],[3,37],
@@ -176,12 +198,12 @@
             [0,6],[-2,6],[-4,6],[-6,7],[-8,8],[-10,10],[-12,12],[-14,13],
             [-15,14],[-17,15]
         ],
-        // ─── Мадагаскар ───
+        // ─── МАДАГАСКАР ───
         [
             [50,-13],[50,-15],[50,-17],[49,-19],[48,-21],[47,-23],[46,-25],[45,-25],
             [44,-24],[44,-22],[44,-20],[45,-18],[46,-16],[47,-14],[48,-13],[50,-13]
         ],
-        // ─── Австралия ───
+        // ─── АВСТРАЛИЯ ───
         [
             [113,-22],[113,-25],[114,-27],[114,-30],[115,-33],[116,-35],[118,-35],[120,-34],
             [122,-34],[124,-33],[126,-32],[128,-32],[130,-32],[132,-32],[134,-32],[136,-34],
@@ -190,31 +212,103 @@
             [141,-13],[139,-12],[137,-12],[135,-12],[133,-11],[131,-11],[129,-13],[127,-14],
             [125,-15],[123,-17],[121,-18],[119,-20],[117,-21],[115,-22],[113,-22]
         ],
-        // ─── Новая Зеландия ───
+        // ─── ТАСМАНИЯ ───
+        [
+            [145,-41],[147,-41],[148,-42],[148,-44],[146,-45],[144,-44],[144,-42],[145,-41]
+        ],
+        // ─── НОВАЯ ЗЕЛАНДИЯ ───
         [
             [172,-34],[174,-35],[176,-37],[178,-38],[178,-40],[177,-41],[175,-42],
             [173,-43],[171,-44],[169,-45],[167,-46],[166,-46],[167,-45],[170,-43],
             [172,-41],[173,-39],[173,-37],[172,-35],[172,-34]
         ],
-        // ─── Антарктида ───
-        [
-            [-180,-70],[-170,-71],[-160,-72],[-150,-73],[-140,-74],[-130,-74],[-120,-74],
-            [-110,-73],[-100,-73],[-90,-72],[-80,-71],[-70,-70],[-60,-69],[-50,-69],
-            [-40,-69],[-30,-69],[-20,-70],[-10,-70],[0,-70],[10,-69],[20,-69],
-            [30,-68],[40,-68],[50,-67],[60,-67],[70,-66],[80,-66],[90,-65],
-            [100,-65],[110,-66],[120,-66],[130,-67],[140,-68],[150,-69],[160,-70],
-            [170,-71],[180,-72],[180,-90],[-180,-90],[-180,-70]
-        ],
     ];
 
     // --------------------------------------------------------
-    //  Проекция
+    //  Проверка: точка внутри полигона (алгоритм луча)
+    // --------------------------------------------------------
+    function isPointInPolygon(lon, lat, polygon) {
+        let inside = false;
+        for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+            const [xi, yi] = polygon[i];
+            const [xj, yj] = polygon[j];
+            const intersect = ((yi > lat) !== (yj > lat)) &&
+                (lon < (xj - xi) * (lat - yi) / (yj - yi) + xi);
+            if (intersect) inside = !inside;
+        }
+        return inside;
+    }
+
+    function isLand(lon, lat) {
+        for (let i = 0; i < CONTINENT_POLYGONS.length; i++) {
+            if (isPointInPolygon(lon, lat, CONTINENT_POLYGONS[i])) return true;
+        }
+        return false;
+    }
+
+    // --------------------------------------------------------
+    //  ВИДИМЫЙ ДИАПАЗОН ДОЛГОТ (мобильная адаптация)
+    // --------------------------------------------------------
+    let VISIBLE_LON_RANGE = { min: -180, max: 180 };
+
+    function updateVisibleRange() {
+        // На мобильных обрезаем карту, чтобы континенты были крупнее
+        const isMobile = window.matchMedia('(max-width: 768px)').matches;
+        const isPortraitMobile = isMobile && window.innerHeight > window.innerWidth;
+
+        if (isPortraitMobile) {
+            // Телефон вертикально: показываем Европу + Африку + Азию
+            // (центр на Москве ~37°)
+            VISIBLE_LON_RANGE = { min: -20, max: 145 };
+        } else if (isMobile) {
+            // Планшет или телефон горизонтально: чуть шире
+            VISIBLE_LON_RANGE = { min: -60, max: 160 };
+        } else {
+            // Десктоп: весь мир
+            VISIBLE_LON_RANGE = { min: -180, max: 180 };
+        }
+    }
+
+    // --------------------------------------------------------
+    //  Проекция с учётом видимого диапазона
     // --------------------------------------------------------
     function project(lon, lat) {
+        const range = VISIBLE_LON_RANGE;
+        const rangeSize = range.max - range.min;
+
         return {
-            x: (lon + 180) / 360 * W,
+            x: (lon - range.min) / rangeSize * W,
             y: (90 - lat) / 180 * H,
         };
+    }
+
+    // --------------------------------------------------------
+    //  ГЕНЕРАЦИЯ ТОЧЕК СУШИ
+    // --------------------------------------------------------
+    let LAND_POINTS = [];
+    let landPointsGenerated = false;
+
+    function generateLandPoints() {
+        LAND_POINTS = [];
+
+        const cols = Math.min(240, Math.floor(W / 5));
+        const rows = Math.floor(cols / 2);
+
+        const range = VISIBLE_LON_RANGE;
+        const rangeSize = range.max - range.min;
+
+        for (let row = 0; row < rows; row++) {
+            for (let col = 0; col < cols; col++) {
+                const lon = range.min + (col + 0.5) / cols * rangeSize;
+                const lat = 90 - (row + 0.5) / rows * 180;
+
+                if (isLand(lon, lat)) {
+                    LAND_POINTS.push({ lon, lat });
+                }
+            }
+        }
+
+        landPointsGenerated = true;
     }
 
     // --------------------------------------------------------
@@ -223,12 +317,9 @@
     function getSolarPosition(date) {
         const start = new Date(date.getFullYear(), 0, 0);
         const dayOfYear = Math.floor((date - start) / 86400000);
-
         const declination = -23.44 * Math.cos((360 / 365) * (dayOfYear + 10) * Math.PI / 180);
-
         const utcHours = date.getUTCHours() + date.getUTCMinutes() / 60 + date.getUTCSeconds() / 3600;
         const longitude = (12 - utcHours) * 15;
-
         return { lat: declination, lon: longitude };
     }
 
@@ -237,12 +328,25 @@
         const lonR = lon * Math.PI / 180;
         const sunLatR = sunPos.lat * Math.PI / 180;
         const sunLonR = sunPos.lon * Math.PI / 180;
+        const cosDist =
+            Math.sin(latR) * Math.sin(sunLatR) +
+            Math.cos(latR) * Math.cos(sunLatR) * Math.cos(lonR - sunLonR);
+        return cosDist > 0;
+    }
 
+    function getTwilightFactor(lat, lon, sunPos) {
+        const latR = lat * Math.PI / 180;
+        const lonR = lon * Math.PI / 180;
+        const sunLatR = sunPos.lat * Math.PI / 180;
+        const sunLonR = sunPos.lon * Math.PI / 180;
         const cosDist =
             Math.sin(latR) * Math.sin(sunLatR) +
             Math.cos(latR) * Math.cos(sunLatR) * Math.cos(lonR - sunLonR);
 
-        return cosDist > 0;
+        const twilightZone = 0.25;
+        if (cosDist > twilightZone) return 1;
+        if (cosDist < -twilightZone) return 0;
+        return (cosDist + twilightZone) / (twilightZone * 2);
     }
 
     // --------------------------------------------------------
@@ -253,8 +357,15 @@
         if (!canvas) return;
 
         ctx = canvas.getContext('2d');
+
+        // Инициализируем видимый диапазон ДО первого resize
+        updateVisibleRange();
         resize();
-        window.addEventListener('resize', resize);
+
+        window.addEventListener('resize', () => {
+            updateVisibleRange();
+            resize();
+        });
 
         const bgMode = localStorage.getItem('desktopBackgroundMode') || 'map';
         isMapVisible = (bgMode === 'map');
@@ -273,15 +384,18 @@
 
     function resize() {
         const dpr = window.devicePixelRatio || 1;
-        W = window.innerWidth;
-        H = window.innerHeight - 36;
+
+        // Размер canvas = размер видимой области (не всего экрана!)
+        const rect = canvas.getBoundingClientRect();
+        W = rect.width;
+        H = rect.height;
 
         canvas.width = W * dpr;
         canvas.height = H * dpr;
-        canvas.style.width = W + 'px';
-        canvas.style.height = H + 'px';
 
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        landPointsGenerated = false;
         stars = [];
     }
 
@@ -354,7 +468,7 @@
     };
 
     // --------------------------------------------------------
-    //  Часы внизу экрана
+    //  Часы внизу
     // --------------------------------------------------------
     function initClockPanel() {
         const desktop = document.getElementById('desktop');
@@ -427,9 +541,7 @@
     }
 
     // --------------------------------------------------------
-    //  🌤️ ПОГОДА через Open-Meteo
-    //  Документация: https://open-meteo.com/en/docs
-    //  Без API-ключа, без регистрации, до 10 000 запросов в день
+    //  🌤️ Погода через Open-Meteo
     // --------------------------------------------------------
     function startWeatherUpdates() {
         if (weatherTimer) clearInterval(weatherTimer);
@@ -440,7 +552,6 @@
     async function loadAllWeather() {
         if (CITIES.length === 0) return;
 
-        // Проверяем кеш — если все свежие, не делаем запрос
         const allFresh = CITIES.every(city => {
             const cached = weatherData[city.name];
             return cached && !cached.error && Date.now() - cached.ts < WEATHER_CACHE_TTL;
@@ -451,7 +562,6 @@
             return;
         }
 
-        // Помечаем строки как «загружается»
         CITIES.forEach(city => {
             const row = document.querySelector(`[data-city="${cssEscape(city.name)}"] .weather-row`);
             if (row) {
@@ -460,8 +570,6 @@
             }
         });
 
-        // Формируем запрос сразу для всех городов
-        // Open-Meteo позволяет перечислить несколько точек
         const lats = CITIES.map(c => c.lat).join(',');
         const lons = CITIES.map(c => c.lon).join(',');
 
@@ -481,8 +589,6 @@
             if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
 
             const data = await resp.json();
-
-            // Open-Meteo возвращает либо один объект, либо массив — зависит от числа точек
             const results = Array.isArray(data) ? data : [data];
 
             results.forEach((result, idx) => {
@@ -507,7 +613,6 @@
             renderAllWeather();
         } catch (e) {
             console.warn('[Weather] Ошибка загрузки:', e.message);
-
             CITIES.forEach(city => {
                 weatherData[city.name] = { error: true, ts: Date.now() };
             });
@@ -515,7 +620,6 @@
         }
     }
 
-    // WMO Weather codes → эмодзи
     function getWeatherEmojiFromCode(code, isDay) {
         if (code === 0) return isDay ? '☀️' : '🌙';
         if (code === 1) return isDay ? '🌤️' : '🌙';
@@ -535,37 +639,18 @@
         return '🌡️';
     }
 
-    // Описание погоды на русском
     function getWeatherDescription(code) {
         const descriptions = {
-            0:  'ясно',
-            1:  'преимущ. ясно',
-            2:  'переменная обл.',
-            3:  'пасмурно',
-            45: 'туман',
-            48: 'изморозь',
-            51: 'слабая морось',
-            53: 'морось',
-            55: 'сильная морось',
-            56: 'лед. морось',
-            57: 'лед. морось',
-            61: 'слабый дождь',
-            63: 'дождь',
-            65: 'сильный дождь',
-            66: 'лед. дождь',
-            67: 'лед. дождь',
-            71: 'слабый снег',
-            73: 'снег',
-            75: 'сильный снег',
-            77: 'снежные зёрна',
-            80: 'ливень',
-            81: 'ливень',
-            82: 'сильный ливень',
-            85: 'снегопад',
-            86: 'снегопад',
-            95: 'гроза',
-            96: 'гроза с градом',
-            99: 'гроза с градом',
+            0: 'ясно', 1: 'преимущ. ясно', 2: 'переменная обл.', 3: 'пасмурно',
+            45: 'туман', 48: 'изморозь',
+            51: 'слабая морось', 53: 'морось', 55: 'сильная морось',
+            56: 'лед. морось', 57: 'лед. морось',
+            61: 'слабый дождь', 63: 'дождь', 65: 'сильный дождь',
+            66: 'лед. дождь', 67: 'лед. дождь',
+            71: 'слабый снег', 73: 'снег', 75: 'сильный снег', 77: 'снежные зёрна',
+            80: 'ливень', 81: 'ливень', 82: 'сильный ливень',
+            85: 'снегопад', 86: 'снегопад',
+            95: 'гроза', 96: 'гроза с градом', 99: 'гроза с градом',
         };
         return descriptions[code] || '—';
     }
@@ -627,12 +712,12 @@
     let stars = [];
     function initStars() {
         stars = [];
-        const count = Math.floor((W * H) / 8000);
+        const count = Math.floor((W * H) / 12000);
         for (let i = 0; i < count; i++) {
             stars.push({
                 x: Math.random() * W,
                 y: Math.random() * H,
-                r: Math.random() * 1.3 + 0.2,
+                r: Math.random() * 1.2 + 0.2,
                 phase: Math.random() * Math.PI * 2,
                 speed: 0.01 + Math.random() * 0.02,
             });
@@ -643,15 +728,15 @@
         if (stars.length === 0) initStars();
 
         const bg = ctx.createLinearGradient(0, 0, 0, H);
-        bg.addColorStop(0, '#050810');
-        bg.addColorStop(0.5, '#080c18');
-        bg.addColorStop(1, '#0a0f1c');
+        bg.addColorStop(0, '#02040a');
+        bg.addColorStop(0.5, '#040812');
+        bg.addColorStop(1, '#060a16');
         ctx.fillStyle = bg;
         ctx.fillRect(0, 0, W, H);
 
         stars.forEach(s => {
-            const alpha = 0.35 + Math.sin(t * s.speed * 3 + s.phase) * 0.35;
-            ctx.fillStyle = `rgba(200, 220, 255, ${alpha})`;
+            const alpha = 0.25 + Math.sin(t * s.speed * 3 + s.phase) * 0.25;
+            ctx.fillStyle = `rgba(180, 200, 255, ${alpha})`;
             ctx.beginPath();
             ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
             ctx.fill();
@@ -659,231 +744,141 @@
     }
 
     // --------------------------------------------------------
-    //  Плавные сумерки
+    //  🌍 Точки континентов
     // --------------------------------------------------------
-    function drawDayNight(sunPos) {
-        const sunPx = project(sunPos.lon, sunPos.lat);
-        const dayRadius = Math.max(W, H) * 0.7;
+    function drawLandPoints(sunPos) {
+        if (!landPointsGenerated) generateLandPoints();
 
-        const grad = ctx.createRadialGradient(
-            sunPx.x, sunPx.y, dayRadius * 0.05,
-            sunPx.x, sunPx.y, dayRadius * 1.35
-        );
+        const dotSize = Math.max(1, Math.min(W, H) / 400);
 
-        grad.addColorStop(0.00, 'rgba(255, 250, 220, 0)');
-        grad.addColorStop(0.30, 'rgba(255, 240, 180, 0)');
-        grad.addColorStop(0.48, 'rgba(255, 180, 100, 0.08)');
-        grad.addColorStop(0.56, 'rgba(80, 70, 130, 0.25)');
-        grad.addColorStop(0.68, 'rgba(20, 30, 80, 0.55)');
-        grad.addColorStop(0.82, 'rgba(5, 10, 35, 0.8)');
-        grad.addColorStop(1.00, 'rgba(0, 5, 20, 0.92)');
+        const dayColor = { r: 130, g: 200, b: 140 };
+        const nightColor = { r: 40, g: 70, b: 90 };
+        const twilightColor = { r: 180, g: 140, b: 120 };
 
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, W, H);
-    }
+        LAND_POINTS.forEach(pt => {
+            const p = project(pt.lon, pt.lat);
 
-    // --------------------------------------------------------
-    //  Терминатор (3 линии сумерек)
-    // --------------------------------------------------------
-    function drawTerminator(sunPos) {
-        const segments = 240;
-        const sunLatRad = sunPos.lat * Math.PI / 180;
+            // Пропускаем точки за пределами canvas
+            if (p.x < -10 || p.x > W + 10) return;
 
-        const angles = [0, 6, 12];
-        const styles = [
-            { color: 'rgba(255, 200, 100, 0.85)', width: 2, blur: 15 },
-            { color: 'rgba(180, 130, 200, 0.5)',  width: 1.2, blur: 8 },
-            { color: 'rgba(100, 100, 200, 0.25)', width: 0.8, blur: 5 },
-        ];
+            const tw = getTwilightFactor(pt.lat, pt.lon, sunPos);
 
-        angles.forEach((angle, idx) => {
-            const angleRad = angle * Math.PI / 180;
-            const style = styles[idx];
+            let r, g, b;
 
-            for (let branch = 0; branch < 2; branch++) {
-                ctx.beginPath();
-                let started = false;
-
-                for (let i = 0; i <= segments; i++) {
-                    const lat = 90 - (i / segments) * 180;
-                    const latRad = lat * Math.PI / 180;
-
-                    const denom = Math.cos(latRad) * Math.cos(sunLatRad);
-                    if (Math.abs(denom) < 0.0001) {
-                        if (started) { ctx.stroke(); started = false; }
-                        continue;
-                    }
-
-                    const cosDiff = (Math.cos(angleRad) - Math.sin(latRad) * Math.sin(sunLatRad)) / denom;
-
-                    if (Math.abs(cosDiff) > 1) {
-                        if (started) { ctx.stroke(); started = false; }
-                        continue;
-                    }
-
-                    const diff = Math.acos(cosDiff);
-                    const sign = branch === 0 ? 1 : -1;
-                    const lon = sunPos.lon + sign * (diff * 180 / Math.PI);
-                    const p = project(normalizeLon(lon), lat);
-
-                    if (!started) {
-                        ctx.moveTo(p.x, p.y);
-                        started = true;
-                    } else {
-                        ctx.lineTo(p.x, p.y);
-                    }
-                }
-
-                ctx.strokeStyle = style.color;
-                ctx.lineWidth = style.width;
-                ctx.shadowColor = style.color;
-                ctx.shadowBlur = style.blur;
-                ctx.stroke();
-                ctx.shadowBlur = 0;
-            }
-        });
-    }
-
-    function normalizeLon(lon) {
-        while (lon > 180) lon -= 360;
-        while (lon < -180) lon += 360;
-        return lon;
-    }
-
-    // --------------------------------------------------------
-    //  Континенты
-    // --------------------------------------------------------
-    function drawContinents() {
-        CONTINENTS.forEach(polygon => {
-            ctx.beginPath();
-
-            polygon.forEach(([lon, lat], i) => {
-                const p = project(lon, lat);
-                if (i === 0) {
-                    ctx.moveTo(p.x, p.y);
+            if (tw >= 1) {
+                r = dayColor.r; g = dayColor.g; b = dayColor.b;
+            } else if (tw <= 0) {
+                r = nightColor.r; g = nightColor.g; b = nightColor.b;
+            } else {
+                if (tw < 0.5) {
+                    const t2 = tw / 0.5;
+                    r = nightColor.r + (twilightColor.r - nightColor.r) * t2;
+                    g = nightColor.g + (twilightColor.g - nightColor.g) * t2;
+                    b = nightColor.b + (twilightColor.b - nightColor.b) * t2;
                 } else {
-                    ctx.lineTo(p.x, p.y);
+                    const t2 = (tw - 0.5) / 0.5;
+                    r = twilightColor.r + (dayColor.r - twilightColor.r) * t2;
+                    g = twilightColor.g + (dayColor.g - twilightColor.g) * t2;
+                    b = twilightColor.b + (dayColor.b - twilightColor.b) * t2;
                 }
-            });
+            }
 
-            ctx.closePath();
+            const alpha = 0.5 + tw * 0.5;
 
-            const grad = ctx.createLinearGradient(0, 0, 0, H);
-            grad.addColorStop(0, 'rgba(45, 85, 60, 0.8)');
-            grad.addColorStop(0.5, 'rgba(55, 100, 70, 0.85)');
-            grad.addColorStop(1, 'rgba(45, 80, 55, 0.75)');
-            ctx.fillStyle = grad;
+            ctx.fillStyle = `rgba(${r | 0}, ${g | 0}, ${b | 0}, ${alpha})`;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, dotSize, 0, Math.PI * 2);
             ctx.fill();
-
-            ctx.strokeStyle = 'rgba(80, 150, 90, 0.5)';
-            ctx.lineWidth = 0.6;
-            ctx.stroke();
         });
     }
 
     // --------------------------------------------------------
-    //  Сетка
-    // --------------------------------------------------------
-    function drawGrid() {
-        ctx.strokeStyle = 'rgba(74, 158, 255, 0.08)';
-        ctx.lineWidth = 0.5;
-
-        for (let lon = -180; lon <= 180; lon += 30) {
-            const p1 = project(lon, 90);
-            const p2 = project(lon, -90);
-            ctx.beginPath();
-            ctx.moveTo(p1.x, p1.y);
-            ctx.lineTo(p2.x, p2.y);
-            ctx.stroke();
-        }
-
-        for (let lat = -60; lat <= 60; lat += 30) {
-            const p1 = project(-180, lat);
-            const p2 = project(180, lat);
-            ctx.beginPath();
-            ctx.moveTo(p1.x, p1.y);
-            ctx.lineTo(p2.x, p2.y);
-            ctx.stroke();
-        }
-
-        const eq1 = project(-180, 0);
-        const eq2 = project(180, 0);
-        ctx.strokeStyle = 'rgba(74, 158, 255, 0.18)';
-        ctx.lineWidth = 0.8;
-        ctx.beginPath();
-        ctx.moveTo(eq1.x, eq1.y);
-        ctx.lineTo(eq2.x, eq2.y);
-        ctx.stroke();
-    }
-
-    // --------------------------------------------------------
-    //  Subsolar-точка
+    //  Subsolar-точка (солнце)
     // --------------------------------------------------------
     function drawSunPoint(sunPos) {
         const p = project(sunPos.lon, sunPos.lat);
 
-        const glow = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 80);
-        glow.addColorStop(0, 'rgba(255, 240, 180, 0.9)');
-        glow.addColorStop(0.3, 'rgba(255, 200, 100, 0.4)');
+        // Если солнце вне видимой области — не рисуем
+        if (p.x < -100 || p.x > W + 100) return;
+
+        const glow = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 100);
+        glow.addColorStop(0, 'rgba(255, 240, 180, 0.6)');
+        glow.addColorStop(0.4, 'rgba(255, 200, 100, 0.15)');
         glow.addColorStop(1, 'rgba(255, 200, 100, 0)');
         ctx.fillStyle = glow;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, 80, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, 100, 0, Math.PI * 2);
         ctx.fill();
 
-        ctx.fillStyle = 'rgba(255, 250, 220, 1)';
+        ctx.fillStyle = 'rgba(255, 245, 200, 0.95)';
         ctx.beginPath();
-        ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
         ctx.fill();
-
-        ctx.strokeStyle = 'rgba(255, 220, 130, 0.9)';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
-        ctx.stroke();
     }
 
     // --------------------------------------------------------
     //  Маркеры городов
     // --------------------------------------------------------
     function drawCityMarkers(sunPos) {
+        const t = performance.now() / 1000;
+
         CITIES.forEach(city => {
             const p = project(city.lon, city.lat);
+
+            // Пропускаем города вне видимой области
+            if (p.x < -50 || p.x > W + 50) return;
+
             const isDay = isDaylight(city.lat, city.lon, sunPos);
             const isMe = city.my;
 
+            const baseRadius = isMe ? 4 : 3;
+
+            const glow = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, baseRadius * 4);
+            const glowColor = isMe
+                ? '74, 158, 255'
+                : (isDay ? '255, 220, 120' : '140, 180, 255');
+            glow.addColorStop(0, `rgba(${glowColor}, 0.4)`);
+            glow.addColorStop(1, `rgba(${glowColor}, 0)`);
+            ctx.fillStyle = glow;
             ctx.beginPath();
-            ctx.arc(p.x, p.y, isMe ? 5 : 3, 0, Math.PI * 2);
-            ctx.fillStyle = isMe ? '#4a9eff' : (isDay ? '#ffd76a' : '#8ab4ff');
+            ctx.arc(p.x, p.y, baseRadius * 4, 0, Math.PI * 2);
             ctx.fill();
 
-            ctx.strokeStyle = isMe ? '#ffffff' : 'rgba(255, 255, 255, 0.6)';
-            ctx.lineWidth = isMe ? 2 : 1;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, baseRadius, 0, Math.PI * 2);
+            ctx.fillStyle = isMe
+                ? '#4a9eff'
+                : (isDay ? '#ffd76a' : '#8ab4ff');
+            ctx.fill();
+
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+            ctx.lineWidth = isMe ? 1.5 : 1;
             ctx.stroke();
 
             if (isMe) {
-                const t = performance.now() / 1000;
-                const pulseRadius = 10 + Math.sin(t * 2) * 3;
-                ctx.strokeStyle = `rgba(74, 158, 255, ${0.5 + Math.sin(t * 2) * 0.3})`;
-                ctx.lineWidth = 1.5;
+                const pulseRadius = baseRadius * 2 + Math.sin(t * 2) * baseRadius;
+                ctx.strokeStyle = `rgba(74, 158, 255, ${0.6 + Math.sin(t * 2) * 0.3})`;
+                ctx.lineWidth = 1.2;
                 ctx.beginPath();
                 ctx.arc(p.x, p.y, pulseRadius, 0, Math.PI * 2);
                 ctx.stroke();
             }
 
             ctx.font = isMe
-                ? '600 12px -apple-system, sans-serif'
-                : '500 11px -apple-system, sans-serif';
+                ? '600 11px -apple-system, sans-serif'
+                : '500 10px -apple-system, sans-serif';
             ctx.textAlign = 'left';
             ctx.textBaseline = 'middle';
 
-            const labelX = p.x + 10;
+            const labelX = p.x + baseRadius + 5;
             const labelY = p.y;
 
             ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
             ctx.fillText(city.name, labelX + 1, labelY + 1);
 
-            ctx.fillStyle = isMe ? '#4a9eff' : 'rgba(255, 255, 255, 0.9)';
+            ctx.fillStyle = isMe
+                ? '#4a9eff'
+                : (isDay ? 'rgba(255, 255, 255, 0.9)' : 'rgba(180, 200, 255, 0.75)');
             ctx.fillText(city.name, labelX, labelY);
         });
     }
@@ -903,18 +898,15 @@
         const sunPos = getSolarPosition(new Date());
 
         drawStars(t);
-        drawGrid();
-        drawContinents();
-        drawDayNight(sunPos);
-        drawTerminator(sunPos);
-        drawCityMarkers(sunPos);
+        drawLandPoints(sunPos);
         drawSunPoint(sunPos);
+        drawCityMarkers(sunPos);
 
         animationId = requestAnimationFrame(loop);
     }
 
     // --------------------------------------------------------
-    //  Пауза при скрытии вкладки
+    //  Пауза при скрытии
     // --------------------------------------------------------
     document.addEventListener('visibilitychange', () => {
         if (document.hidden) {
