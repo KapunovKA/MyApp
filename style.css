@@ -42,7 +42,6 @@
     --notif-text: #1c1c1e;
     --notif-text-muted: rgba(0, 0, 0, 0.55);
 
-    /* Универсальные для приложений */
     --app-bg: #f5f5f7;
     --app-card-bg: rgba(0, 0, 0, 0.04);
     --app-card-border: rgba(0, 0, 0, 0.08);
@@ -802,16 +801,136 @@ html, body {
 .cal-today-btn:hover { background: rgba(74, 158, 255, 0.25); border-color: #4a9eff; }
 
 /* ============================================================
-   РАБОЧИЙ СТОЛ
+   РАБОЧИЙ СТОЛ С КАРТОЙ МИРА
    ============================================================ */
 #desktop {
     position: absolute;
     inset: 36px 0 0 0;
-    background: var(--desktop-bg);
-    background-size: cover;
-    background-position: center;
     overflow: hidden;
+    background: #0a0d14;
     transition: background 0.5s ease;
+}
+
+#world-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* Виньетка по краям — но не перекрывает панель часов */
+#desktop::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+        ellipse at center,
+        transparent 0%,
+        transparent 50%,
+        rgba(0, 0, 0, 0.25) 85%,
+        rgba(0, 0, 0, 0.5) 100%
+    );
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Всё содержимое desktop — поверх canvas, КРОМЕ панели часов */
+#desktop > *:not(#world-canvas):not(.world-clock-panel) {
+    position: relative;
+    z-index: 2;
+}
+
+/* ============================================================
+   ЧАСЫ МИРОВЫХ ГОРОДОВ (внизу карты)
+   ============================================================ */
+.world-clock-panel {
+    position: absolute;
+    left: 50%;
+    bottom: 24px;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    padding: 10px 14px;
+    background: rgba(15, 20, 35, 0.65);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+    z-index: 5;
+    max-width: calc(100% - 40px);
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+}
+
+.world-clock-panel::-webkit-scrollbar { display: none; }
+
+.world-clock-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 8px 14px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    min-width: 90px;
+    flex-shrink: 0;
+    transition: background 0.15s, transform 0.15s;
+    cursor: default;
+    position: relative;
+}
+
+.world-clock-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.world-clock-city {
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.75);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.world-clock-time {
+    font-size: 22px;
+    font-weight: 300;
+    color: #ffffff;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.5px;
+    line-height: 1;
+}
+
+.world-clock-date {
+    font-size: 9px;
+    color: rgba(255, 255, 255, 0.4);
+    font-variant-numeric: tabular-nums;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+}
+
+.world-clock-item .day-icon {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    font-size: 12px;
+    line-height: 1;
+    opacity: 0.85;
+}
+
+/* Моё местоположение — выделено */
+.world-clock-item.my-location {
+    background: rgba(74, 158, 255, 0.15);
+    border: 1px solid rgba(74, 158, 255, 0.35);
+}
+
+.world-clock-item.my-location .world-clock-city {
+    color: #4a9eff;
 }
 
 /* ============================================================
@@ -1129,9 +1248,7 @@ html, body {
     color: var(--cl-text);
 }
 
-.cloud-panel .cloud-action-btn:hover:not(:disabled) {
-    background: var(--cl-card-hover);
-}
+.cloud-panel .cloud-action-btn:hover:not(:disabled) { background: var(--cl-card-hover); }
 
 .cloud-panel .cloud-status {
     background: var(--cl-card-bg);
@@ -1175,7 +1292,6 @@ html, body {
 .cloud-panel .cloud-hint { color: var(--cl-muted); }
 .cloud-panel .cloud-hint a { color: #4a9eff; }
 
-/* Общие Cloud */
 .cloud-header {
     display: flex;
     align-items: center;
@@ -1268,11 +1384,7 @@ html, body {
     font-family: inherit;
 }
 
-.cloud-action-btn:hover:not(:disabled) {
-    background: var(--app-card-hover);
-    transform: translateY(-1px);
-}
-
+.cloud-action-btn:hover:not(:disabled) { background: var(--app-card-hover); transform: translateY(-1px); }
 .cloud-action-btn:active:not(:disabled) { transform: scale(0.98); }
 .cloud-action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .cloud-action-btn .icon { font-size: 24px; }
@@ -1739,9 +1851,6 @@ table.sal-table {
     min-width: 820px;
 }
 
-/* ----------------------------------------
-   ШАПКА ТАБЛИЦЫ — ФИКС: НЕПРОЗРАЧНЫЙ ФОН
-   ---------------------------------------- */
 .sal-table thead th {
     background: var(--app-table-header-solid, var(--app-bg, #f5f5f7));
     color: var(--app-table-header-text);
@@ -2028,7 +2137,6 @@ table.sal-table {
 
 .salary-chart-container canvas { width: 100% !important; height: 100% !important; }
 
-/* Авторизация зарплаты */
 .salary-lock {
     position: absolute;
     inset: 0;
@@ -2226,7 +2334,6 @@ table.sal-table {
     -webkit-overflow-scrolling: touch;
 }
 
-/* Сапёр */
 .minesweeper-wrapper { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; }
 .minesweeper-difficulty { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
 
@@ -2286,7 +2393,6 @@ table.sal-table {
 .ms-cell.n7 { color: var(--window-text); }
 .ms-cell.n8 { color: var(--popup-text-muted); }
 
-/* Пятнашки */
 .puzzle-wrapper { display: flex; flex-direction: column; align-items: center; gap: 16px; width: 100%; }
 
 .puzzle-board {
@@ -2324,7 +2430,6 @@ table.sal-table {
 .puzzle-tile.empty { background: transparent; cursor: default; box-shadow: none; pointer-events: none; }
 .puzzle-tile.correct { background: linear-gradient(135deg, #34c759 0%, #2fb350 100%); box-shadow: 0 4px 8px rgba(52, 199, 89, 0.3); }
 
-/* Судоку */
 .sudoku-wrapper { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; }
 .sudoku-difficulty { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
 
@@ -2420,7 +2525,6 @@ table.sal-table {
     width: 100%;
 }
 
-/* Overlay победы */
 .game-win-overlay {
     position: absolute;
     inset: 0;
@@ -2689,7 +2793,6 @@ table.sal-table {
     #desktop {
         inset: 52px 0 0 0 !important;
         overflow: hidden !important;
-        transform: none !important;
     }
 
     .window {
@@ -2828,6 +2931,26 @@ table.sal-table {
     #panel-cloud .cloud-switch { width: 48px; height: 28px; }
     #panel-cloud .cloud-switch .slider::before { height: 22px; width: 22px; }
     #panel-cloud .cloud-switch input:checked + .slider::before { transform: translateX(20px); }
+
+    /* Часы мировых городов — мобильная версия */
+    .world-clock-panel {
+        bottom: 12px;
+        gap: 6px;
+        padding: 8px 10px;
+        border-radius: 14px;
+        max-width: calc(100% - 16px);
+    }
+
+    .world-clock-item {
+        padding: 6px 10px;
+        min-width: 72px;
+        border-radius: 10px;
+    }
+
+    .world-clock-city { font-size: 9px; }
+    .world-clock-time { font-size: 18px; }
+    .world-clock-date { font-size: 8px; }
+    .world-clock-item .day-icon { font-size: 10px; top: 4px; right: 6px; }
 }
 
 @media (max-width: 480px) {
@@ -2836,10 +2959,519 @@ table.sal-table {
     .salary-analysis-card .analysis-value { font-size: 11px; }
     .ms-cell { width: 28px; height: 28px; font-size: 14px; }
     .sudoku-cell { font-size: 16px; }
+
+    .world-clock-item { min-width: 64px; padding: 5px 8px; }
+    .world-clock-time { font-size: 16px; }
+    .world-clock-city { font-size: 8px; }
 }
 
 @media (max-height: 500px) and (orientation: landscape) {
     .window { min-height: 100vh !important; height: 100vh !important; top: 0 !important; }
     #menu-bar { height: 44px; }
     #desktop { inset: 44px 0 0 0 !important; }
+}
+/* ============================================================
+   SETTINGS — ВКЛАДКА «КАРТА» (список городов)
+   ============================================================ */
+
+/* Сетка городов */
+.cities-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 320px;
+    overflow-y: auto;
+    padding-right: 4px;
+    -webkit-overflow-scrolling: touch;
+}
+
+.cities-list::-webkit-scrollbar { width: 6px; }
+.cities-list::-webkit-scrollbar-thumb {
+    background: var(--window-border);
+    border-radius: 3px;
+}
+
+.city-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--app-card-bg);
+    border: 1px solid var(--app-card-border);
+    border-radius: 10px;
+    transition: background 0.15s, border-color 0.15s, transform 0.15s;
+}
+
+.city-item:hover {
+    background: var(--app-card-hover);
+    border-color: var(--app-card-border);
+}
+
+.city-item.my-city {
+    background: rgba(74, 158, 255, 0.12);
+    border-color: rgba(74, 158, 255, 0.4);
+}
+
+/* Звёздочка — «Мой город» */
+.city-star {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: var(--popup-text-light);
+    transition: background 0.15s, color 0.15s, transform 0.15s;
+    flex-shrink: 0;
+    padding: 0;
+}
+
+.city-star:hover {
+    background: rgba(74, 158, 255, 0.15);
+    color: #4a9eff;
+    transform: scale(1.1);
+}
+
+.city-star.active {
+    color: #ffcc00;
+}
+
+.city-star.active:hover {
+    background: rgba(255, 204, 0, 0.15);
+}
+
+/* Информация о городе */
+.city-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.city-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--window-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.city-coords {
+    font-size: 10px;
+    color: var(--popup-text-light);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+/* Кнопка удаления */
+.city-remove {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: var(--popup-text-light);
+    transition: background 0.15s, color 0.15s, transform 0.15s;
+    flex-shrink: 0;
+    padding: 0;
+}
+
+.city-remove:hover {
+    background: rgba(255, 59, 48, 0.15);
+    color: #ff3b30;
+    transform: scale(1.05);
+}
+
+/* Кнопка «Добавить город» */
+.city-add-btn {
+    width: 100%;
+    padding: 10px 14px;
+    background: rgba(74, 158, 255, 0.12);
+    border: 1.5px dashed rgba(74, 158, 255, 0.4);
+    border-radius: 10px;
+    color: #4a9eff;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.city-add-btn:hover {
+    background: rgba(74, 158, 255, 0.2);
+    border-color: #4a9eff;
+    transform: translateY(-1px);
+}
+
+.city-add-btn:active {
+    transform: scale(0.98);
+}
+
+/* Форма добавления нового города */
+.city-add-form {
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    background: var(--app-card-bg);
+    border: 1px solid var(--app-card-border);
+    border-radius: 10px;
+    margin-top: 8px;
+}
+
+.city-add-form.visible {
+    display: flex;
+}
+
+.city-form-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.city-form-input {
+    flex: 1;
+    padding: 8px 12px;
+    background: var(--app-input-bg);
+    border: 1px solid var(--app-input-border);
+    border-radius: 8px;
+    color: var(--app-input-text);
+    font-size: 12px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.15s, background 0.15s;
+    user-select: text;
+    min-width: 0;
+}
+
+.city-form-input:focus {
+    border-color: #4a9eff;
+    background: var(--app-card-hover);
+}
+
+.city-form-label {
+    font-size: 10px;
+    color: var(--popup-text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-bottom: 2px;
+    display: block;
+}
+
+.city-form-btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: none;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s, transform 0.05s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.city-form-btn.primary {
+    background: #4a9eff;
+    color: #fff;
+}
+
+.city-form-btn.primary:hover { background: #3a8eef; }
+
+.city-form-btn.secondary {
+    background: var(--app-btn-bg);
+    color: var(--window-text);
+    border: 1px solid var(--window-border);
+}
+
+.city-form-btn.secondary:hover { background: var(--app-btn-hover); }
+
+.city-form-btn:active { transform: scale(0.97); }
+
+.city-form-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 4px;
+}
+
+/* Справочная подсказка */
+.city-form-hint {
+    font-size: 10px;
+    color: var(--popup-text-light);
+    line-height: 1.4;
+    margin-top: 2px;
+}
+
+.city-form-hint a {
+    color: #4a9eff;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.city-form-hint a:hover { text-decoration: underline; }
+
+/* Пустой список */
+.cities-empty {
+    padding: 24px 16px;
+    text-align: center;
+    color: var(--popup-text-light);
+    font-size: 12px;
+    font-style: italic;
+    background: var(--app-card-bg);
+    border: 1px dashed var(--app-card-border);
+    border-radius: 10px;
+}
+
+/* Счётчик городов */
+.cities-counter {
+    font-size: 10px;
+    color: var(--popup-text-light);
+    padding: 4px 10px;
+    background: var(--app-btn-bg);
+    border-radius: 20px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+/* Пресеты (быстрое добавление популярных) */
+.city-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.city-preset-chip {
+    padding: 5px 10px;
+    background: var(--app-btn-bg);
+    border: 1px solid var(--app-card-border);
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--window-text);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+    white-space: nowrap;
+}
+
+.city-preset-chip:hover {
+    background: rgba(74, 158, 255, 0.15);
+    border-color: #4a9eff;
+    color: #4a9eff;
+    transform: translateY(-1px);
+}
+
+.city-preset-chip:active { transform: scale(0.96); }
+
+.city-preset-chip.added {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+    text-decoration: line-through;
+}
+
+/* Мобильная версия */
+@media (max-width: 768px) {
+    .cities-list { max-height: 260px; }
+
+    .city-item { padding: 8px 10px; }
+    .city-star, .city-remove { width: 32px; height: 32px; }
+    .city-name { font-size: 12px; }
+    .city-coords { font-size: 9px; }
+
+    .city-form-input {
+        font-size: 16px !important;
+        padding: 10px 12px;
+        min-height: 42px;
+    }
+
+    .city-form-btn {
+        min-height: 42px;
+        padding: 10px 18px;
+        font-size: 13px;
+    }
+
+    .city-add-btn {
+        min-height: 44px;
+        font-size: 13px;
+    }
+
+    .city-preset-chip {
+        padding: 7px 12px;
+        font-size: 12px;
+    }
+}
+/* ============================================================
+   СЛОЙ ОБОЕВ ПОД КАРТОЙ
+   ============================================================ */
+#wallpaper-layer {
+    position: absolute;
+    inset: 0;
+    background: var(--desktop-bg);
+    background-size: cover;
+    background-position: center;
+    transition: opacity 0.5s ease, background 0.5s ease;
+    z-index: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+
+#wallpaper-layer.visible {
+    opacity: 1;
+}
+
+#world-canvas {
+    z-index: 1;
+    transition: opacity 0.5s ease;
+}
+
+#world-canvas.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Панель часов скрывается вместе с картой */
+.world-clock-panel.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-50%) translateY(20px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* ============================================================
+   🌡️ ПОГОДА В ПАНЕЛИ ЧАСОВ
+   ============================================================ */
+.world-clock-item .weather-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 2px;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.65);
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.world-clock-item .weather-icon {
+    font-size: 12px;
+    line-height: 1;
+}
+
+.world-clock-item .weather-temp {
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    font-variant-numeric: tabular-nums;
+}
+
+.world-clock-item .weather-desc {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 9px;
+    text-transform: lowercase;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 60px;
+}
+
+/* Скелетон загрузки */
+.world-clock-item .weather-row.loading {
+    opacity: 0.4;
+    animation: weatherPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes weatherPulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.8; }
+}
+
+/* Ошибка погоды */
+.world-clock-item .weather-row.error .weather-temp {
+    color: rgba(255, 100, 100, 0.8);
+}
+
+/* Обновление погоды */
+.world-clock-item .weather-row.updating {
+    animation: weatherUpdate 0.6s ease;
+}
+
+@keyframes weatherUpdate {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* Мобильная погода */
+@media (max-width: 768px) {
+    .world-clock-item .weather-row { font-size: 9px; }
+    .world-clock-item .weather-icon { font-size: 11px; }
+    .world-clock-item .weather-desc { display: none; }
+}
+
+/* ============================================================
+   SETTINGS — переключатель фона
+   ============================================================ */
+.background-mode-toggle {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.background-mode-btn {
+    flex: 1;
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 1.5px solid var(--window-border);
+    background: var(--app-btn-bg);
+    color: var(--window-text);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    min-height: 80px;
+    justify-content: center;
+}
+
+.background-mode-btn:hover {
+    background: var(--app-btn-hover);
+    transform: translateY(-1px);
+}
+
+.background-mode-btn.active {
+    border-color: #4a9eff;
+    background: rgba(74, 158, 255, 0.15);
+    color: #4a9eff;
+    font-weight: 600;
+}
+
+.background-mode-btn .bg-icon {
+    font-size: 24px;
+    line-height: 1;
+}
+
+.background-mode-btn .bg-label {
+    font-size: 12px;
 }

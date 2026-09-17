@@ -1,5 +1,6 @@
 // ============================================================
 //  ОБОИ РАБОЧЕГО СТОЛА + АВТОСМЕНА ПОД ТЕМУ СИСТЕМЫ
+//  (визуальная часть отключена — фон рисует globe.js)
 // ============================================================
 
 const WALLPAPERS = [
@@ -85,15 +86,29 @@ function getWallpaperById(id) {
     return WALLPAPERS.find(w => w.id === id) || null;
 }
 
+// ------------------------------------------------------------
+//  Применение обоев
+//  ⚠️ Визуальная часть отключена — фон рисует globe.js (canvas)
+//  Значение сохраняется в localStorage, чтобы вкладка "Обои" работала
+// ------------------------------------------------------------
 function applyWallpaper(id) {
     const wp = getWallpaperById(id);
     if (!wp) return false;
 
-    const desktop = document.getElementById('desktop');
-    if (!desktop) return false;
-
-    desktop.style.background = wp.value;
+    // Сохраняем выбор (вкладка "Обои" продолжает работать как селектор)
     localStorage.setItem(WALLPAPER_STORAGE_KEY, id);
+
+    // Применяем фон к #desktop как fallback (например, если canvas не загрузился)
+    // Но CSS-правило #globe-canvas перекрывает его
+    const desktop = document.getElementById('desktop');
+    if (desktop) {
+        // Если canvas отсутствует — используем обои
+        const canvas = document.getElementById('globe-canvas');
+        if (!canvas) {
+            desktop.style.background = wp.value;
+        }
+    }
+
     return true;
 }
 
@@ -103,20 +118,19 @@ function getDefaultWallpaperId() {
     return isDark ? 'default-dark' : 'default-light';
 }
 
-// Реакция на смену системной темы (только если не выбран ручной режим)
+// Реакция на смену системной темы (если не выбран ручной режим)
 function handleSystemThemeChange(e) {
     if (isWallpaperManual()) return;
 
     const targetId = e.matches ? 'default-dark' : 'default-light';
     applyWallpaper(targetId);
 
-    // Уведомить пользователя
     if (window.showNotification) {
         window.showNotification({
-            title: 'Обои обновлены',
+            title: 'Фон обновлён',
             message: `Системная тема: ${e.matches ? 'тёмная' : 'светлая'}`,
             type: 'info',
-            icon: '🖼️',
+            icon: '🌍',
             duration: 2500,
         });
     }
@@ -141,14 +155,12 @@ function resetWallpaperToAuto() {
 function initWallpaper() {
     let savedId = getCurrentWallpaperId();
 
-    // Если нет сохранённых ИЛИ пользователь не выбрал вручную — берём под тему
     if (!savedId || !getWallpaperById(savedId) || !isWallpaperManual()) {
         savedId = getDefaultWallpaperId();
     }
 
     applyWallpaper(savedId);
 
-    // Слушаем смену системной темы
     window.matchMedia('(prefers-color-scheme: dark)')
         .addEventListener('change', handleSystemThemeChange);
 }

@@ -1,5 +1,5 @@
 // ============================================================
-//  ПРИЛОЖЕНИЕ SETTINGS — Обои + Облако (вкладки)
+//  ПРИЛОЖЕНИЕ SETTINGS — Обои + Облако + Карта
 // ============================================================
 
 function createSettingsApp() {
@@ -10,20 +10,33 @@ function createSettingsApp() {
             <div class="settings-tabs">
                 <button class="settings-tab active" data-tab="wallpapers">🖼️ Обои</button>
                 <button class="settings-tab" data-tab="cloud">☁️ Облако</button>
+                <button class="settings-tab" data-tab="map">🗺️ Карта</button>
             </div>
 
             <!-- Панель: Обои -->
             <div class="settings-panel active" id="panel-wallpapers">
 
                 <div class="settings-section">
+                    <div class="settings-section-title">🎨 Фон рабочего стола</div>
+                    <div class="background-mode-toggle">
+                        <button class="background-mode-btn active" data-bgmode="map">
+                            <span class="bg-icon">🗺️</span>
+                            <span class="bg-label">Карта мира</span>
+                        </button>
+                        <button class="background-mode-btn" data-bgmode="wallpaper">
+                            <span class="bg-icon">🖼️</span>
+                            <span class="bg-label">Обои</span>
+                        </button>
+                    </div>
+                    <div class="wallpaper-mode-hint">
+                        Карта показывает день и ночь, погоду и часы по городам. Обои — классический градиент.
+                    </div>
+                </div>
+
+                <div class="settings-section">
                     <div class="settings-section-title">👤 Имя пользователя</div>
-                    <input
-                        type="text"
-                        id="welcomeNameInput"
-                        placeholder="Введите имя"
-                        maxlength="32"
-                        style="width:100%; padding:10px 14px; border-radius:10px; border:1px solid var(--window-border); background:var(--cal-nav-bg); color:var(--window-text); font-family:inherit; font-size:13px; outline:none; transition:border-color 0.15s, background 0.15s;"
-                    >
+                    <input type="text" id="welcomeNameInput" class="city-form-input"
+                           placeholder="Введите имя" maxlength="32">
                     <div class="wallpaper-mode-hint" style="margin-top:6px;">
                         Отображается на приветственном экране при запуске системы
                     </div>
@@ -129,9 +142,75 @@ function createSettingsApp() {
                             </div>
                             <div class="cloud-status-row">
                                 <span class="label">Файл на диске</span>
-                                <span class="value" id="cloudFilePath">${YANDEX_BACKUP_PATH}</span>
+                                <span class="value" id="cloudFilePath">${typeof YANDEX_BACKUP_PATH !== 'undefined' ? YANDEX_BACKUP_PATH : 'app:/macos_web_backup.json'}</span>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Панель: Карта -->
+            <div class="settings-panel" id="panel-map">
+                <div class="settings-section">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <div class="settings-section-title" style="margin-bottom: 0;">🏙️ Города на карте</div>
+                        <span class="cities-counter" id="citiesCounter">0</span>
+                    </div>
+                    <div class="wallpaper-mode-hint" style="margin-bottom: 8px;">
+                        Отметьте ⭐ «Мой город» — он будет пульсировать на карте. Часы внизу показывают время для всех выбранных.
+                    </div>
+
+                    <div class="cities-list" id="citiesList"></div>
+
+                    <button class="city-add-btn" id="cityAddBtn">
+                        ➕ Добавить свой город
+                    </button>
+
+                    <!-- Форма добавления -->
+                    <div class="city-add-form" id="cityAddForm">
+                        <div>
+                            <label class="city-form-label" for="cityNameInput">Название города</label>
+                            <input type="text" id="cityNameInput" class="city-form-input"
+                                   placeholder="Например, Казань" maxlength="30">
+                        </div>
+                        <div class="city-form-row">
+                            <div style="flex: 1;">
+                                <label class="city-form-label" for="cityLatInput">Широта</label>
+                                <input type="number" id="cityLatInput" class="city-form-input"
+                                       placeholder="55.79" step="0.01" min="-90" max="90">
+                            </div>
+                            <div style="flex: 1;">
+                                <label class="city-form-label" for="cityLonInput">Долгота</label>
+                                <input type="number" id="cityLonInput" class="city-form-input"
+                                       placeholder="49.12" step="0.01" min="-180" max="180">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="city-form-label" for="cityTzInput">Часовой пояс (UTC±)</label>
+                            <input type="number" id="cityTzInput" class="city-form-input"
+                                   placeholder="3" step="1" min="-12" max="14" value="3">
+                        </div>
+                        <div class="city-form-hint">
+                            💡 Координаты легко найти на <a href="https://www.openstreetmap.org" target="_blank">openstreetmap.org</a> —
+                            правый клик по городу → «Показать адрес».
+                        </div>
+                        <div class="city-form-actions">
+                            <button class="city-form-btn secondary" id="cityCancelBtn">Отмена</button>
+                            <button class="city-form-btn primary" id="citySubmitBtn">✓ Добавить</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <div class="settings-section-title">📋 Популярные города</div>
+                    <div class="city-presets" id="cityPresets"></div>
+                </div>
+
+                <div class="settings-section">
+                    <div class="settings-section-title">⚙️ Управление</div>
+                    <div class="cloud-actions">
+                        <button class="cloud-btn secondary" id="citiesResetBtn">🔄 Вернуть стандартные</button>
+                        <button class="cloud-btn danger" id="citiesClearBtn">🗑️ Удалить все</button>
                     </div>
                 </div>
             </div>
@@ -142,13 +221,13 @@ function createSettingsApp() {
 
     const win = createWindow({
         title: 'System Settings',
-        width: 560,
-        height: 700,
+        width: 620,
+        height: 760,
         content: html,
     });
     win.dataset.app = 'settings';
-    win.style.minWidth = '460px';
-    win.style.minHeight = '540px';
+    win.style.minWidth = '480px';
+    win.style.minHeight = '560px';
 
     const body = win.querySelector('.window-body');
     body.style.padding = '0';
@@ -159,9 +238,7 @@ function createSettingsApp() {
 }
 
 function initSettingsApp(win) {
-    // ============================================================
-    //  ВКЛАДКИ
-    // ============================================================
+    // Вкладки
     const tabs = win.querySelectorAll('.settings-tab');
     const panels = win.querySelectorAll('.settings-panel');
 
@@ -176,19 +253,13 @@ function initSettingsApp(win) {
         });
     });
 
-    // ============================================================
-    //  ПАНЕЛЬ: ОБОИ (+ имя пользователя)
-    // ============================================================
     initWallpapersPanel(win);
-
-    // ============================================================
-    //  ПАНЕЛЬ: ОБЛАКО
-    // ============================================================
     initCloudPanel(win);
+    initMapPanel(win);
 }
 
 // ------------------------------------------------------------
-//  Панель обоев + имя пользователя
+//  Панель обоев
 // ------------------------------------------------------------
 function initWallpapersPanel(win) {
     const grid = win.querySelector('#wallpapersGrid');
@@ -197,20 +268,55 @@ function initWallpapersPanel(win) {
     const nameInput = win.querySelector('#welcomeNameInput');
     if (!grid) return;
 
-    // ---------- Имя пользователя ----------
+    // ---- Переключатель фона: карта ↔ обои ----
+    const bgModeBtns = win.querySelectorAll('.background-mode-btn');
+
+    function updateBgModeUI() {
+        const mode = typeof window.getBackgroundMode === 'function'
+            ? window.getBackgroundMode()
+            : 'map';
+        bgModeBtns.forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.bgmode === mode);
+        });
+    }
+
+    bgModeBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const mode = btn.dataset.bgmode;
+
+            if (typeof window.setBackgroundMode === 'function') {
+                window.setBackgroundMode(mode);
+            } else {
+                localStorage.setItem('desktopBackgroundMode', mode);
+            }
+
+            updateBgModeUI();
+
+            if (window.showNotification) {
+                window.showNotification({
+                    title: mode === 'map' ? 'Карта включена' : 'Обои включены',
+                    message: mode === 'map'
+                        ? 'Рабочий стол показывает карту мира'
+                        : 'Рабочий стол показывает обои',
+                    type: 'success',
+                    icon: mode === 'map' ? '🗺️' : '🖼️',
+                    duration: 2500,
+                });
+            }
+        });
+    });
+
+    updateBgModeUI();
+
+    // ---- Имя пользователя ----
     if (nameInput) {
         nameInput.value = localStorage.getItem('welcomeUsername') || '';
-
-        // Стилевое выделение при фокусе
         nameInput.addEventListener('focus', () => {
             nameInput.style.borderColor = '#4a9eff';
-            nameInput.style.background = 'var(--cal-nav-bg-hover)';
         });
         nameInput.addEventListener('blur', () => {
-            nameInput.style.borderColor = 'var(--window-border)';
-            nameInput.style.background = 'var(--cal-nav-bg)';
+            nameInput.style.borderColor = 'var(--app-input-border)';
         });
-
         nameInput.addEventListener('input', () => {
             const val = nameInput.value.trim();
             if (val) {
@@ -219,26 +325,8 @@ function initWallpapersPanel(win) {
                 localStorage.removeItem('welcomeUsername');
             }
         });
-
-        // Уведомление при сохранении (по Enter)
-        nameInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                nameInput.blur();
-                const val = nameInput.value.trim();
-                if (window.showNotification) {
-                    window.showNotification({
-                        title: 'Имя сохранено',
-                        message: val ? `Теперь вас зовут: ${val}` : 'Имя сброшено на «Гость»',
-                        type: 'success',
-                        icon: '👤',
-                        duration: 2500,
-                    });
-                }
-            }
-        });
     }
 
-    // ---------- Обои ----------
     function updateModeButtons() {
         const manual = isWallpaperManual();
         modeBtns.forEach(btn => {
@@ -273,6 +361,17 @@ function initWallpapersPanel(win) {
                 item.classList.add('selected');
 
                 setWallpaperManually(wp.id);
+
+                // Автоматически включаем режим «Обои»
+                if (typeof window.setBackgroundMode === 'function') {
+                    window.setBackgroundMode('wallpaper');
+                    updateBgModeUI();
+                }
+
+                // Обновляем слой обоев
+                if (typeof window.refreshWallpaperLayer === 'function') {
+                    setTimeout(window.refreshWallpaperLayer, 50);
+                }
 
                 if (window.showNotification) {
                     window.showNotification({
@@ -317,6 +416,11 @@ function initWallpapersPanel(win) {
             }
             renderWallpapers();
             updateModeButtons();
+
+            // Обновляем слой обоев
+            if (typeof window.refreshWallpaperLayer === 'function') {
+                window.refreshWallpaperLayer();
+            }
         });
     });
 
@@ -462,13 +566,11 @@ function initCloudPanel(win) {
 
     autoSyncToggle.addEventListener('change', () => {
         const enabled = autoSyncToggle.checked;
-
         if (enabled && !getYandexToken()) {
             autoSyncToggle.checked = false;
             toast('Сначала сохраните токен', 'error');
             return;
         }
-
         setAutoSyncEnabled(enabled);
 
         if (enabled) {
@@ -502,7 +604,6 @@ function initCloudPanel(win) {
             refreshStatus();
             toast('Данные сохранены в облако', 'success');
         } catch (error) {
-            console.error('Ошибка сохранения:', error);
             toast('Ошибка: ' + getCloudNetworkMessage(error), 'error');
         } finally {
             setBusy(false);
@@ -521,7 +622,6 @@ function initCloudPanel(win) {
             refreshStatus();
             toast(`Загружено записей: ${keys}`, 'success');
         } catch (error) {
-            console.error('Ошибка загрузки:', error);
             toast('Ошибка: ' + getCloudNetworkMessage(error), 'error');
         } finally {
             setBusy(false);
@@ -567,4 +667,315 @@ function initCloudPanel(win) {
 
     refreshStatus();
     refreshAutoSyncUI();
+}
+
+// ------------------------------------------------------------
+//  Панель карты — управление городами
+// ------------------------------------------------------------
+function initMapPanel(win) {
+    const list        = win.querySelector('#citiesList');
+    const counter     = win.querySelector('#citiesCounter');
+    const addBtn      = win.querySelector('#cityAddBtn');
+    const addForm     = win.querySelector('#cityAddForm');
+    const nameInput   = win.querySelector('#cityNameInput');
+    const latInput    = win.querySelector('#cityLatInput');
+    const lonInput    = win.querySelector('#cityLonInput');
+    const tzInput     = win.querySelector('#cityTzInput');
+    const submitBtn   = win.querySelector('#citySubmitBtn');
+    const cancelBtn   = win.querySelector('#cityCancelBtn');
+    const presetsEl   = win.querySelector('#cityPresets');
+    const resetBtn    = win.querySelector('#citiesResetBtn');
+    const clearBtn    = win.querySelector('#citiesClearBtn');
+
+    if (!list) return;
+
+    function getCities() {
+        if (typeof window.getCitiesList === 'function') {
+            return window.getCitiesList();
+        }
+        return [];
+    }
+
+    function saveCities(cities) {
+        if (typeof window.setCitiesList === 'function') {
+            window.setCitiesList(cities);
+        }
+    }
+
+    // ---- Отрисовка списка городов ----
+    function renderCities() {
+        const cities = getCities();
+        list.innerHTML = '';
+
+        if (cities.length === 0) {
+            list.innerHTML = '<div class="cities-empty">Нет добавленных городов.<br>Добавьте свой или выберите из популярных ниже.</div>';
+            counter.textContent = '0';
+            return;
+        }
+
+        counter.textContent = String(cities.length);
+
+        cities.forEach((city, idx) => {
+            const item = document.createElement('div');
+            item.className = 'city-item';
+            if (city.my) item.classList.add('my-city');
+
+            const lat = city.lat.toFixed(2);
+            const lon = city.lon.toFixed(2);
+            const tz = city.tz >= 0 ? `UTC+${city.tz}` : `UTC${city.tz}`;
+
+            item.innerHTML = `
+                <button class="city-star ${city.my ? 'active' : ''}" title="${city.my ? 'Это мой город' : 'Сделать моим городом'}">
+                    ${city.my ? '⭐' : '☆'}
+                </button>
+                <div class="city-info">
+                    <div class="city-name">${city.name}</div>
+                    <div class="city-coords">${lat}, ${lon} · ${tz}</div>
+                </div>
+                <button class="city-remove" title="Удалить">🗑️</button>
+            `;
+
+            // Звёздочка
+            item.querySelector('.city-star').addEventListener('click', () => {
+                const cities = getCities();
+                cities.forEach(c => c.my = false);
+                cities[idx].my = true;
+                saveCities(cities);
+                renderCities();
+                renderPresets();
+
+                if (window.showNotification) {
+                    window.showNotification({
+                        title: 'Мой город',
+                        message: `${city.name} отмечен как ваш город`,
+                        type: 'success',
+                        icon: '⭐',
+                        duration: 2500,
+                    });
+                }
+            });
+
+            // Удаление
+            item.querySelector('.city-remove').addEventListener('click', () => {
+                const cities = getCities();
+                const removed = cities.splice(idx, 1)[0];
+                saveCities(cities);
+                renderCities();
+                renderPresets();
+
+                if (window.showNotification) {
+                    window.showNotification({
+                        title: 'Город удалён',
+                        message: `${removed.name} убран с карты`,
+                        type: 'info',
+                        icon: '🗑️',
+                        duration: 2000,
+                    });
+                }
+            });
+
+            list.appendChild(item);
+        });
+    }
+
+    // ---- Пресеты ----
+    const PRESET_CITIES = [
+        { name: 'Москва',        lat: 55.75, lon: 37.62,  tz: 3 },
+        { name: 'Санкт-Петербург', lat: 59.93, lon: 30.34, tz: 3 },
+        { name: 'Казань',        lat: 55.79, lon: 49.12,  tz: 3 },
+        { name: 'Новосибирск',   lat: 55.03, lon: 82.92,  tz: 7 },
+        { name: 'Лондон',        lat: 51.51, lon: -0.13,  tz: 0 },
+        { name: 'Париж',         lat: 48.85, lon: 2.35,   tz: 1 },
+        { name: 'Берлин',        lat: 52.52, lon: 13.40,  tz: 1 },
+        { name: 'Нью-Йорк',      lat: 40.71, lon: -74.01, tz: -5 },
+        { name: 'Лос-Анджелес',  lat: 34.05, lon: -118.24, tz: -8 },
+        { name: 'Токио',         lat: 35.68, lon: 139.69, tz: 9 },
+        { name: 'Пекин',         lat: 39.90, lon: 116.40, tz: 8 },
+        { name: 'Дубай',         lat: 25.20, lon: 55.27,  tz: 4 },
+        { name: 'Сидней',        lat: -33.87, lon: 151.21, tz: 10 },
+        { name: 'Сан-Паулу',     lat: -23.55, lon: -46.63, tz: -3 },
+        { name: 'Стамбул',       lat: 41.01, lon: 28.98,  tz: 3 },
+        { name: 'Бангкок',       lat: 13.76, lon: 100.50, tz: 7 },
+        { name: 'Мумбаи',        lat: 19.08, lon: 72.88,  tz: 5 },
+        { name: 'Мехико',        lat: 19.43, lon: -99.13, tz: -6 },
+        { name: 'Каир',          lat: 30.04, lon: 31.24,  tz: 2 },
+        { name: 'Кейптаун',      lat: -33.92, lon: 18.42, tz: 2 },
+    ];
+
+    function renderPresets() {
+        const cities = getCities();
+        const existingNames = new Set(cities.map(c => c.name.toLowerCase()));
+
+        presetsEl.innerHTML = '';
+
+        PRESET_CITIES.forEach(preset => {
+            const isAdded = existingNames.has(preset.name.toLowerCase());
+            const chip = document.createElement('button');
+            chip.className = 'city-preset-chip' + (isAdded ? ' added' : '');
+            chip.textContent = preset.name;
+            chip.title = isAdded ? 'Уже добавлен' : 'Нажмите, чтобы добавить';
+
+            if (!isAdded) {
+                chip.addEventListener('click', () => {
+                    const cities = getCities();
+                    const makeMy = cities.length === 0;
+                    cities.push({
+                        name: preset.name,
+                        lat: preset.lat,
+                        lon: preset.lon,
+                        tz: preset.tz,
+                        my: makeMy,
+                    });
+                    saveCities(cities);
+                    renderCities();
+                    renderPresets();
+
+                    if (window.showNotification) {
+                        window.showNotification({
+                            title: 'Город добавлен',
+                            message: preset.name,
+                            type: 'success',
+                            icon: '🏙️',
+                            duration: 2000,
+                        });
+                    }
+                });
+            }
+
+            presetsEl.appendChild(chip);
+        });
+    }
+
+    // ---- Форма ----
+    function showForm() {
+        addForm.classList.add('visible');
+        addBtn.style.display = 'none';
+        nameInput.value = '';
+        latInput.value = '';
+        lonInput.value = '';
+        tzInput.value = '3';
+        nameInput.focus();
+    }
+
+    function hideForm() {
+        addForm.classList.remove('visible');
+        addBtn.style.display = 'flex';
+    }
+
+    addBtn.addEventListener('click', showForm);
+    cancelBtn.addEventListener('click', hideForm);
+
+    submitBtn.addEventListener('click', () => {
+        const name = nameInput.value.trim();
+        const lat = parseFloat(latInput.value);
+        const lon = parseFloat(lonInput.value);
+        const tz = parseInt(tzInput.value) || 0;
+
+        if (!name) {
+            if (window.showNotification) window.showNotification({
+                title: 'Ошибка', message: 'Введите название города',
+                type: 'error', icon: '⚠️', duration: 2500,
+            });
+            nameInput.focus();
+            return;
+        }
+
+        if (isNaN(lat) || lat < -90 || lat > 90) {
+            if (window.showNotification) window.showNotification({
+                title: 'Ошибка', message: 'Широта должна быть от -90 до 90',
+                type: 'error', icon: '⚠️', duration: 2500,
+            });
+            latInput.focus();
+            return;
+        }
+
+        if (isNaN(lon) || lon < -180 || lon > 180) {
+            if (window.showNotification) window.showNotification({
+                title: 'Ошибка', message: 'Долгота должна быть от -180 до 180',
+                type: 'error', icon: '⚠️', duration: 2500,
+            });
+            lonInput.focus();
+            return;
+        }
+
+        const cities = getCities();
+
+        if (cities.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+            if (window.showNotification) window.showNotification({
+                title: 'Ошибка', message: 'Город с таким названием уже есть',
+                type: 'warning', icon: '⚠️', duration: 2500,
+            });
+            return;
+        }
+
+        const makeMy = cities.length === 0;
+        cities.push({ name, lat, lon, tz, my: makeMy });
+        saveCities(cities);
+
+        renderCities();
+        renderPresets();
+        hideForm();
+
+        if (window.showNotification) {
+            window.showNotification({
+                title: 'Город добавлен', message: name,
+                type: 'success', icon: '🏙️', duration: 2500,
+            });
+        }
+    });
+
+    [nameInput, latInput, lonInput, tzInput].forEach(input => {
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') submitBtn.click();
+            if (e.key === 'Escape') hideForm();
+        });
+    });
+
+    // ---- Сброс ----
+    resetBtn.addEventListener('click', () => {
+        if (!confirm('Вернуть стандартный список городов?')) return;
+
+        const defaults = [
+            { name: 'Москва',       lat: 55.75, lon: 37.62,  tz: 3,  my: true },
+            { name: 'Лондон',       lat: 51.51, lon: -0.13,  tz: 0,  my: false },
+            { name: 'Нью-Йорк',     lat: 40.71, lon: -74.01, tz: -5, my: false },
+            { name: 'Лос-Анджелес', lat: 34.05, lon: -118.24, tz: -8, my: false },
+            { name: 'Токио',        lat: 35.68, lon: 139.69, tz: 9,  my: false },
+            { name: 'Сидней',       lat: -33.87, lon: 151.21, tz: 10, my: false },
+            { name: 'Дубай',        lat: 25.20, lon: 55.27,  tz: 4,  my: false },
+            { name: 'Сан-Паулу',    lat: -23.55, lon: -46.63, tz: -3, my: false },
+        ];
+
+        saveCities(JSON.parse(JSON.stringify(defaults)));
+        renderCities();
+        renderPresets();
+
+        if (window.showNotification) {
+            window.showNotification({
+                title: 'Список восстановлен',
+                message: 'Стандартные города возвращены',
+                type: 'success', icon: '🔄', duration: 2500,
+            });
+        }
+    });
+
+    // ---- Удалить все ----
+    clearBtn.addEventListener('click', () => {
+        if (!confirm('Удалить все города с карты?')) return;
+
+        saveCities([]);
+        renderCities();
+        renderPresets();
+
+        if (window.showNotification) {
+            window.showNotification({
+                title: 'Все города удалены',
+                message: 'Список пуст',
+                type: 'warning', icon: '🗑️', duration: 2500,
+            });
+        }
+    });
+
+    renderCities();
+    renderPresets();
 }
