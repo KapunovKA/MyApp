@@ -898,7 +898,7 @@ html, body {
     z-index: 1;
 }
 
-#desktop > *:not(#world-canvas):not(.world-clock-panel):not(#wallpaper-layer) {
+#desktop > *:not(#world-canvas):not(.world-clock-panel):not(#wallpaper-layer):not(.window) {
     position: relative;
     z-index: 2;
 }
