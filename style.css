@@ -2212,6 +2212,344 @@ html, body {
 }
 
 /* ============================================================
+   JSON VIEWER
+   ============================================================ */
+.json-app {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: var(--window-bg);
+    color: var(--window-text);
+    font-size: 13px;
+    overflow: hidden;
+}
+
+/* ---------- Toolbar ---------- */
+.json-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--window-border);
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    background: var(--window-header-bg);
+}
+
+.json-toolbar-spacer { flex: 1; }
+
+.json-btn {
+    background: var(--app-btn-bg);
+    border: 1px solid var(--window-border);
+    border-radius: 8px;
+    padding: 7px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--window-text);
+    cursor: pointer;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+    transition: background 0.15s, transform 0.05s;
+}
+
+.json-btn:hover { background: var(--app-btn-hover); }
+.json-btn:active { transform: scale(0.97); }
+.json-btn.primary { background: #4a9eff; color: #fff; border-color: transparent; }
+.json-btn.primary:hover { background: #3a8eef; }
+
+.json-view-toggle {
+    display: inline-flex;
+    background: var(--app-btn-bg);
+    border-radius: 8px;
+    padding: 2px;
+    gap: 2px;
+}
+
+.json-view-btn {
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--popup-text-muted);
+    cursor: pointer;
+    font-family: inherit;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s;
+}
+
+.json-view-btn:hover { color: var(--window-text); }
+.json-view-btn.active {
+    background: var(--window-bg);
+    color: #4a9eff;
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+/* ---------- Main ---------- */
+.json-main {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    min-height: 0;
+}
+
+.json-dropzone {
+    position: absolute;
+    inset: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 2px dashed var(--app-card-border);
+    border-radius: 14px;
+    background: var(--app-card-bg);
+    color: var(--popup-text-muted);
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
+    pointer-events: none;
+}
+
+.json-app.has-data .json-dropzone { display: none; }
+
+.json-dropzone.dragover {
+    border-color: #4a9eff;
+    background: rgba(74, 158, 255, 0.08);
+    color: #4a9eff;
+}
+
+.json-dropzone-icon { font-size: 44px; line-height: 1; opacity: 0.7; }
+.json-dropzone-title { font-size: 14px; font-weight: 600; }
+.json-dropzone-hint { font-size: 11px; opacity: 0.75; }
+
+/* ---------- Content ---------- */
+.json-content {
+    position: absolute;
+    inset: 0;
+    overflow: auto;
+    padding: 14px 18px;
+    font-family: 'SF Mono', 'Menlo', 'Consolas', 'Monaco', monospace;
+    font-size: 12px;
+    line-height: 1.55;
+    -webkit-overflow-scrolling: touch;
+}
+
+.json-app:not(.has-data) .json-content { display: none; }
+
+/* ---------- Tree ---------- */
+.json-node {
+    display: block;
+    padding: 1px 0;
+}
+
+.json-summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 1px 4px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex-wrap: wrap;
+    user-select: none;
+    transition: background 0.1s;
+}
+
+.json-summary::-webkit-details-marker { display: none; }
+.json-summary::marker { content: ''; }
+
+.json-summary::before {
+    content: '▶';
+    display: inline-block;
+    width: 12px;
+    font-size: 8px;
+    color: var(--popup-text-light);
+    transition: transform 0.15s;
+    flex-shrink: 0;
+}
+
+.json-node[open] > .json-summary::before { transform: rotate(90deg); }
+
+.json-summary:hover { background: var(--app-card-hover); }
+
+.json-children {
+    padding-left: 18px;
+    border-left: 1px dashed var(--app-card-border);
+    margin-left: 6px;
+    margin-top: 2px;
+}
+
+.json-line {
+    padding: 1px 4px 1px 18px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    position: relative;
+}
+
+.json-line::before {
+    content: '';
+    position: absolute;
+    left: 0;
+}
+
+/* ---------- Цвета типов ---------- */
+.json-key    { color: #4a9eff; }
+.json-colon  { color: var(--popup-text-light); margin-right: 4px; }
+.json-string { color: #34c759; word-break: break-all; }
+.json-number { color: #ff9f40; }
+.json-boolean{ color: #a78bfa; font-weight: 600; }
+.json-null   { color: var(--popup-text-light); font-style: italic; }
+.json-bracket{ color: var(--popup-text-muted); font-weight: 600; }
+
+.json-count {
+    color: var(--popup-text-light);
+    font-size: 10px;
+    font-style: italic;
+    padding: 0 4px;
+    opacity: 0.8;
+}
+
+/* ---------- Raw ---------- */
+.json-raw {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: inherit;
+    font-size: inherit;
+    color: var(--window-text);
+}
+
+/* ---------- Paste area ---------- */
+.json-paste-area {
+    position: absolute;
+    inset: 0;
+    background: var(--window-bg);
+    display: none;
+    flex-direction: column;
+    padding: 14px;
+    gap: 10px;
+    z-index: 10;
+}
+
+.json-paste-area.visible { display: flex; }
+
+.json-paste-input {
+    flex: 1;
+    width: 100%;
+    background: var(--app-input-bg);
+    border: 1px solid var(--app-input-border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-family: 'SF Mono', 'Menlo', 'Consolas', 'Monaco', monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--app-input-text);
+    outline: none;
+    resize: none;
+    user-select: text;
+    box-sizing: border-box;
+    transition: border-color 0.15s;
+}
+
+.json-paste-input::placeholder { color: var(--popup-text-light); }
+.json-paste-input:focus { border-color: #4a9eff; }
+
+.json-paste-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    flex-shrink: 0;
+}
+
+/* ---------- Error ---------- */
+.json-error {
+    display: none;
+    padding: 10px 16px;
+    font-size: 11px;
+    font-weight: 500;
+    background: rgba(255, 59, 48, 0.12);
+    color: #ff3b30;
+    border-top: 1px solid rgba(255, 59, 48, 0.25);
+    flex-shrink: 0;
+}
+
+.json-error.visible { display: block; }
+.json-error.warning {
+    background: rgba(74, 158, 255, 0.12);
+    color: #4a9eff;
+    border-top-color: rgba(74, 158, 255, 0.25);
+}
+
+/* ---------- Status ---------- */
+.json-status {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 14px;
+    border-top: 1px solid var(--window-border);
+    background: var(--window-header-bg);
+    flex-shrink: 0;
+    min-height: 34px;
+}
+
+.json-status-info {
+    font-size: 11px;
+    color: var(--popup-text-muted);
+    font-variant-numeric: tabular-nums;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.json-status-actions {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.json-status-btn {
+    background: transparent;
+    border: 1px solid var(--app-card-border);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--popup-text-muted);
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s, color 0.15s;
+}
+
+.json-status-btn:hover {
+    background: var(--app-btn-hover);
+    color: var(--window-text);
+}
+
+/* ---------- Мобильная адаптация ---------- */
+@media (max-width: 768px) {
+    .json-toolbar { padding: 8px 10px; gap: 5px; }
+
+    .json-btn { padding: 8px 12px; font-size: 12px; min-height: 38px; }
+    .json-btn.primary { flex: 1; justify-content: center; }
+
+    .json-view-toggle { order: 10; width: 100%; }
+    .json-view-btn { flex: 1; text-align: center; padding: 8px 10px; min-height: 36px; }
+
+    .json-content { padding: 12px; font-size: 12px; }
+    .json-children { padding-left: 14px; }
+
+    .json-paste-input { font-size: 14px !important; padding: 12px; }
+
+    .json-status { flex-wrap: wrap; padding: 8px 12px; }
+    .json-status-info { width: 100%; font-size: 10px; }
+    .json-status-actions { width: 100%; justify-content: flex-end; }
+}
+/* ============================================================
    ЗАРПЛАТА
    ============================================================ */
 .salary-app {
