@@ -3565,6 +3565,10 @@ table.sal-table {
 .puzzle-tile.empty { background: transparent; cursor: default; box-shadow: none; pointer-events: none; }
 .puzzle-tile.correct { background: linear-gradient(135deg, #34c759 0%, #2fb350 100%); box-shadow: 0 4px 8px rgba(52, 199, 89, 0.3); }
 
+/* ============================================================
+   СУДОКУ
+   ============================================================ */
+
 .sudoku-wrapper { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; }
 .sudoku-difficulty { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
 
@@ -3573,7 +3577,7 @@ table.sal-table {
     grid-template-columns: repeat(9, 1fr);
     grid-template-rows: repeat(9, 1fr);
     gap: 1px;
-    background: #4a9eff;
+    background: var(--window-border);
     padding: 3px;
     border-radius: 10px;
     aspect-ratio: 1 / 1;
@@ -3599,15 +3603,83 @@ table.sal-table {
     transition: background 0.1s;
 }
 
-.sudoku-cell:hover:not(.given):not(.locked) { background: rgba(74, 158, 255, 0.18); }
-.sudoku-cell.given { background: var(--app-btn-bg); font-weight: 700; cursor: default; }
-.sudoku-cell.user { color: #4a9eff; font-weight: 600; }
-.sudoku-cell.user.wrong { color: #ff3b30; background: rgba(255, 59, 48, 0.18); }
-.sudoku-cell.selected { background: rgba(74, 158, 255, 0.4) !important; color: #fff !important; }
-.sudoku-cell.highlighted { background: rgba(74, 158, 255, 0.12); }
-.sudoku-cell.highlighted-same { background: rgba(74, 158, 255, 0.22); }
-.sudoku-cell.correct { background: rgba(52, 199, 89, 0.15); }
-.sudoku-cell.border-right { border-right: 2px solid #4a9eff; }
+/* Hover — нейтральный, не синий */
+.sudoku-cell:hover:not(.given):not(.locked) {
+    background: var(--app-btn-hover);
+}
+
+/* Заданные (given) — приглушённый фон, чтобы отличать от введённых */
+.sudoku-cell.given {
+    background: var(--app-btn-bg);
+    font-weight: 700;
+    cursor: default;
+    color: var(--window-text);
+}
+
+/* Введённые пользователем: правильные — зелёные, неправильные — красные */
+.sudoku-cell.user {
+    color: #34c759;
+    font-weight: 700;
+}
+
+.sudoku-cell.user.wrong {
+    color: #ff3b30;
+    background: rgba(255, 59, 48, 0.15);
+}
+
+/* Выделенная ячейка — оранжевая, чтобы не путалась с подсветкой */
+.sudoku-cell.selected {
+    background: #ff9f0a !important;
+    color: #fff !important;
+    font-weight: 700;
+    box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.15);
+}
+
+.sudoku-cell.selected.given {
+    background: #ff9f0a !important;
+    color: #fff !important;
+}
+
+/* Подсветка строки/столбца/блока — нейтральная, лёгкая */
+.sudoku-cell.highlighted {
+    background: rgba(127, 127, 127, 0.12);
+}
+
+/* Совпадения по цифре — голубоватые, чтобы отличались от выделения */
+.sudoku-cell.highlighted-same {
+    background: rgba(74, 158, 255, 0.28);
+}
+
+/* Границы 3×3 — тёмные, нейтральные */
+.sudoku-cell.border-right {
+    border-right: 2px solid var(--popup-text-light);
+}
+
+.sudoku-cell.border-bottom {
+    border-bottom: 2px solid var(--popup-text-light);
+}
+
+/* Заданные ячейки не должны «затирать» выделение */
+.sudoku-cell.given.selected {
+    background: #ff9f0a !important;
+    color: #fff !important;
+}
+
+/* Тёмная тема — подстройка */
+@media (prefers-color-scheme: dark) {
+    .sudoku-cell.highlighted {
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    .sudoku-cell.highlighted-same {
+        background: rgba(74, 158, 255, 0.32);
+    }
+
+    .sudoku-cell.border-right,
+    .sudoku-cell.border-bottom {
+        border-color: rgba(255, 255, 255, 0.35);
+    }
+}
 .sudoku-cell.border-bottom { border-bottom: 2px solid #4a9eff; }
 
 .sudoku-keypad {
