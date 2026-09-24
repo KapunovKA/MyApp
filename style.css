@@ -2160,6 +2160,47 @@ html, body {
     color: var(--popup-text-light);
     text-decoration: line-through;
 }
+/* Кнопки управления в #panel-map (вне .cloud-panel) */
+#panel-map .cloud-btn {
+    background: var(--app-btn-bg);
+    color: var(--app-btn-text);
+    border: 1px solid var(--app-card-border);
+}
+
+#panel-map .cloud-btn:hover:not(:disabled) {
+    background: var(--app-btn-hover);
+    filter: none;
+}
+
+#panel-map .cloud-btn.secondary {
+    background: var(--app-btn-bg);
+    color: var(--app-btn-text);
+    border: 1px solid var(--app-card-border);
+}
+
+#panel-map .cloud-btn.secondary:hover:not(:disabled) {
+    background: var(--app-btn-hover);
+}
+
+#panel-map .cloud-btn.danger {
+    background: rgba(255, 59, 48, 0.12);
+    color: #ff3b30;
+    border: 1px solid rgba(255, 59, 48, 0.3);
+}
+
+#panel-map .cloud-btn.danger:hover:not(:disabled) {
+    background: rgba(255, 59, 48, 0.22);
+    filter: none;
+}
+
+/* На мобильном — крупнее */
+@media (max-width: 768px) {
+    #panel-map .cloud-btn {
+        min-height: 44px;
+        font-size: 14px;
+        border-radius: 10px;
+    }
+}
 
 @media (prefers-color-scheme: dark) {
     .city-add-btn { border-color: rgba(255, 255, 255, 0.15); }
