@@ -1,17 +1,12 @@
 // ============================================================
 //  ЖИВАЯ ЗАСТАВКА: КАРТА МИРА ИЗ ТОЧЕК (в стиле Apple Watch)
-//  + день/ночь, терминатор, города, часы, погода (WeatherAPI.com)
+//  + день/ночь, терминатор, города, часы, погода (Open-Meteo)
 //  + адаптация под мобильные (обрезка по долготе)
 // ============================================================
 
 (function initWorldMap() {
     'use strict';
 
-    // ============================================================
-    //  🔑 API-КЛЮЧ WeatherAPI.com
-    //  Получить: https://www.weatherapi.com/ → Sign Up → Dashboard
-    // ============================================================
-    const WEATHER_API_KEY = '';
     let canvas, ctx, W, H;
     let animationId = null;
     let lastFrame = 0;
@@ -539,7 +534,7 @@
     }
 
     // --------------------------------------------------------
-    //  🌤️ Погода через WeatherAPI.com
+    //  🌤️ Погода через Open-Meteo
     // --------------------------------------------------------
     function startWeatherUpdates() {
         if (weatherTimer) clearInterval(weatherTimer);
@@ -549,16 +544,6 @@
 
     async function loadAllWeather() {
         if (CITIES.length === 0) return;
-
-        // Проверка ключа
-        if (!WEATHER_API_KEY || WEATHER_API_KEY === 'ВСТАВЬ_СЮДА_СВОЙ_КЛЮЧ') {
-            console.warn('[Weather] API-ключ WeatherAPI.com не задан. Получи бесплатный ключ: https://www.weatherapi.com/');
-            CITIES.forEach(city => {
-                weatherData[city.name] = { error: true, ts: Date.now() };
-            });
-            renderAllWeather();
-            return;
-        }
 
         const allFresh = CITIES.every(city => {
             const cached = weatherData[city.name];
@@ -570,7 +555,6 @@
             return;
         }
 
-        // Показываем статус «загрузка»
         CITIES.forEach(city => {
             const row = document.querySelector(`[data-city="${cssEscape(city.name)}"] .weather-row`);
             if (row) {
@@ -579,92 +563,89 @@
             }
         });
 
-        // Запрашиваем погоду для каждого города отдельно (WeatherAPI.com поддерживает только один q за раз)
-        const promises = CITIES.map(city => fetchCityWeather(city));
+        const lats = CITIES.map(c => c.lat).join(',');
+        const lons = CITIES.map(c => c.lon).join(',');
+
+        const units = (window.APP_CONFIG?.WEATHER_UNITS) || 'metric';
+        const tempUnit = units === 'imperial' ? 'fahrenheit' : 'celsius';
+
+        const url = 'https://api.open-meteo.com/v1/forecast' +
+            `?latitude=${lats}` +
+            `&longitude=${lons}` +
+            '&current=temperature_2m,weather_code,is_day,apparent_temperature,relative_humidity_2m,wind_speed_10m' +
+            `&temperature_unit=${tempUnit}` +
+            '&wind_speed_unit=ms' +
+            '&timezone=auto';
 
         try {
-            await Promise.all(promises);
+            const resp = await fetch(url);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+            const data = await resp.json();
+            const results = Array.isArray(data) ? data : [data];
+
+            results.forEach((result, idx) => {
+                const city = CITIES[idx];
+                if (!city || !result || !result.current) return;
+
+                const current = result.current;
+                const code = current.weather_code;
+                const isDay = current.is_day === 1;
+
+                weatherData[city.name] = {
+                    temp: Math.round(current.temperature_2m ?? 0),
+                    feelsLike: Math.round(current.apparent_temperature ?? 0),
+                    humidity: Math.round(current.relative_humidity_2m ?? 0),
+                    windSpeed: (current.wind_speed_10m ?? 0).toFixed(1),
+                    icon: getWeatherEmojiFromCode(code, isDay),
+                    desc: getWeatherDescription(code),
+                    ts: Date.now(),
+                };
+            });
+
             renderAllWeather();
         } catch (e) {
             console.warn('[Weather] Ошибка загрузки:', e.message);
             CITIES.forEach(city => {
-                if (!weatherData[city.name]) {
-                    weatherData[city.name] = { error: true, ts: Date.now() };
-                }
+                weatherData[city.name] = { error: true, ts: Date.now() };
             });
             renderAllWeather();
         }
     }
 
-    async function fetchCityWeather(city) {
-        try {
-            // q=lat,lon или q=название города
-            const q = `${city.lat},${city.lon}`;
-            const url = `https://api.weatherapi.com/v1/current.json` +
-                `?key=${encodeURIComponent(WEATHER_API_KEY)}` +
-                `&q=${encodeURIComponent(q)}` +
-                `&lang=ru` +
-                `&aqi=no`;
-
-            const resp = await fetch(url);
-            if (!resp.ok) {
-                const errText = await resp.text().catch(() => '');
-                throw new Error(`HTTP ${resp.status} ${errText.slice(0, 100)}`);
-            }
-
-            const data = await resp.json();
-            if (!data.current) throw new Error('Нет поля current');
-
-            weatherData[city.name] = {
-                temp: Math.round(data.current.temp_c ?? 0),
-                feelsLike: Math.round(data.current.feelslike_c ?? 0),
-                humidity: Math.round(data.current.humidity ?? 0),
-                windSpeed: (data.current.wind_kph ? (data.current.wind_kph / 3.6).toFixed(1) : '0.0'),
-                icon: getWeatherEmoji(data.current.condition.code, data.current.is_day === 1),
-                desc: (data.current.condition.text || '—').toLowerCase(),
-                ts: Date.now(),
-            };
-        } catch (e) {
-            console.warn(`[Weather] ${city.name}:`, e.message);
-            weatherData[city.name] = { error: true, ts: Date.now() };
-        }
+    function getWeatherEmojiFromCode(code, isDay) {
+        if (code === 0) return isDay ? '☀️' : '🌙';
+        if (code === 1) return isDay ? '🌤️' : '🌙';
+        if (code === 2) return isDay ? '⛅' : '☁️';
+        if (code === 3) return '☁️';
+        if (code === 45 || code === 48) return '🌫️';
+        if (code >= 51 && code <= 55) return '🌦️';
+        if (code === 56 || code === 57) return '🌧️';
+        if (code >= 61 && code <= 65) return '🌧️';
+        if (code === 66 || code === 67) return '🌧️';
+        if (code >= 71 && code <= 75) return '❄️';
+        if (code === 77) return '🌨️';
+        if (code >= 80 && code <= 82) return '🌦️';
+        if (code === 85 || code === 86) return '🌨️';
+        if (code === 95) return '⛈️';
+        if (code === 96 || code === 99) return '⛈️';
+        return '🌡️';
     }
 
-    // --------------------------------------------------------
-    //  Маппинг кодов WeatherAPI.com → эмодзи
-    //  Справочник: https://www.weatherapi.com/docs/weather_conditions.json
-    // --------------------------------------------------------
-    function getWeatherEmoji(code, isDay) {
-        // code — это WeatherAPI condition code
-        // 1000 — Clear/Sunny
-        // 1003 — Partly cloudy
-        // 1006 — Cloudy
-        // 1009 — Overcast
-        // 1030 — Mist
-        // 1063, 1180-1201 — Rain
-        // 1066, 1210-1225 — Snow
-        // 1087, 1273-1282 — Thunder
-        // 1114, 1117 — Blizzard
-        // 1135, 1147 — Fog
-        // 1150-1171 — Drizzle
-        // 1240-1246 — Rain showers
-
-        if (code === 1000) return isDay ? '☀️' : '🌙';
-        if (code === 1003) return isDay ? '🌤️' : '☁️';
-        if (code === 1006) return '⛅';
-        if (code === 1009) return '☁️';
-        if (code === 1030 || code === 1135 || code === 1147) return '🌫️';
-        if (code === 1063 || code === 1180 || code === 1183) return '🌦️';
-        if (code === 1186 || code === 1189 || code === 1192 || code === 1195 || code === 1240 || code === 1243 || code === 1246) return '🌧️';
-        if (code === 1198 || code === 1201) return '🌧️';
-        if (code === 1066 || code === 1210 || code === 1213) return '🌨️';
-        if (code === 1216 || code === 1219 || code === 1222 || code === 1225) return '❄️';
-        if (code === 1114 || code === 1117) return '🌨️';
-        if (code === 1087 || code === 1273 || code === 1276 || code === 1279 || code === 1282) return '⛈️';
-        if (code === 1237 || code === 1261 || code === 1264) return '🌨️';
-        if (code === 1072) return '🌧️';
-        if (code === 1150 || code === 1153 || code === 1168 || code === 1171) return '🌧️';
-        return '🌡️';
+    function getWeatherDescription(code) {
+        const descriptions = {
+            0: 'ясно', 1: 'преимущ. ясно', 2: 'переменная обл.', 3: 'пасмурно',
+            45: 'туман', 48: 'изморозь',
+            51: 'слабая морось', 53: 'морось', 55: 'сильная морось',
+            56: 'лед. морось', 57: 'лед. морось',
+            61: 'слабый дождь', 63: 'дождь', 65: 'сильный дождь',
+            66: 'лед. дождь', 67: 'лед. дождь',
+            71: 'слабый снег', 73: 'снег', 75: 'сильный снег', 77: 'снежные зёрна',
+            80: 'ливень', 81: 'ливень', 82: 'сильный ливень',
+            85: 'снегопад', 86: 'снегопад',
+            95: 'гроза', 96: 'гроза с градом', 99: 'гроза с градом',
+        };
+        return descriptions[code] || '—';
     }
 
     function renderAllWeather() {
@@ -697,11 +678,13 @@
             return;
         }
 
+        const unit = (window.APP_CONFIG?.WEATHER_UNITS === 'imperial') ? 'F' : 'C';
+
         row.className = 'weather-row updating';
-        row.title = `Ощущается: ${data.feelsLike}°C · Влажность: ${data.humidity}% · Ветер: ${data.windSpeed} м/с`;
+        row.title = `Ощущается: ${data.feelsLike}°${unit} · Влажность: ${data.humidity}% · Ветер: ${data.windSpeed} м/с`;
         row.innerHTML = `
             <span class="weather-icon">${data.icon}</span>
-            <span class="weather-temp">${data.temp}°C</span>
+            <span class="weather-temp">${data.temp}°${unit}</span>
             <span class="weather-desc">${data.desc}</span>
         `;
 
