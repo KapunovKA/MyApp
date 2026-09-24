@@ -1010,7 +1010,7 @@ const APP_LAUNCHERS = {
     salary: createSalaryApp,
     games: createGamesApp,
     settings: createSettingsApp,
-    json: createJsonViewerApp,
+    spg: createSpgApp,
 };
 
 const APP_TITLES = {
@@ -1018,7 +1018,7 @@ const APP_TITLES = {
     salary: 'Salary Stats',
     games: 'Games',
     settings: 'System Settings',
-    json: 'JSON Viewer',
+    spg: 'СПГ — Технологические цепочки',
 };
 
 // ============================================================
