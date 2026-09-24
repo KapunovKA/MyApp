@@ -2213,7 +2213,6 @@ html, body {
     position: relative;
 }
 
-/* ---------- Topbar (лого + drop) ---------- */
 .spg-topbar {
     display: flex;
     align-items: center;
@@ -2279,7 +2278,6 @@ html, body {
     color: #34c759;
 }
 
-/* ---------- Scroll-контейнер ---------- */
 .spg-scroll {
     flex: 1;
     overflow-y: auto;
@@ -2306,7 +2304,6 @@ html, body {
 
 .spg-hidden { display: none !important; }
 
-/* ---------- Скрытие комментариев: баннер ---------- */
 .spg-hidden-banner {
     display: flex;
     gap: 10px;
@@ -2330,7 +2327,6 @@ html, body {
 
 .spg-hidden-banner .spg-spacer { flex: 1; }
 
-/* ---------- Поиск ---------- */
 .spg-search-row {
     display: flex;
     gap: 8px;
@@ -2369,7 +2365,6 @@ html, body {
     font-variant-numeric: tabular-nums;
 }
 
-/* ---------- Список цепочек со скроллом ---------- */
 .spg-chains-scroll {
     max-height: 460px;
     overflow-y: auto;
@@ -2395,7 +2390,6 @@ html, body {
     font-style: italic;
 }
 
-/* ---------- Цепочка ---------- */
 .spg-chain {
     border: 2px solid var(--app-card-border);
     border-radius: 10px;
@@ -2479,7 +2473,6 @@ html, body {
     white-space: nowrap;
 }
 
-/* ---------- Таблица цепочки ---------- */
 .spg-chain-table-scroll {
     margin-top: 10px;
     border-radius: 8px;
@@ -2540,7 +2533,6 @@ table.spg-chain-table {
     font-style: italic;
 }
 
-/* ---------- Toolbar и кнопки ---------- */
 .spg-toolbar {
     display: flex;
     gap: 8px;
@@ -2619,7 +2611,6 @@ table.spg-chain-table {
     max-width: 200px;
 }
 
-/* ---------- Поля ---------- */
 .spg-field-row {
     display: flex;
     gap: 14px;
@@ -2658,7 +2649,6 @@ table.spg-chain-table {
 .spg-field.spg-wide input { width: 220px; }
 .spg-field .spg-hint { color: var(--popup-text-light); font-size: 10px; }
 
-/* ---------- Mode tabs ---------- */
 .spg-mode-tabs {
     display: inline-flex;
     background: var(--app-btn-bg);
@@ -2684,7 +2674,6 @@ table.spg-chain-table {
     box-shadow: 0 1px 3px rgba(0,0,0,0.15);
 }
 
-/* ---------- Info blocks ---------- */
 .spg-info-block {
     margin-top: 10px;
     padding: 10px 14px;
@@ -2703,7 +2692,6 @@ table.spg-chain-table {
 .spg-mt-12 { margin-top: 12px; }
 .spg-mt-14 { margin-top: 14px; }
 
-/* ---------- Таблица расписания ---------- */
 .spg-table-scroll {
     margin-top: 10px;
     border-radius: 8px;
@@ -2767,7 +2755,6 @@ table.spg-trains-table {
 .spg-trains-table input.spg-train-input { width: 100px; }
 .spg-trains-table input.spg-time-input  { width: 90px; }
 
-/* ---------- Result preview ---------- */
 .spg-result-preview {
     background: #0f172a;
     color: #e2e8f0;
@@ -2783,7 +2770,6 @@ table.spg-trains-table {
     word-break: break-word;
 }
 
-/* ---------- Modal ---------- */
 .spg-modal-backdrop {
     position: absolute;
     inset: 0;
@@ -2809,9 +2795,7 @@ table.spg-trains-table {
 .spg-modal-box h3 { margin: 0 0 10px; font-size: 15px; color: var(--window-text); }
 .spg-modal-box p { margin: 0 0 14px; color: var(--popup-text-muted); font-size: 13px; line-height: 1.5; }
 .spg-modal-box b { color: var(--window-text); }
-.spg-modal-box .spg-trains-table {
-    font-size: 11px;
-}
+.spg-modal-box .spg-trains-table { font-size: 11px; }
 .spg-modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
 
 /* ============================================================
@@ -2986,12 +2970,13 @@ table.sal-table {
     min-width: 820px;
 }
 
+/* ─── Шапка таблицы ─── */
 .sal-table thead th {
     background: var(--app-table-header-solid, var(--app-bg, #f5f5f7));
     color: var(--app-table-header-text);
     font-weight: 600;
     padding: 8px 10px;
-    text-align: left;
+    text-align: right;                    /* ← числовые колонки по правому краю */
     border-bottom: 2px solid var(--app-border);
     white-space: nowrap;
     position: sticky;
@@ -3001,6 +2986,12 @@ table.sal-table {
     text-transform: uppercase;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
     transition: background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Заголовки текстовых колонок (Месяц, Организация) — по левому краю */
+.sal-table thead th:nth-child(1),
+.sal-table thead th:nth-child(2) {
+    text-align: left;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -3565,10 +3556,6 @@ table.sal-table {
 .puzzle-tile.empty { background: transparent; cursor: default; box-shadow: none; pointer-events: none; }
 .puzzle-tile.correct { background: linear-gradient(135deg, #34c759 0%, #2fb350 100%); box-shadow: 0 4px 8px rgba(52, 199, 89, 0.3); }
 
-/* ============================================================
-   СУДОКУ
-   ============================================================ */
-
 .sudoku-wrapper { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; }
 .sudoku-difficulty { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
 
@@ -3603,12 +3590,10 @@ table.sal-table {
     transition: background 0.1s;
 }
 
-/* Hover — нейтральный, не синий */
 .sudoku-cell:hover:not(.given):not(.locked) {
     background: var(--app-btn-hover);
 }
 
-/* Заданные (given) — приглушённый фон, чтобы отличать от введённых */
 .sudoku-cell.given {
     background: var(--app-btn-bg);
     font-weight: 700;
@@ -3616,7 +3601,6 @@ table.sal-table {
     color: var(--window-text);
 }
 
-/* Введённые пользователем: правильные — зелёные, неправильные — красные */
 .sudoku-cell.user {
     color: #34c759;
     font-weight: 700;
@@ -3627,7 +3611,6 @@ table.sal-table {
     background: rgba(255, 59, 48, 0.15);
 }
 
-/* Выделенная ячейка — оранжевая, чтобы не путалась с подсветкой */
 .sudoku-cell.selected {
     background: #ff9f0a !important;
     color: #fff !important;
@@ -3640,17 +3623,14 @@ table.sal-table {
     color: #fff !important;
 }
 
-/* Подсветка строки/столбца/блока — нейтральная, лёгкая */
 .sudoku-cell.highlighted {
     background: rgba(127, 127, 127, 0.12);
 }
 
-/* Совпадения по цифре — голубоватые, чтобы отличались от выделения */
 .sudoku-cell.highlighted-same {
     background: rgba(74, 158, 255, 0.28);
 }
 
-/* Границы 3×3 — тёмные, нейтральные */
 .sudoku-cell.border-right {
     border-right: 2px solid var(--popup-text-light);
 }
@@ -3659,13 +3639,11 @@ table.sal-table {
     border-bottom: 2px solid var(--popup-text-light);
 }
 
-/* Заданные ячейки не должны «затирать» выделение */
 .sudoku-cell.given.selected {
     background: #ff9f0a !important;
     color: #fff !important;
 }
 
-/* Тёмная тема — подстройка */
 @media (prefers-color-scheme: dark) {
     .sudoku-cell.highlighted {
         background: rgba(255, 255, 255, 0.08);
@@ -3680,7 +3658,6 @@ table.sal-table {
         border-color: rgba(255, 255, 255, 0.35);
     }
 }
-.sudoku-cell.border-bottom { border-bottom: 2px solid #4a9eff; }
 
 .sudoku-keypad {
     display: grid;
