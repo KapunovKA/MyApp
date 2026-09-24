@@ -2152,6 +2152,73 @@ html, body {
     position: relative;
 }
 
+/* ---------- Topbar (лого + drop) ---------- */
+.spg-topbar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--window-border);
+    background: var(--window-header-bg);
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+
+.spg-topbar-logo {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--window-text);
+    white-space: nowrap;
+}
+
+.spg-drop {
+    flex: 1;
+    min-width: 240px;
+    border: 2px dashed var(--app-card-border);
+    border-radius: 8px;
+    padding: 6px 14px;
+    text-align: left;
+    cursor: pointer;
+    background: var(--app-input-bg);
+    transition: border-color .15s, background .15s, color .15s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    color: var(--popup-text-muted);
+}
+
+.spg-drop:hover,
+.spg-drop.dragover {
+    border-color: #4a9eff;
+    background: rgba(74, 158, 255, 0.08);
+    color: #4a9eff;
+}
+
+.spg-drop-icon { font-size: 16px; line-height: 1; }
+.spg-drop-text { flex: 1; }
+.spg-drop-text b { color: var(--window-text); }
+.spg-drop.dragover .spg-drop-text b,
+.spg-drop:hover .spg-drop-text b { color: #4a9eff; }
+
+.spg-drop-file {
+    font-size: 11px;
+    color: #4a9eff;
+    font-weight: 500;
+    white-space: nowrap;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.spg-drop.uploaded {
+    background: rgba(52, 199, 89, 0.1);
+    border-color: rgba(52, 199, 89, 0.5);
+    border-style: solid;
+    color: #34c759;
+}
+
+/* ---------- Scroll-контейнер ---------- */
 .spg-scroll {
     flex: 1;
     overflow-y: auto;
@@ -2178,48 +2245,96 @@ html, body {
 
 .spg-hidden { display: none !important; }
 
-.spg-drop {
-    border: 2px dashed var(--app-card-border);
-    border-radius: 10px;
-    padding: 26px;
-    text-align: center;
-    cursor: pointer;
+/* ---------- Скрытие комментариев: баннер ---------- */
+.spg-hidden-banner {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    background: rgba(255, 204, 0, 0.15);
+    color: #b8860b;
+    margin-bottom: 12px;
+}
+@media (prefers-color-scheme: dark) {
+    .spg-hidden-banner { color: #ffcc00; }
+}
+
+.spg-hidden-banner .spg-meta {
+    font-size: 11px;
+    opacity: .8;
+}
+
+.spg-hidden-banner .spg-spacer { flex: 1; }
+
+/* ---------- Поиск ---------- */
+.spg-search-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.spg-search-input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid var(--app-input-border);
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: inherit;
     background: var(--app-input-bg);
+    color: var(--app-input-text);
+    outline: none;
+    user-select: text;
     transition: border-color .15s, background .15s;
 }
 
-.spg-drop:hover,
-.spg-drop.dragover {
+.spg-search-input:focus {
     border-color: #4a9eff;
-    background: rgba(74, 158, 255, 0.08);
+    background: var(--app-card-hover);
+    box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.1);
 }
 
-.spg-drop-icon { font-size: 30px; line-height: 1; }
-.spg-drop-text { margin-top: 6px; color: var(--popup-text-muted); font-size: 13px; }
-.spg-drop-file { margin-top: 6px; color: #4a9eff; font-size: 12px; font-weight: 500; }
-
-.spg-log {
-    font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
-    font-size: 12px;
-    background: #0f172a;
-    color: #d1fae5;
-    padding: 12px;
-    border-radius: 8px;
-    white-space: pre-wrap;
-    max-height: 180px;
-    overflow: auto;
-    line-height: 1.5;
+.spg-search-input::placeholder {
+    color: var(--popup-text-light);
 }
 
-.spg-overview {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px 20px;
+.spg-search-info {
+    font-size: 11px;
+    color: var(--popup-text-muted);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Список цепочек со скроллом ---------- */
+.spg-chains-scroll {
+    max-height: 460px;
+    overflow-y: auto;
+    padding-right: 4px;
+    -webkit-overflow-scrolling: touch;
+}
+
+.spg-chains-scroll::-webkit-scrollbar { width: 8px; }
+.spg-chains-scroll::-webkit-scrollbar-track { background: transparent; border-radius: 4px; }
+.spg-chains-scroll::-webkit-scrollbar-thumb {
+    background: var(--app-card-border);
+    border-radius: 4px;
+}
+.spg-chains-scroll::-webkit-scrollbar-thumb:hover {
+    background: var(--popup-text-light);
+}
+
+.spg-empty-message {
+    padding: 30px 16px;
+    text-align: center;
+    color: var(--popup-text-light);
     font-size: 13px;
-    color: var(--window-text);
+    font-style: italic;
 }
-.spg-overview b { color: #4a9eff; }
 
+/* ---------- Цепочка ---------- */
 .spg-chain {
     border: 2px solid var(--app-card-border);
     border-radius: 10px;
@@ -2303,11 +2418,13 @@ html, body {
     white-space: nowrap;
 }
 
+/* ---------- Таблица цепочки ---------- */
 .spg-chain-table-scroll {
     margin-top: 10px;
     border-radius: 8px;
     overflow: auto;
     border: 1px solid var(--app-card-border);
+    max-height: 300px;
 }
 
 table.spg-chain-table {
@@ -2342,14 +2459,19 @@ table.spg-chain-table {
     color: var(--popup-text-muted);
 }
 .spg-chain-table td.spg-row-title { color: #a78bfa; }
+.spg-chain-table td.spg-xcell {
+    font-family: 'SF Mono', 'Consolas', monospace;
+    color: #4a9eff;
+    font-weight: 500;
+}
 .spg-chain-table td.spg-comment-cell {
     color: #4a9eff;
     font-weight: 500;
     font-family: 'SF Mono', 'Consolas', monospace;
+    word-break: break-word;
 }
 .spg-dash { color: var(--popup-text-light); }
 
-.spg-empty,
 .spg-empty-cell {
     color: var(--popup-text-light);
     text-align: center;
@@ -2357,6 +2479,7 @@ table.spg-chain-table {
     font-style: italic;
 }
 
+/* ---------- Toolbar и кнопки ---------- */
 .spg-toolbar {
     display: flex;
     gap: 8px;
@@ -2370,6 +2493,11 @@ table.spg-chain-table {
     font-size: 12px;
 }
 .spg-toolbar .spg-info b { color: var(--window-text); }
+.spg-toolbar .spg-label {
+    font-size: 12px;
+    color: var(--popup-text-muted);
+    font-weight: 500;
+}
 
 .spg-btn {
     background: var(--app-btn-bg);
@@ -2384,7 +2512,7 @@ table.spg-chain-table {
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    transition: background .15s, transform .05s;
+    transition: background .15s, transform .05s, filter .15s;
     white-space: nowrap;
 }
 
@@ -2396,6 +2524,21 @@ table.spg-chain-table {
     border-color: transparent;
 }
 .spg-btn.spg-primary:hover { background: #3a8eef; }
+.spg-btn.spg-success {
+    background: rgba(52, 199, 89, 0.15);
+    color: #34c759;
+    border-color: rgba(52, 199, 89, 0.4);
+}
+.spg-btn.spg-success:hover { background: rgba(52, 199, 89, 0.25); }
+.spg-btn.spg-warn {
+    background: rgba(255, 204, 0, 0.18);
+    color: #b8860b;
+    border-color: rgba(255, 204, 0, 0.4);
+}
+.spg-btn.spg-warn:hover { background: rgba(255, 204, 0, 0.28); }
+@media (prefers-color-scheme: dark) {
+    .spg-btn.spg-warn { color: #ffcc00; }
+}
 .spg-btn.spg-big { padding: 10px 22px; font-size: 13px; font-weight: 600; }
 .spg-btn.spg-small { padding: 4px 10px; font-size: 11px; }
 .spg-btn.spg-danger {
@@ -2405,6 +2548,17 @@ table.spg-chain-table {
 }
 .spg-btn.spg-danger:hover { background: rgba(255, 59, 48, 0.22); }
 
+.spg-file-inline {
+    padding: 4px 6px;
+    background: var(--app-input-bg);
+    border: 1px solid var(--app-input-border);
+    border-radius: 6px;
+    color: var(--window-text);
+    font-size: 11px;
+    max-width: 200px;
+}
+
+/* ---------- Поля ---------- */
 .spg-field-row {
     display: flex;
     gap: 14px;
@@ -2433,24 +2587,17 @@ table.spg-chain-table {
     width: 150px;
     outline: none;
     user-select: text;
-    transition: border-color .15s;
+    transition: border-color .15s, background .15s;
 }
 .spg-field input:focus {
     border-color: #4a9eff;
+    background: var(--app-card-hover);
     box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.1);
 }
 .spg-field.spg-wide input { width: 220px; }
 .spg-field .spg-hint { color: var(--popup-text-light); font-size: 10px; }
-.spg-file-inline {
-    padding: 6px;
-    background: var(--app-input-bg);
-    border: 1px solid var(--app-input-border);
-    border-radius: 8px;
-    color: var(--window-text);
-    width: auto !important;
-    font-size: 12px;
-}
 
+/* ---------- Mode tabs ---------- */
 .spg-mode-tabs {
     display: inline-flex;
     background: var(--app-btn-bg);
@@ -2476,6 +2623,7 @@ table.spg-chain-table {
     box-shadow: 0 1px 3px rgba(0,0,0,0.15);
 }
 
+/* ---------- Info blocks ---------- */
 .spg-info-block {
     margin-top: 10px;
     padding: 10px 14px;
@@ -2494,12 +2642,13 @@ table.spg-chain-table {
 .spg-mt-12 { margin-top: 12px; }
 .spg-mt-14 { margin-top: 14px; }
 
+/* ---------- Таблица расписания ---------- */
 .spg-table-scroll {
     margin-top: 10px;
     border-radius: 8px;
     overflow: auto;
     border: 1px solid var(--app-card-border);
-    max-height: 320px;
+    max-height: 340px;
 }
 
 table.spg-trains-table {
@@ -2532,8 +2681,8 @@ table.spg-trains-table {
     color: var(--popup-text-muted);
 }
 
-.spg-trains-table tr.spg-warn td { background: rgba(255, 204, 0, 0.1); }
-.spg-trains-table tr.spg-err  td { background: rgba(255, 59, 48, 0.08); }
+.spg-trains-table tr.spg-err td { background: rgba(255, 59, 48, 0.08); }
+.spg-trains-table tr.spg-incomplete td { background: rgba(255, 204, 0, 0.08); }
 
 .spg-trains-table input.spg-cell-input {
     padding: 5px 8px;
@@ -2547,15 +2696,17 @@ table.spg-trains-table {
     min-width: 70px;
     outline: none;
     user-select: text;
-    transition: border-color .15s;
+    transition: border-color .15s, background .15s;
 }
 .spg-trains-table input.spg-cell-input:focus {
     border-color: #4a9eff;
+    background: var(--app-card-hover);
     box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.1);
 }
 .spg-trains-table input.spg-train-input { width: 100px; }
 .spg-trains-table input.spg-time-input  { width: 90px; }
 
+/* ---------- Result preview ---------- */
 .spg-result-preview {
     background: #0f172a;
     color: #e2e8f0;
@@ -2571,6 +2722,7 @@ table.spg-trains-table {
     word-break: break-word;
 }
 
+/* ---------- Modal ---------- */
 .spg-modal-backdrop {
     position: absolute;
     inset: 0;
@@ -2586,14 +2738,20 @@ table.spg-trains-table {
     border: 1px solid var(--window-border);
     border-radius: 12px;
     padding: 22px;
-    max-width: 480px;
+    max-width: 560px;
     width: 100%;
+    max-height: 80vh;
+    overflow: auto;
     box-shadow: 0 20px 50px rgba(0,0,0,.35);
     color: var(--window-text);
 }
 .spg-modal-box h3 { margin: 0 0 10px; font-size: 15px; color: var(--window-text); }
 .spg-modal-box p { margin: 0 0 14px; color: var(--popup-text-muted); font-size: 13px; line-height: 1.5; }
-.spg-modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.spg-modal-box b { color: var(--window-text); }
+.spg-modal-box .spg-trains-table {
+    font-size: 11px;
+}
+.spg-modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
 
 /* ============================================================
    ЗАРПЛАТА
@@ -3866,6 +4024,27 @@ table.sal-table {
     .sudoku-key { min-width: 0; font-size: 18px; }
     .puzzle-board { max-width: 100%; }
 
+    /* СПГ — мобильная адаптация */
+    .spg-topbar { padding: 8px 10px; gap: 8px; }
+    .spg-topbar-logo { font-size: 12px; }
+    .spg-drop { padding: 6px 10px; min-width: 200px; }
+    .spg-scroll { padding: 12px; }
+    .spg-section { padding: 12px; }
+    .spg-field input { width: 100%; min-width: 0; }
+    .spg-field.spg-wide input { width: 100%; }
+    .spg-field { flex: 1; min-width: 140px; }
+    .spg-btn { min-height: 38px; }
+    .spg-btn.spg-big { flex: 1; justify-content: center; }
+    .spg-search-input { font-size: 16px !important; padding: 10px 12px; }
+    .spg-chains-scroll { max-height: 380px; }
+    .spg-chain-table-scroll { max-height: 260px; font-size: 11px; }
+    .spg-chain-table th,
+    .spg-chain-table td { padding: 5px 6px; }
+    .spg-trains-table input.spg-cell-input { font-size: 14px !important; }
+    .spg-hidden-banner { padding: 8px 10px; gap: 6px; }
+    .spg-hidden-banner .spg-meta { font-size: 10px; }
+    .spg-modal-box { max-width: 90vw; padding: 18px; }
+
     .clock-popup { width: calc(100vw - 20px); max-width: 340px; right: -10px; padding: 16px; }
 
     .currency-modal-content { max-width: calc(100vw - 20px); }
@@ -3903,19 +4082,6 @@ table.sal-table {
     #panel-cloud .cloud-switch { width: 48px; height: 28px; }
     #panel-cloud .cloud-switch .slider::before { height: 22px; width: 22px; }
     #panel-cloud .cloud-switch input:checked + .slider::before { transform: translateX(20px); }
-
-    /* СПГ — мобильная адаптация */
-    .spg-scroll { padding: 12px; }
-    .spg-section { padding: 12px; }
-    .spg-field input { width: 100%; min-width: 0; }
-    .spg-field.spg-wide input { width: 100%; }
-    .spg-field { flex: 1; min-width: 140px; }
-    .spg-btn { min-height: 38px; }
-    .spg-btn.spg-big { flex: 1; justify-content: center; }
-    .spg-chain-table-scroll { font-size: 11px; }
-    .spg-chain-table th,
-    .spg-chain-table td { padding: 5px 6px; }
-    .spg-trains-table input.spg-cell-input { font-size: 14px !important; }
 
     /* Часы мировых городов — мобильные */
     .world-clock-panel {
