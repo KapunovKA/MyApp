@@ -2160,6 +2160,7 @@ html, body {
     color: var(--popup-text-light);
     text-decoration: line-through;
 }
+
 /* Кнопки управления в #panel-map (вне .cloud-panel) */
 #panel-map .cloud-btn {
     background: var(--app-btn-bg);
@@ -2191,15 +2192,6 @@ html, body {
 #panel-map .cloud-btn.danger:hover:not(:disabled) {
     background: rgba(255, 59, 48, 0.22);
     filter: none;
-}
-
-/* На мобильном — крупнее */
-@media (max-width: 768px) {
-    #panel-map .cloud-btn {
-        min-height: 44px;
-        font-size: 14px;
-        border-radius: 10px;
-    }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -4087,6 +4079,12 @@ table.sal-table {
     #panel-map .city-form-row {
         flex-direction: column;
         gap: 10px;
+    }
+
+    #panel-map .cloud-btn {
+        min-height: 44px;
+        font-size: 14px;
+        border-radius: 10px;
     }
 
     .games-tabs { padding: 0 6px; }
