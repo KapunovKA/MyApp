@@ -453,6 +453,34 @@ html, body {
 .currency-item.updating .currency-value { animation: currencyPulse 0.4s ease; }
 
 /* ============================================================
+   ИКОНКА НАСТРОЕК
+   ============================================================ */
+.settings-icon-btn {
+    font-size: 15px;
+    line-height: 1;
+    padding: 5px 8px;
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    transition: background 0.15s, transform 0.15s;
+}
+
+.settings-icon-btn:hover {
+    background: var(--menubar-hover);
+    transform: rotate(45deg);
+}
+
+.settings-icon-btn:active {
+    transform: rotate(45deg) scale(0.9);
+}
+
+.settings-icon-btn.running {
+    background: var(--menubar-active);
+}
+
+/* ============================================================
    КОЛОКОЛЬЧИК УВЕДОМЛЕНИЙ
    ============================================================ */
 .notif-bell-container { position: relative; display: flex; align-items: center; }
@@ -3854,6 +3882,13 @@ table.sal-table {
     .menu-right { gap: 6px; flex-shrink: 0; }
     .currency-widget { display: none; }
     #clock { font-size: 12px; padding: 6px 8px; }
+
+    .settings-icon-btn {
+        font-size: 18px;
+        padding: 6px 8px;
+        min-width: 40px;
+        min-height: 40px;
+    }
 
     .notif-bell {
         font-size: 18px;
