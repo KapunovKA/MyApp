@@ -11,7 +11,7 @@
     //  🔑 API-КЛЮЧ WeatherAPI.com
     //  Получить: https://www.weatherapi.com/ → Sign Up → Dashboard
     // ============================================================
-    const WEATHER_API_KEY = 5a9ed6a21998469ba6d142535262409;
+    const WEATHER_API_KEY = '5a9ed6a21998469ba6d142535262409';
 
     let canvas, ctx, W, H;
     let animationId = null;
