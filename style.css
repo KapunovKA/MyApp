@@ -2518,6 +2518,14 @@ table.spg-chain-table {
     color: #4a9eff;
     font-weight: 500;
 }
+.spg-chain-table td.spg-comment-cell {
+    color: #4a9eff;
+    font-weight: 500;
+    font-family: 'SF Mono', 'Consolas', monospace;
+    word-break: break-word;
+}
+
+/* Колонка «Цвет» (strokeColor) */
 .spg-chain-table td.spg-stroke-cell {
     font-family: 'SF Mono', 'Consolas', monospace;
     font-size: 11px;
@@ -2538,6 +2546,7 @@ table.spg-chain-table {
     color: var(--popup-text-muted);
     vertical-align: middle;
 }
+
 .spg-dash { color: var(--popup-text-light); }
 
 .spg-empty-cell {
@@ -2990,7 +2999,7 @@ table.sal-table {
     color: var(--app-table-header-text);
     font-weight: 600;
     padding: 8px 10px;
-    text-align: right;                    /* ← числовые колонки по правому краю */
+    text-align: right;
     border-bottom: 2px solid var(--app-border);
     white-space: nowrap;
     position: sticky;
@@ -3002,7 +3011,6 @@ table.sal-table {
     transition: background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
 }
 
-/* Заголовки текстовых колонок (Месяц, Организация) — по левому краю */
 .sal-table thead th:nth-child(1),
 .sal-table thead th:nth-child(2) {
     text-align: left;
