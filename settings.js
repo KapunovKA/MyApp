@@ -157,7 +157,7 @@ function createSettingsApp() {
                         <span class="cities-counter" id="citiesCounter">0</span>
                     </div>
                     <div class="wallpaper-mode-hint" style="margin-bottom: 8px;">
-                        Отметьте ⭐ «Мой город» — он будет пульсировать на карте. Часы внизу показывают время для всех выбранных.
+                        Отметьте ⭐ «Мой город» — он будет пульсировать на карте. Часы внизу показывают время для всех выбранных. Кнопка ✏️ редактирует название, координаты и часовой пояс.
                     </div>
 
                     <div class="cities-list" id="citiesList"></div>
@@ -166,7 +166,7 @@ function createSettingsApp() {
                         ➕ Добавить свой город
                     </button>
 
-                    <!-- Форма добавления -->
+                    <!-- Форма добавления / редактирования -->
                     <div class="city-add-form" id="cityAddForm">
                         <div>
                             <label class="city-form-label" for="cityNameInput">Название города</label>
@@ -689,6 +689,9 @@ function initMapPanel(win) {
 
     if (!list) return;
 
+    // -1 = не редактируем, иначе — индекс редактируемого города
+    let editingIndex = -1;
+
     function getCities() {
         if (typeof window.getCitiesList === 'function') {
             return window.getCitiesList();
@@ -732,6 +735,7 @@ function initMapPanel(win) {
                     <div class="city-name">${city.name}</div>
                     <div class="city-coords">${lat}, ${lon} · ${tz}</div>
                 </div>
+                <button class="city-edit" title="Редактировать">✏️</button>
                 <button class="city-remove" title="Удалить">🗑️</button>
             `;
 
@@ -755,6 +759,12 @@ function initMapPanel(win) {
                 }
             });
 
+            // Редактирование
+            item.querySelector('.city-edit').addEventListener('click', () => {
+                editingIndex = idx;
+                openCityForm(city);
+            });
+
             // Удаление
             item.querySelector('.city-remove').addEventListener('click', () => {
                 const cities = getCities();
@@ -776,6 +786,52 @@ function initMapPanel(win) {
 
             list.appendChild(item);
         });
+    }
+
+    // ---- Форма: открыть для добавления или редактирования ----
+    function openCityForm(cityToEdit) {
+        addForm.classList.add('visible');
+        addBtn.style.display = 'none';
+
+        const isEdit = !!cityToEdit && editingIndex >= 0;
+
+        let titleEl = addForm.querySelector('.city-form-title');
+        if (!titleEl) {
+            titleEl = document.createElement('div');
+            titleEl.className = 'city-form-title';
+            addForm.insertBefore(titleEl, addForm.firstChild);
+        }
+        titleEl.textContent = isEdit ? '✏️ Редактирование города' : '➕ Новый город';
+
+        if (isEdit) {
+            nameInput.value = cityToEdit.name || '';
+            latInput.value = cityToEdit.lat != null ? cityToEdit.lat : '';
+            lonInput.value = cityToEdit.lon != null ? cityToEdit.lon : '';
+            tzInput.value = cityToEdit.tz != null ? cityToEdit.tz : 0;
+            submitBtn.textContent = '💾 Сохранить';
+        } else {
+            nameInput.value = '';
+            latInput.value = '';
+            lonInput.value = '';
+            tzInput.value = '3';
+            submitBtn.textContent = '✓ Добавить';
+        }
+
+        nameInput.focus();
+    }
+
+    function closeCityForm() {
+        addForm.classList.remove('visible');
+        addBtn.style.display = 'flex';
+        editingIndex = -1;
+        nameInput.value = '';
+        latInput.value = '';
+        lonInput.value = '';
+        tzInput.value = '3';
+        submitBtn.textContent = '✓ Добавить';
+
+        const titleEl = addForm.querySelector('.city-form-title');
+        if (titleEl) titleEl.textContent = '➕ Новый город';
     }
 
     // ---- Пресеты ----
@@ -848,18 +904,12 @@ function initMapPanel(win) {
 
     // ---- Форма ----
     function showForm() {
-        addForm.classList.add('visible');
-        addBtn.style.display = 'none';
-        nameInput.value = '';
-        latInput.value = '';
-        lonInput.value = '';
-        tzInput.value = '3';
-        nameInput.focus();
+        editingIndex = -1;
+        openCityForm(null);
     }
 
     function hideForm() {
-        addForm.classList.remove('visible');
-        addBtn.style.display = 'flex';
+        closeCityForm();
     }
 
     addBtn.addEventListener('click', showForm);
@@ -899,8 +949,13 @@ function initMapPanel(win) {
         }
 
         const cities = getCities();
+        const isEdit = editingIndex >= 0;
 
-        if (cities.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+        // Проверка на дубликат имени (кроме редактируемого города)
+        const duplicateIdx = cities.findIndex(
+            (c, i) => i !== editingIndex && c.name.toLowerCase() === name.toLowerCase()
+        );
+        if (duplicateIdx !== -1) {
             if (window.showNotification) window.showNotification({
                 title: 'Ошибка', message: 'Город с таким названием уже есть',
                 type: 'warning', icon: '⚠️', duration: 2500,
@@ -908,19 +963,38 @@ function initMapPanel(win) {
             return;
         }
 
-        const makeMy = cities.length === 0;
-        cities.push({ name, lat, lon, tz, my: makeMy });
-        saveCities(cities);
+        if (isEdit) {
+            // Сохраняем флаг «мой город»
+            const wasMy = cities[editingIndex].my;
+            cities[editingIndex] = { name, lat, lon, tz, my: wasMy };
 
-        renderCities();
-        renderPresets();
-        hideForm();
+            saveCities(cities);
+            renderCities();
+            renderPresets();
+            closeCityForm();
 
-        if (window.showNotification) {
-            window.showNotification({
-                title: 'Город добавлен', message: name,
-                type: 'success', icon: '🏙️', duration: 2500,
-            });
+            if (window.showNotification) {
+                window.showNotification({
+                    title: 'Город обновлён', message: name,
+                    type: 'success', icon: '✏️', duration: 2500,
+                });
+            }
+        } else {
+            // Добавление
+            const makeMy = cities.length === 0;
+            cities.push({ name, lat, lon, tz, my: makeMy });
+            saveCities(cities);
+
+            renderCities();
+            renderPresets();
+            closeCityForm();
+
+            if (window.showNotification) {
+                window.showNotification({
+                    title: 'Город добавлен', message: name,
+                    type: 'success', icon: '🏙️', duration: 2500,
+                });
+            }
         }
     });
 

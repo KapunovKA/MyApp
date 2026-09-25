@@ -1011,6 +1011,7 @@ const APP_LAUNCHERS = {
     games: createGamesApp,
     settings: createSettingsApp,
     spg: createSpgApp,
+    jsoneditor: createJsonEditorApp,
 };
 
 const APP_TITLES = {
@@ -1019,6 +1020,7 @@ const APP_TITLES = {
     games: 'Games',
     settings: 'System Settings',
     spg: 'СПГ — Технологические цепочки',
+    jsoneditor: 'Редактор JSON',
 };
 
 // ============================================================
