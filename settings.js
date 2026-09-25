@@ -191,8 +191,7 @@ function createSettingsApp() {
                                    placeholder="3" step="1" min="-12" max="14" value="3">
                         </div>
                         <div class="city-form-hint">
-                            💡 Координаты легко найти на <a href="https://www.openstreetmap.org" target="_blank">openstreetmap.org</a> —
-                            правый клик по городу → «Показать адрес».
+                            💡 Координаты легко найти на <a href="https://www.timeserver.ru/"_blank">timeserver.ru</a>
                         </div>
                         <div class="city-form-actions">
                             <button class="city-form-btn secondary" id="cityCancelBtn">Отмена</button>
