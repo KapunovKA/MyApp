@@ -1,7 +1,8 @@
 // ============================================================
 //  ЖИВАЯ ЗАСТАВКА: КАРТА МИРА ИЗ ТОЧЕК (в стиле Apple Watch)
-//  + день/ночь, терминатор, города, часы, погода
-//  Провайдер погоды: WeatherAPI.com или Open-Meteo (см. APP_CONFIG)
+//  + день/ночь, терминатор, города, часы, погода (Open-Meteo)
+//  + адаптация под мобильные (обрезка по долготе)
+//  + панель погоды показывает только города с visible !== false
 // ============================================================
 
 (function initWorldMap() {
@@ -18,34 +19,19 @@
     const WEATHER_CACHE_TTL = 10 * 60 * 1000;
 
     // --------------------------------------------------------
-    //  Читаем конфиг (безопасно, с fallback)
-    // --------------------------------------------------------
-    function getConfig() {
-        const cfg = (window.APP_CONFIG && typeof window.APP_CONFIG === 'object')
-            ? window.APP_CONFIG
-            : {};
-        return {
-            units: cfg.WEATHER_UNITS || 'metric',
-            lang: cfg.WEATHER_LANG || 'ru',
-            provider: cfg.WEATHER_PROVIDER || 'open-meteo',
-            apiKey: (typeof cfg.WEATHER_API_KEY === 'string') ? cfg.WEATHER_API_KEY.trim() : '',
-        };
-    }
-
-    // --------------------------------------------------------
     //  ГОРОДА — сохраняются в localStorage
     // --------------------------------------------------------
     const CITIES_STORAGE_KEY = 'worldMapCities';
 
     const DEFAULT_CITIES = [
-        { name: 'Москва',       lat: 55.75, lon: 37.62,  tz: 3,  my: true },
-        { name: 'Лондон',       lat: 51.51, lon: -0.13,  tz: 0,  my: false },
-        { name: 'Нью-Йорк',     lat: 40.71, lon: -74.01, tz: -5, my: false },
-        { name: 'Лос-Анджелес', lat: 34.05, lon: -118.24, tz: -8, my: false },
-        { name: 'Токио',        lat: 35.68, lon: 139.69, tz: 9,  my: false },
-        { name: 'Сидней',       lat: -33.87, lon: 151.21, tz: 10, my: false },
-        { name: 'Дубай',        lat: 25.20, lon: 55.27,  tz: 4,  my: false },
-        { name: 'Сан-Паулу',    lat: -23.55, lon: -46.63, tz: -3, my: false },
+        { name: 'Москва',       lat: 55.75, lon: 37.62,  tz: 3,  my: true,  visible: true },
+        { name: 'Лондон',       lat: 51.51, lon: -0.13,  tz: 0,  my: false, visible: true },
+        { name: 'Нью-Йорк',     lat: 40.71, lon: -74.01, tz: -5, my: false, visible: true },
+        { name: 'Лос-Анджелес', lat: 34.05, lon: -118.24, tz: -8, my: false, visible: true },
+        { name: 'Токио',        lat: 35.68, lon: 139.69, tz: 9,  my: false, visible: true },
+        { name: 'Сидней',       lat: -33.87, lon: 151.21, tz: 10, my: false, visible: true },
+        { name: 'Дубай',        lat: 25.20, lon: 55.27,  tz: 4,  my: false, visible: true },
+        { name: 'Сан-Паулу',    lat: -23.55, lon: -46.63, tz: -3, my: false, visible: true },
     ];
 
     let CITIES = loadCities();
@@ -55,7 +41,13 @@
             const saved = localStorage.getItem(CITIES_STORAGE_KEY);
             if (saved) {
                 const parsed = JSON.parse(saved);
-                if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    // Миграция: добавляем visible: true, если поле отсутствует
+                    return parsed.map(c => ({
+                        ...c,
+                        visible: c.visible !== false
+                    }));
+                }
             }
         } catch (e) {}
         return JSON.parse(JSON.stringify(DEFAULT_CITIES));
@@ -72,19 +64,27 @@
     }
 
     function setCitiesList(cities) {
-        CITIES = Array.isArray(cities) ? cities : [];
+        CITIES = Array.isArray(cities) ? cities.map(c => ({
+            ...c,
+            visible: c.visible !== false
+        })) : [];
         saveCities(CITIES);
         rebuildClockPanel();
+
+        // Очищаем кэш погоды для удалённых городов
         Object.keys(weatherData).forEach(name => {
             if (!CITIES.find(c => c.name === name)) delete weatherData[name];
         });
+
+        // Перезапрашиваем погоду для новых городов
+        renderAllWeather();
     }
 
     window.getCitiesList = getCitiesList;
     window.setCitiesList = setCitiesList;
 
     // --------------------------------------------------------
-    //  ПОЛИГОНЫ КОНТИНЕНТОВ (для генерации точек)
+    //  ПОЛИГОНЫ КОНТИНЕНТОВ
     // --------------------------------------------------------
     const CONTINENT_POLYGONS = [
         // ─── СЕВЕРНАЯ АМЕРИКА ───
@@ -473,7 +473,7 @@
     };
 
     // --------------------------------------------------------
-    //  Часы внизу
+    //  Часы внизу — только для видимых городов
     // --------------------------------------------------------
     function initClockPanel() {
         const desktop = document.getElementById('desktop');
@@ -493,7 +493,14 @@
         if (!clockPanel) return;
         clockPanel.innerHTML = '';
 
-        CITIES.forEach(city => {
+        const visibleCities = CITIES.filter(c => c.visible !== false);
+
+        if (visibleCities.length === 0) {
+            clockPanel.innerHTML = '<div class="world-clock-empty">Нет городов для отображения. Добавьте их в Настройках → Карта.</div>';
+            return;
+        }
+
+        visibleCities.forEach(city => {
             const item = document.createElement('div');
             item.className = 'world-clock-item';
             if (city.my) item.classList.add('my-location');
@@ -520,7 +527,9 @@
         const now = new Date();
         const sunPos = getSolarPosition(now);
 
-        CITIES.forEach(city => {
+        const visibleCities = CITIES.filter(c => c.visible !== false);
+
+        visibleCities.forEach(city => {
             const item = clockPanel.querySelector(`[data-city="${cssEscape(city.name)}"]`);
             if (!item) return;
 
@@ -545,9 +554,9 @@
         });
     }
 
-    // ============================================================
-    //  🌤️ Погода — роутер по провайдерам
-    // ============================================================
+    // --------------------------------------------------------
+    //  🌤️ Погода — только для видимых городов
+    // --------------------------------------------------------
     function startWeatherUpdates() {
         if (weatherTimer) clearInterval(weatherTimer);
         setTimeout(loadAllWeather, 1500);
@@ -555,11 +564,10 @@
     }
 
     async function loadAllWeather() {
-        if (CITIES.length === 0) return;
+        const visibleCities = CITIES.filter(c => c.visible !== false);
+        if (visibleCities.length === 0) return;
 
-        const cfg = getConfig();
-
-        const allFresh = CITIES.every(city => {
+        const allFresh = visibleCities.every(city => {
             const cached = weatherData[city.name];
             return cached && !cached.error && Date.now() - cached.ts < WEATHER_CACHE_TTL;
         });
@@ -569,8 +577,7 @@
             return;
         }
 
-        // Показываем «загрузка»
-        CITIES.forEach(city => {
+        visibleCities.forEach(city => {
             const row = document.querySelector(`[data-city="${cssEscape(city.name)}"] .weather-row`);
             if (row) {
                 row.className = 'weather-row loading';
@@ -578,97 +585,11 @@
             }
         });
 
-        try {
-            if (cfg.provider === 'weatherapi') {
-                await loadWeatherFromWeatherApi(cfg);
-            } else {
-                await loadWeatherFromOpenMeteo(cfg);
-            }
-            renderAllWeather();
-        } catch (e) {
-            console.warn('[Weather] Ошибка загрузки:', e.message);
-            CITIES.forEach(city => {
-                if (!weatherData[city.name]) {
-                    weatherData[city.name] = { error: true, ts: Date.now() };
-                }
-            });
-            renderAllWeather();
-        }
-    }
+        const lats = visibleCities.map(c => c.lat).join(',');
+        const lons = visibleCities.map(c => c.lon).join(',');
 
-    // ---------- WeatherAPI.com ----------
-    async function loadWeatherFromWeatherApi(cfg) {
-        if (!cfg.apiKey) {
-            console.warn('[Weather] WeatherAPI: ключ не задан в APP_CONFIG.WEATHER_API_KEY');
-            CITIES.forEach(city => {
-                weatherData[city.name] = { error: true, ts: Date.now() };
-            });
-            return;
-        }
-
-        const promises = CITIES.map(city => fetchCityWeatherApi(city, cfg.apiKey));
-        await Promise.all(promises);
-    }
-
-    async function fetchCityWeatherApi(city, apiKey) {
-        try {
-            const q = `${city.lat},${city.lon}`;
-            const url = `https://api.weatherapi.com/v1/current.json` +
-                `?key=${encodeURIComponent(apiKey)}` +
-                `&q=${encodeURIComponent(q)}` +
-                `&lang=ru&aqi=no`;
-
-            const resp = await fetch(url);
-            if (!resp.ok) {
-                throw new Error(`HTTP ${resp.status}`);
-            }
-            const data = await resp.json();
-            if (!data.current) throw new Error('нет поля current');
-
-            weatherData[city.name] = {
-                temp: Math.round(data.current.temp_c ?? 0),
-                feelsLike: Math.round(data.current.feelslike_c ?? 0),
-                humidity: Math.round(data.current.humidity ?? 0),
-                windSpeed: data.current.wind_kph
-                    ? (data.current.wind_kph / 3.6).toFixed(1)
-                    : '0.0',
-                icon: weatherApiEmoji(data.current.condition.code, data.current.is_day === 1),
-                desc: (data.current.condition.text || '—').toLowerCase(),
-                ts: Date.now(),
-            };
-        } catch (e) {
-            console.warn(`[Weather] ${city.name}:`, e.message);
-            weatherData[city.name] = { error: true, ts: Date.now() };
-        }
-    }
-
-    function weatherApiEmoji(code, isDay) {
-        // WeatherAPI condition codes
-        if (code === 1000) return isDay ? '☀️' : '🌙';
-        if (code === 1003) return isDay ? '🌤️' : '☁️';
-        if (code === 1006) return '⛅';
-        if (code === 1009) return '☁️';
-        if (code === 1030 || code === 1135 || code === 1147) return '🌫️';
-        if (code === 1063 || code === 1180 || code === 1183) return '🌦️';
-        if (code === 1186 || code === 1189 || code === 1192 || code === 1195) return '🌧️';
-        if (code === 1240 || code === 1243 || code === 1246) return '🌧️';
-        if (code === 1198 || code === 1201) return '🌧️';
-        if (code === 1066 || code === 1210 || code === 1213) return '🌨️';
-        if (code === 1216 || code === 1219 || code === 1222 || code === 1225) return '❄️';
-        if (code === 1114 || code === 1117) return '🌨️';
-        if (code === 1087 || code === 1273 || code === 1276 || code === 1279 || code === 1282) return '⛈️';
-        if (code === 1237 || code === 1261 || code === 1264) return '🌨️';
-        if (code === 1072) return '🌧️';
-        if (code === 1150 || code === 1153 || code === 1168 || code === 1171) return '🌧️';
-        return '🌡️';
-    }
-
-    // ---------- Open-Meteo (fallback) ----------
-    async function loadWeatherFromOpenMeteo(cfg) {
-        const lats = CITIES.map(c => c.lat).join(',');
-        const lons = CITIES.map(c => c.lon).join(',');
-
-        const tempUnit = cfg.units === 'imperial' ? 'fahrenheit' : 'celsius';
+        const units = (window.APP_CONFIG?.WEATHER_UNITS) || 'metric';
+        const tempUnit = units === 'imperial' ? 'fahrenheit' : 'celsius';
 
         const url = 'https://api.open-meteo.com/v1/forecast' +
             `?latitude=${lats}` +
@@ -678,30 +599,43 @@
             '&wind_speed_unit=ms' +
             '&timezone=auto';
 
-        const resp = await fetch(url);
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        try {
+            const resp = await fetch(url);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
 
-        const data = await resp.json();
-        const results = Array.isArray(data) ? data : [data];
+            const data = await resp.json();
+            const results = Array.isArray(data) ? data : [data];
 
-        results.forEach((result, idx) => {
-            const city = CITIES[idx];
-            if (!city || !result || !result.current) return;
+            results.forEach((result, idx) => {
+                const city = visibleCities[idx];
+                if (!city || !result || !result.current) return;
 
-            const current = result.current;
-            weatherData[city.name] = {
-                temp: Math.round(current.temperature_2m ?? 0),
-                feelsLike: Math.round(current.apparent_temperature ?? 0),
-                humidity: Math.round(current.relative_humidity_2m ?? 0),
-                windSpeed: (current.wind_speed_10m ?? 0).toFixed(1),
-                icon: openMeteoEmoji(current.weather_code, current.is_day === 1),
-                desc: openMeteoDesc(current.weather_code),
-                ts: Date.now(),
-            };
-        });
+                const current = result.current;
+                const code = current.weather_code;
+                const isDay = current.is_day === 1;
+
+                weatherData[city.name] = {
+                    temp: Math.round(current.temperature_2m ?? 0),
+                    feelsLike: Math.round(current.apparent_temperature ?? 0),
+                    humidity: Math.round(current.relative_humidity_2m ?? 0),
+                    windSpeed: (current.wind_speed_10m ?? 0).toFixed(1),
+                    icon: getWeatherEmojiFromCode(code, isDay),
+                    desc: getWeatherDescription(code),
+                    ts: Date.now(),
+                };
+            });
+
+            renderAllWeather();
+        } catch (e) {
+            console.warn('[Weather] Ошибка загрузки:', e.message);
+            visibleCities.forEach(city => {
+                weatherData[city.name] = { error: true, ts: Date.now() };
+            });
+            renderAllWeather();
+        }
     }
 
-    function openMeteoEmoji(code, isDay) {
+    function getWeatherEmojiFromCode(code, isDay) {
         if (code === 0) return isDay ? '☀️' : '🌙';
         if (code === 1) return isDay ? '🌤️' : '🌙';
         if (code === 2) return isDay ? '⛅' : '☁️';
@@ -720,8 +654,8 @@
         return '🌡️';
     }
 
-    function openMeteoDesc(code) {
-        const d = {
+    function getWeatherDescription(code) {
+        const descriptions = {
             0: 'ясно', 1: 'преимущ. ясно', 2: 'переменная обл.', 3: 'пасмурно',
             45: 'туман', 48: 'изморозь',
             51: 'слабая морось', 53: 'морось', 55: 'сильная морось',
@@ -733,21 +667,26 @@
             85: 'снегопад', 86: 'снегопад',
             95: 'гроза', 96: 'гроза с градом', 99: 'гроза с градом',
         };
-        return d[code] || '—';
+        return descriptions[code] || '—';
     }
 
-    // --------------------------------------------------------
-    //  Рендер погоды
-    // --------------------------------------------------------
     function renderAllWeather() {
-        CITIES.forEach(city => renderCityWeather(city));
+        CITIES.filter(c => c.visible !== false).forEach(city => renderCityWeather(city));
     }
 
     function renderCityWeather(city) {
         const item = document.querySelector(`[data-city="${cssEscape(city.name)}"]`);
         if (!item) return;
 
+        // Проверяем настройку «показывать погоду»
+        const showWeather = localStorage.getItem('weatherShow') !== '0';
         let row = item.querySelector('.weather-row');
+
+        if (!showWeather) {
+            if (row) row.remove();
+            return;
+        }
+
         if (!row) {
             row = document.createElement('div');
             row.className = 'weather-row loading';
@@ -769,16 +708,25 @@
             return;
         }
 
-        const cfg = getConfig();
-        const unit = cfg.units === 'imperial' ? 'F' : 'C';
+        const style = localStorage.getItem('weatherStyle') || 'icon-temp-desc';
+        const unit = (window.APP_CONFIG?.WEATHER_UNITS === 'imperial') ? 'F' : 'C';
 
         row.className = 'weather-row updating';
         row.title = `Ощущается: ${data.feelsLike}°${unit} · Влажность: ${data.humidity}% · Ветер: ${data.windSpeed} м/с`;
-        row.innerHTML = `
-            <span class="weather-icon">${data.icon}</span>
-            <span class="weather-temp">${data.temp}°${unit}</span>
-            <span class="weather-desc">${data.desc}</span>
-        `;
+
+        let html = '';
+        if (style === 'icon-temp') {
+            html = `<span class="weather-icon">${data.icon}</span><span class="weather-temp">${data.temp}°${unit}</span>`;
+        } else if (style === 'temp-only') {
+            html = `<span class="weather-temp">${data.temp}°${unit}</span>`;
+        } else {
+            html = `
+                <span class="weather-icon">${data.icon}</span>
+                <span class="weather-temp">${data.temp}°${unit}</span>
+                <span class="weather-desc">${data.desc}</span>
+            `;
+        }
+        row.innerHTML = html;
 
         setTimeout(() => {
             if (row.classList.contains('updating')) {
@@ -900,7 +848,7 @@
     }
 
     // --------------------------------------------------------
-    //  Маркеры городов
+    //  Маркеры городов (все города — и видимые, и скрытые)
     // --------------------------------------------------------
     function drawCityMarkers(sunPos) {
         const t = performance.now() / 1000;
@@ -912,14 +860,15 @@
 
             const isDay = isDaylight(city.lat, city.lon, sunPos);
             const isMe = city.my;
+            const isVisible = city.visible !== false;
 
-            const baseRadius = isMe ? 4 : 3;
+            const baseRadius = isMe ? 4 : (isVisible ? 3 : 2.5);
 
             const glow = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, baseRadius * 4);
             const glowColor = isMe
                 ? '74, 158, 255'
                 : (isDay ? '255, 220, 120' : '140, 180, 255');
-            glow.addColorStop(0, `rgba(${glowColor}, 0.4)`);
+            glow.addColorStop(0, `rgba(${glowColor}, ${isVisible ? 0.4 : 0.2})`);
             glow.addColorStop(1, `rgba(${glowColor}, 0)`);
             ctx.fillStyle = glow;
             ctx.beginPath();
@@ -931,7 +880,9 @@
             ctx.fillStyle = isMe
                 ? '#4a9eff'
                 : (isDay ? '#ffd76a' : '#8ab4ff');
+            ctx.globalAlpha = isVisible ? 1 : 0.5;
             ctx.fill();
+            ctx.globalAlpha = 1;
 
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
             ctx.lineWidth = isMe ? 1.5 : 1;
@@ -946,6 +897,7 @@
                 ctx.stroke();
             }
 
+            // Скрытые города — подпись приглушённая
             ctx.font = isMe
                 ? '600 11px -apple-system, sans-serif'
                 : '500 10px -apple-system, sans-serif';
@@ -958,9 +910,13 @@
             ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
             ctx.fillText(city.name, labelX + 1, labelY + 1);
 
-            ctx.fillStyle = isMe
-                ? '#4a9eff'
-                : (isDay ? 'rgba(255, 255, 255, 0.9)' : 'rgba(180, 200, 255, 0.75)');
+            if (isMe) {
+                ctx.fillStyle = '#4a9eff';
+            } else if (isVisible) {
+                ctx.fillStyle = isDay ? 'rgba(255, 255, 255, 0.9)' : 'rgba(180, 200, 255, 0.75)';
+            } else {
+                ctx.fillStyle = 'rgba(180, 180, 180, 0.5)';
+            }
             ctx.fillText(city.name, labelX, labelY);
         });
     }
@@ -1001,6 +957,18 @@
             }
         }
     });
+
+    // --------------------------------------------------------
+    //  Публичные функции для настроек
+    // --------------------------------------------------------
+    window.refreshWeather = function() {
+        renderAllWeather();
+    };
+
+    window.reloadWeather = function() {
+        Object.keys(weatherData).forEach(k => delete weatherData[k]);
+        loadAllWeather();
+    };
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
