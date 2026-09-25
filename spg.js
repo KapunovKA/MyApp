@@ -1,5 +1,6 @@
 // ============================================================
-//  СПГ — Технологические цепочки (v2)
+//  СПГ — Технологические цепочки (v3)
+//  + strokeColor по номеру поезда
 //  Интеграция в macOS-систему (createWindow)
 // ============================================================
 
@@ -146,8 +147,8 @@ function createSpgApp() {
 
     const win = createWindow({
         title: 'СПГ — Технологические цепочки',
-        width: 960,
-        height: 760,
+        width: 980,
+        height: 780,
         content: html,
     });
     win.dataset.app = 'spg';
@@ -233,6 +234,27 @@ function spgInit(win) {
         if (n < min) return min;
         if (n > max) return max;
         return n;
+    }
+
+    /**
+     * Возвращает strokeColor по номеру поезда.
+     * 6014-6999 → #008000
+     * 7100-7399 → #0000ff
+     * 7600-7900 → #800080
+     * иначе → null (оставить как в оригинале)
+     */
+    function getStrokeColorForTrain(trainNum) {
+        if (trainNum == null) return null;
+        const s = String(trainNum).trim();
+        const m = s.match(/^(\d+)/);
+        if (!m) return null;
+        const n = parseInt(m[1], 10);
+        if (isNaN(n)) return null;
+
+        if (n >= 6014 && n <= 6999) return '#008000';
+        if (n >= 7100 && n <= 7399) return '#0000ff';
+        if (n >= 7600 && n <= 7900) return '#800080';
+        return null;
     }
 
     // ============================================================
@@ -354,7 +376,8 @@ function spgInit(win) {
                 opsByChain[key].push({
                     id: op.id, label: op.label, type: op.type,
                     x: op.x, duration: op.duration, iconId: op.iconId,
-                    comment: op.comment, rowId: row.id, rowTitle: row.title
+                    comment: op.comment, strokeColor: op.strokeColor,
+                    rowId: row.id, rowTitle: row.title
                 });
             }
         }
@@ -634,12 +657,22 @@ function spgInit(win) {
                     '<th>Операция</th>' +
                     '<th>Тип</th>' +
                     '<th>x (чч:мм)</th>' +
-                    '<th>Длит.</th>';
+                    '<th>Длит.</th>' +
+                    '<th>Цвет</th>';
             if (!commentsHidden) html += '<th>Комментарий</th>';
             html += '</tr>';
 
             for (let j = 0; j < c.operations.length; j++) {
                 const op = c.operations[j];
+                const sc = op.strokeColor;
+                let strokeCell;
+                if (sc && String(sc).trim() !== '') {
+                    strokeCell = '<span class="spg-stroke-swatch" style="background:' + escapeAttr(sc) + '"></span>' +
+                                 '<span class="spg-stroke-code">' + escapeHtml(sc) + '</span>';
+                } else {
+                    strokeCell = '<span class="spg-dash">—</span>';
+                }
+
                 html += '<tr>';
                 html += '<td class="spg-num">' + (j + 1) + '</td>';
                 html += '<td class="spg-row-title">' + escapeHtml(op.rowTitle || '') + '</td>';
@@ -647,6 +680,7 @@ function spgInit(win) {
                 html += '<td class="spg-num">' + (op.type || '') + '</td>';
                 html += '<td class="spg-xcell">' + (op.x != null ? xToHHMM(op.x) : '') + '</td>';
                 html += '<td class="spg-num">' + (op.duration != null ? op.duration : '') + '</td>';
+                html += '<td class="spg-stroke-cell">' + strokeCell + '</td>';
                 if (!commentsHidden) {
                     html += '<td class="spg-comment-cell">' +
                             (op.comment != null && String(op.comment).trim() !== ''
@@ -657,7 +691,7 @@ function spgInit(win) {
                 html += '</tr>';
             }
             if (c.operations.length === 0) {
-                const colSpan = commentsHidden ? 6 : 7;
+                const colSpan = commentsHidden ? 7 : 8;
                 html += '<tr><td colspan="' + colSpan + '" class="spg-empty-cell">Операций нет</td></tr>';
             }
             html += '</table></div></div></div>';
@@ -790,8 +824,8 @@ function spgInit(win) {
             'Режим: <b>по расписанию</b>. Строк: <b>' + trainsList.length +
             '</b>, валидных: <b>' + okCount + '</b>.<br>' +
             'Копий: <b>' + totalCopies2 + '</b>. Итог: <b>' + (chains.length + totalCopies2) + '</b> цепочек.<br>' +
-            '<b>Поезд-1</b> → comment первой операции (по метке «перегон»), ' +
-            '<b>поезд-2</b> → последней.';
+            '<b>Поезд-1</b> → comment + strokeColor в первую операцию (по метке «перегон»), ' +
+            '<b>поезд-2</b> → comment + strokeColor в последнюю.';
     }
     $('spgCopyCount').oninput = updatePreview;
     $('spgShiftMinutes').oninput = updatePreview;
@@ -1090,6 +1124,9 @@ function spgInit(win) {
         const s1 = trainRow.s1m, e1 = trainRow.e1m, s2 = trainRow.s2m, e2 = trainRow.e2m;
         const train1 = trainRow.train1, train2 = trainRow.train2;
 
+        const sc1 = getStrokeColorForTrain(train1);
+        const sc2 = getStrokeColorForTrain(train2);
+
         const anchors = findChainAnchors(chain);
         const firstOpId = anchors.firstOpId, lastOpId = anchors.lastOpId, prostoyId = anchors.prostoyId;
 
@@ -1113,22 +1150,58 @@ function spgInit(win) {
             const op = sorted[j];
             const opId = op.id;
             const dur = (typeof op.duration === 'number') ? op.duration : 0;
+
             if (opId === firstOpId) {
-                result.push({ opSrc: op, newX: s1 * K, newDuration: e1 - s1, newComment: train1 });
+                result.push({
+                    opSrc: op,
+                    newX: s1 * K,
+                    newDuration: e1 - s1,
+                    newComment: train1,
+                    newStrokeColor: sc1,
+                    isAnchor: 'first'
+                });
                 continue;
             }
             if (opId === lastOpId && opId !== firstOpId) {
-                result.push({ opSrc: op, newX: s2 * K, newDuration: e2 - s2, newComment: train2 });
+                result.push({
+                    opSrc: op,
+                    newX: s2 * K,
+                    newDuration: e2 - s2,
+                    newComment: train2,
+                    newStrokeColor: sc2,
+                    isAnchor: 'last'
+                });
                 continue;
             }
             if (opId === prostoyId) {
-                result.push({ opSrc: op, newX: e1 * K, newDuration: s2 - e1, newComment: null });
+                result.push({
+                    opSrc: op,
+                    newX: e1 * K,
+                    newDuration: s2 - e1,
+                    newComment: null,
+                    newStrokeColor: null,
+                    isAnchor: null
+                });
                 continue;
             }
             if (j < prostoySortedIdx) {
-                result.push({ opSrc: op, newX: e1 * K - dur * K, newDuration: dur, newComment: null });
+                result.push({
+                    opSrc: op,
+                    newX: e1 * K - dur * K,
+                    newDuration: dur,
+                    newComment: null,
+                    newStrokeColor: null,
+                    isAnchor: null
+                });
             } else {
-                result.push({ opSrc: op, newX: s2 * K, newDuration: dur, newComment: null });
+                result.push({
+                    opSrc: op,
+                    newX: s2 * K,
+                    newDuration: dur,
+                    newComment: null,
+                    newStrokeColor: null,
+                    isAnchor: null
+                });
             }
         }
         return result;
@@ -1217,11 +1290,24 @@ function spgInit(win) {
                         newOp2.chainId = newChainId2;
                         newOp2.x = item.newX;
                         if (item.newDuration != null) newOp2.duration = item.newDuration;
+
+                        // Комментарий
                         if (item.newComment != null && String(item.newComment).trim() !== '') {
                             newOp2.comment = item.newComment;
                         } else {
                             delete newOp2.comment;
                         }
+
+                        // strokeColor
+                        if (item.isAnchor === 'first' || item.isAnchor === 'last') {
+                            if (item.newStrokeColor != null) {
+                                newOp2.strokeColor = item.newStrokeColor;
+                            }
+                            // null → оставляем strokeColor из оригинала
+                        } else {
+                            delete newOp2.strokeColor;
+                        }
+
                         targetRow2.operations.push(newOp2);
                     }
                     totalCopies++;
