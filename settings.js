@@ -157,7 +157,7 @@ function createSettingsApp() {
                         <span class="cities-counter" id="citiesCounter">0</span>
                     </div>
                     <div class="wallpaper-mode-hint" style="margin-bottom: 8px;">
-                        Отметьте ⭐ «Мой город» — он будет пульсировать на карте. Часы внизу показывают время для всех выбранных. Кнопка ✏️ редактирует название, координаты и часовой пояс.
+                        ⭐ — «Мой город» (пульсирует на карте). 📌 — показывать плитку внизу экрана. 📎 — скрыть с панели. ✏️ — редактировать. 🗑️ — удалить.
                     </div>
 
                     <div class="cities-list" id="citiesList"></div>
@@ -207,7 +207,39 @@ function createSettingsApp() {
                 </div>
 
                 <div class="settings-section">
-                    <div class="settings-section-title">⚙️ Управление</div>
+                    <div class="settings-section-title">🌤️ Погода на главном экране</div>
+                    <div class="wallpaper-mode-hint" style="margin-bottom: 8px;">
+                        Показывать погоду под часами городов внизу экрана.
+                    </div>
+
+                    <div class="cloud-switch-row" style="padding: 6px 0;">
+                        <span class="cloud-switch-label">Показывать погоду</span>
+                        <label class="cloud-switch">
+                            <input type="checkbox" id="weatherShowToggle">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="settings-subsection" style="margin-top: 8px;">
+                        <label class="city-form-label" for="weatherStyleSelect">Стиль отображения</label>
+                        <select class="cloud-select" id="weatherStyleSelect" style="width: 100%;">
+                            <option value="icon-temp-desc">🌤 Иконка + температура + описание</option>
+                            <option value="icon-temp">🌡 Иконка + температура</option>
+                            <option value="temp-only">🔢 Только температура</option>
+                        </select>
+                    </div>
+
+                    <div class="settings-subsection" style="margin-top: 8px;">
+                        <label class="city-form-label" for="weatherUnitsSelect">Единицы измерения</label>
+                        <select class="cloud-select" id="weatherUnitsSelect" style="width: 100%;">
+                            <option value="metric">°C — Цельсий</option>
+                            <option value="imperial">°F — Фаренгейт</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <div class="settings-section-title">⚙️ Управление городами</div>
                     <div class="cloud-actions">
                         <button class="cloud-btn secondary" id="citiesResetBtn">🔄 Вернуть стандартные</button>
                         <button class="cloud-btn danger" id="citiesClearBtn">🗑️ Удалить все</button>
@@ -222,7 +254,7 @@ function createSettingsApp() {
     const win = createWindow({
         title: 'System Settings',
         width: 620,
-        height: 760,
+        height: 780,
         content: html,
     });
     win.dataset.app = 'settings';
@@ -362,13 +394,11 @@ function initWallpapersPanel(win) {
 
                 setWallpaperManually(wp.id);
 
-                // Автоматически включаем режим «Обои»
                 if (typeof window.setBackgroundMode === 'function') {
                     window.setBackgroundMode('wallpaper');
                     updateBgModeUI();
                 }
 
-                // Обновляем слой обоев
                 if (typeof window.refreshWallpaperLayer === 'function') {
                     setTimeout(window.refreshWallpaperLayer, 50);
                 }
@@ -417,7 +447,6 @@ function initWallpapersPanel(win) {
             renderWallpapers();
             updateModeButtons();
 
-            // Обновляем слой обоев
             if (typeof window.refreshWallpaperLayer === 'function') {
                 window.refreshWallpaperLayer();
             }
@@ -726,6 +755,7 @@ function initMapPanel(win) {
             const lat = city.lat.toFixed(2);
             const lon = city.lon.toFixed(2);
             const tz = city.tz >= 0 ? `UTC+${city.tz}` : `UTC${city.tz}`;
+            const visible = city.visible !== false;
 
             item.innerHTML = `
                 <button class="city-star ${city.my ? 'active' : ''}" title="${city.my ? 'Это мой город' : 'Сделать моим городом'}">
@@ -735,12 +765,16 @@ function initMapPanel(win) {
                     <div class="city-name">${city.name}</div>
                     <div class="city-coords">${lat}, ${lon} · ${tz}</div>
                 </div>
+                <button class="city-visible ${visible ? 'active' : ''}" title="${visible ? 'Скрыть с панели погоды' : 'Показать на панели погоды'}">
+                    ${visible ? '📌' : '📎'}
+                </button>
                 <button class="city-edit" title="Редактировать">✏️</button>
                 <button class="city-remove" title="Удалить">🗑️</button>
             `;
 
             // Звёздочка
-            item.querySelector('.city-star').addEventListener('click', () => {
+            item.querySelector('.city-star').addEventListener('click', (e) => {
+                e.stopPropagation();
                 const cities = getCities();
                 cities.forEach(c => c.my = false);
                 cities[idx].my = true;
@@ -759,14 +793,38 @@ function initMapPanel(win) {
                 }
             });
 
+            // Тумблер видимости
+            item.querySelector('.city-visible').addEventListener('click', (e) => {
+                e.stopPropagation();
+                const cities = getCities();
+                const current = cities[idx].visible !== false;
+                cities[idx].visible = !current;
+                saveCities(cities);
+                renderCities();
+
+                if (window.showNotification) {
+                    window.showNotification({
+                        title: !current ? 'Город показан' : 'Город скрыт',
+                        message: !current
+                            ? `${city.name} появится внизу экрана`
+                            : `${city.name} скрыт с панели погоды`,
+                        type: 'info',
+                        icon: !current ? '📌' : '📎',
+                        duration: 2000,
+                    });
+                }
+            });
+
             // Редактирование
-            item.querySelector('.city-edit').addEventListener('click', () => {
+            item.querySelector('.city-edit').addEventListener('click', (e) => {
+                e.stopPropagation();
                 editingIndex = idx;
                 openCityForm(city);
             });
 
             // Удаление
-            item.querySelector('.city-remove').addEventListener('click', () => {
+            item.querySelector('.city-remove').addEventListener('click', (e) => {
+                e.stopPropagation();
                 const cities = getCities();
                 const removed = cities.splice(idx, 1)[0];
                 saveCities(cities);
@@ -881,6 +939,7 @@ function initMapPanel(win) {
                         lon: preset.lon,
                         tz: preset.tz,
                         my: makeMy,
+                        visible: true,
                     });
                     saveCities(cities);
                     renderCities();
@@ -951,7 +1010,6 @@ function initMapPanel(win) {
         const cities = getCities();
         const isEdit = editingIndex >= 0;
 
-        // Проверка на дубликат имени (кроме редактируемого города)
         const duplicateIdx = cities.findIndex(
             (c, i) => i !== editingIndex && c.name.toLowerCase() === name.toLowerCase()
         );
@@ -964,9 +1022,9 @@ function initMapPanel(win) {
         }
 
         if (isEdit) {
-            // Сохраняем флаг «мой город»
             const wasMy = cities[editingIndex].my;
-            cities[editingIndex] = { name, lat, lon, tz, my: wasMy };
+            const wasVisible = cities[editingIndex].visible !== false;
+            cities[editingIndex] = { name, lat, lon, tz, my: wasMy, visible: wasVisible };
 
             saveCities(cities);
             renderCities();
@@ -980,9 +1038,8 @@ function initMapPanel(win) {
                 });
             }
         } else {
-            // Добавление
             const makeMy = cities.length === 0;
-            cities.push({ name, lat, lon, tz, my: makeMy });
+            cities.push({ name, lat, lon, tz, my: makeMy, visible: true });
             saveCities(cities);
 
             renderCities();
@@ -1010,14 +1067,14 @@ function initMapPanel(win) {
         if (!confirm('Вернуть стандартный список городов?')) return;
 
         const defaults = [
-            { name: 'Москва',       lat: 55.75, lon: 37.62,  tz: 3,  my: true },
-            { name: 'Лондон',       lat: 51.51, lon: -0.13,  tz: 0,  my: false },
-            { name: 'Нью-Йорк',     lat: 40.71, lon: -74.01, tz: -5, my: false },
-            { name: 'Лос-Анджелес', lat: 34.05, lon: -118.24, tz: -8, my: false },
-            { name: 'Токио',        lat: 35.68, lon: 139.69, tz: 9,  my: false },
-            { name: 'Сидней',       lat: -33.87, lon: 151.21, tz: 10, my: false },
-            { name: 'Дубай',        lat: 25.20, lon: 55.27,  tz: 4,  my: false },
-            { name: 'Сан-Паулу',    lat: -23.55, lon: -46.63, tz: -3, my: false },
+            { name: 'Москва',       lat: 55.75, lon: 37.62,  tz: 3,  my: true,  visible: true },
+            { name: 'Лондон',       lat: 51.51, lon: -0.13,  tz: 0,  my: false, visible: true },
+            { name: 'Нью-Йорк',     lat: 40.71, lon: -74.01, tz: -5, my: false, visible: true },
+            { name: 'Лос-Анджелес', lat: 34.05, lon: -118.24, tz: -8, my: false, visible: true },
+            { name: 'Токио',        lat: 35.68, lon: 139.69, tz: 9,  my: false, visible: true },
+            { name: 'Сидней',       lat: -33.87, lon: 151.21, tz: 10, my: false, visible: true },
+            { name: 'Дубай',        lat: 25.20, lon: 55.27,  tz: 4,  my: false, visible: true },
+            { name: 'Сан-Паулу',    lat: -23.55, lon: -46.63, tz: -3, my: false, visible: true },
         ];
 
         saveCities(JSON.parse(JSON.stringify(defaults)));
@@ -1049,6 +1106,78 @@ function initMapPanel(win) {
             });
         }
     });
+
+    // ---- Погода на главном экране ----
+    const weatherShowToggle = win.querySelector('#weatherShowToggle');
+    const weatherStyleSelect = win.querySelector('#weatherStyleSelect');
+    const weatherUnitsSelect = win.querySelector('#weatherUnitsSelect');
+
+    if (weatherShowToggle) {
+        weatherShowToggle.checked = localStorage.getItem('weatherShow') !== '0';
+        weatherStyleSelect.value = localStorage.getItem('weatherStyle') || 'icon-temp-desc';
+        weatherUnitsSelect.value = (window.APP_CONFIG && window.APP_CONFIG.WEATHER_UNITS) || 'metric';
+
+        weatherShowToggle.addEventListener('change', () => {
+            localStorage.setItem('weatherShow', weatherShowToggle.checked ? '1' : '0');
+            if (typeof window.refreshWeather === 'function') {
+                window.refreshWeather();
+            }
+
+            if (window.showNotification) {
+                window.showNotification({
+                    title: weatherShowToggle.checked ? 'Погода включена' : 'Погода выключена',
+                    message: weatherShowToggle.checked
+                        ? 'Погода отображается под часами городов'
+                        : 'Погода скрыта с главного экрана',
+                    type: weatherShowToggle.checked ? 'success' : 'info',
+                    icon: '🌤️',
+                    duration: 2500,
+                });
+            }
+        });
+
+        weatherStyleSelect.addEventListener('change', () => {
+            localStorage.setItem('weatherStyle', weatherStyleSelect.value);
+            if (typeof window.refreshWeather === 'function') {
+                window.refreshWeather();
+            }
+
+            const labels = {
+                'icon-temp-desc': 'Иконка + температура + описание',
+                'icon-temp': 'Иконка + температура',
+                'temp-only': 'Только температура'
+            };
+            if (window.showNotification) {
+                window.showNotification({
+                    title: 'Стиль погоды изменён',
+                    message: labels[weatherStyleSelect.value] || '',
+                    type: 'success',
+                    icon: '🎨',
+                    duration: 2500,
+                });
+            }
+        });
+
+        weatherUnitsSelect.addEventListener('change', () => {
+            const units = weatherUnitsSelect.value;
+            if (!window.APP_CONFIG) window.APP_CONFIG = {};
+            window.APP_CONFIG.WEATHER_UNITS = units;
+
+            if (typeof window.reloadWeather === 'function') {
+                window.reloadWeather();
+            }
+
+            if (window.showNotification) {
+                window.showNotification({
+                    title: 'Единицы изменены',
+                    message: units === 'imperial' ? 'Градусы Фаренгейта' : 'Градусы Цельсия',
+                    type: 'success',
+                    icon: '🌡️',
+                    duration: 2500,
+                });
+            }
+        });
+    }
 
     renderCities();
     renderPresets();
