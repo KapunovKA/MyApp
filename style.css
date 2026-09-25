@@ -2518,11 +2518,25 @@ table.spg-chain-table {
     color: #4a9eff;
     font-weight: 500;
 }
-.spg-chain-table td.spg-comment-cell {
-    color: #4a9eff;
-    font-weight: 500;
+.spg-chain-table td.spg-stroke-cell {
     font-family: 'SF Mono', 'Consolas', monospace;
-    word-break: break-word;
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.spg-stroke-swatch {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    border: 1px solid var(--app-card-border);
+    vertical-align: middle;
+    margin-right: 5px;
+}
+
+.spg-stroke-code {
+    color: var(--popup-text-muted);
+    vertical-align: middle;
 }
 .spg-dash { color: var(--popup-text-light); }
 
