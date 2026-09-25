@@ -4583,6 +4583,7 @@ table.sal-table {
     }
 
     #panel-map .city-star,
+    #panel-map .city-visible,
     #panel-map .city-edit,
     #panel-map .city-remove {
         width: 38px;
