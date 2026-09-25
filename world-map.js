@@ -491,7 +491,18 @@
         if (!clockPanel) return;
         clockPanel.innerHTML = '';
 
-        const visibleCities = CITIES.filter(c => c.visible !== false);
+        // Берём только видимые города и сортируем по часовому поясу (от меньшего к большему)
+        const visibleCities = CITIES
+            .filter(c => c.visible !== false)
+            .slice()
+            .sort((a, b) => {
+                const tzA = Number.isFinite(a.tz) ? a.tz : 0;
+                const tzB = Number.isFinite(b.tz) ? b.tz : 0;
+                if (tzA !== tzB) return tzA - tzB;
+
+                // При равных поясах — по названию (стабильность)
+                return String(a.name).localeCompare(String(b.name), 'ru');
+            });
 
         if (visibleCities.length === 0) {
             clockPanel.innerHTML = '<div class="world-clock-empty">Нет городов для отображения. Добавьте их в Настройках → Карта.</div>';
