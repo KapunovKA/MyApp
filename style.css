@@ -4733,3 +4733,86 @@ table.sal-table {
     #desktop { inset: 44px 0 0 0 !important; }
     #world-canvas { height: 100%; }
 }
+/* ============================================================
+   SETTINGS — ПОГОДА (дополнение)
+   ============================================================ */
+.settings-subsection {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.settings-subsection .city-form-label {
+    margin-bottom: 4px;
+}
+
+#panel-map .cloud-select {
+    background: var(--app-input-bg);
+    border: 1px solid var(--app-input-border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 13px;
+    color: var(--app-input-text);
+    outline: none;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+#panel-map .cloud-select:hover { background: var(--app-card-hover); }
+#panel-map .cloud-select:focus { border-color: #4a9eff; }
+
+#panel-map .cloud-select option {
+    background: var(--window-bg);
+    color: var(--window-text);
+}
+
+/* Скрытая погода — плавное исчезновение */
+.world-clock-item .weather-row {
+    transition: opacity 0.25s ease;
+}
+
+/* Пустая панель городов */
+.world-clock-empty {
+    padding: 12px 20px;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 12px;
+    font-style: italic;
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* Кнопка видимости города (📌/📎) */
+.city-visible {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    font-family: inherit;
+    color: var(--popup-text-muted);
+    transition: background 0.15s, color 0.15s, transform 0.1s;
+    opacity: 0.5;
+}
+
+.city-visible:hover {
+    background: rgba(74, 158, 255, 0.12);
+    color: #4a9eff;
+    opacity: 1;
+}
+
+.city-visible:active { transform: scale(0.9); }
+
+.city-visible.active {
+    opacity: 1;
+    color: #4a9eff;
+    background: rgba(74, 158, 255, 0.1);
+}
