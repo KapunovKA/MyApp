@@ -3,6 +3,7 @@
 //  + день/ночь, терминатор, города, часы, погода (Open-Meteo)
 //  + адаптация под мобильные (обрезка по долготе)
 //  + панель погоды показывает только города с visible !== false
+//  + читаемые подписи городов (белая обводка)
 // ============================================================
 
 (function initWorldMap() {
@@ -42,7 +43,6 @@
             if (saved) {
                 const parsed = JSON.parse(saved);
                 if (Array.isArray(parsed) && parsed.length > 0) {
-                    // Миграция: добавляем visible: true, если поле отсутствует
                     return parsed.map(c => ({
                         ...c,
                         visible: c.visible !== false
@@ -71,12 +71,10 @@
         saveCities(CITIES);
         rebuildClockPanel();
 
-        // Очищаем кэш погоды для удалённых городов
         Object.keys(weatherData).forEach(name => {
             if (!CITIES.find(c => c.name === name)) delete weatherData[name];
         });
 
-        // Перезапрашиваем погоду для новых городов
         renderAllWeather();
     }
 
@@ -588,7 +586,9 @@
         const lats = visibleCities.map(c => c.lat).join(',');
         const lons = visibleCities.map(c => c.lon).join(',');
 
-        const units = (window.APP_CONFIG?.WEATHER_UNITS) || 'metric';
+        const units = localStorage.getItem('weatherUnits')
+            || (window.APP_CONFIG?.WEATHER_UNITS)
+            || 'metric';
         const tempUnit = units === 'imperial' ? 'fahrenheit' : 'celsius';
 
         const url = 'https://api.open-meteo.com/v1/forecast' +
@@ -678,7 +678,6 @@
         const item = document.querySelector(`[data-city="${cssEscape(city.name)}"]`);
         if (!item) return;
 
-        // Проверяем настройку «показывать погоду»
         const showWeather = localStorage.getItem('weatherShow') !== '0';
         let row = item.querySelector('.weather-row');
 
@@ -709,7 +708,10 @@
         }
 
         const style = localStorage.getItem('weatherStyle') || 'icon-temp-desc';
-        const unit = (window.APP_CONFIG?.WEATHER_UNITS === 'imperial') ? 'F' : 'C';
+        const weatherUnits = localStorage.getItem('weatherUnits')
+            || (window.APP_CONFIG?.WEATHER_UNITS)
+            || 'metric';
+        const unit = weatherUnits === 'imperial' ? 'F' : 'C';
 
         row.className = 'weather-row updating';
         row.title = `Ощущается: ${data.feelsLike}°${unit} · Влажность: ${data.humidity}% · Ветер: ${data.windSpeed} м/с`;
@@ -848,7 +850,11 @@
     }
 
     // --------------------------------------------------------
-    //  Маркеры городов (все города — и видимые, и скрытые)
+    //  Маркеры городов
+    //  • Видимые (visible !== false) — яркие, белые подписи
+    //  • Скрытые — приглушённые, серые подписи
+    //  • «Мой город» — синяя подпись + пульсация
+    //  • Все подписи с чёрной обводкой (strokeText) для читаемости на любом фоне
     // --------------------------------------------------------
     function drawCityMarkers(sunPos) {
         const t = performance.now() / 1000;
@@ -864,6 +870,7 @@
 
             const baseRadius = isMe ? 4 : (isVisible ? 3 : 2.5);
 
+            // ---- Свечение вокруг точки ----
             const glow = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, baseRadius * 4);
             const glowColor = isMe
                 ? '74, 158, 255'
@@ -875,6 +882,7 @@
             ctx.arc(p.x, p.y, baseRadius * 4, 0, Math.PI * 2);
             ctx.fill();
 
+            // ---- Точка ----
             ctx.beginPath();
             ctx.arc(p.x, p.y, baseRadius, 0, Math.PI * 2);
             ctx.fillStyle = isMe
@@ -888,6 +896,7 @@
             ctx.lineWidth = isMe ? 1.5 : 1;
             ctx.stroke();
 
+            // ---- Пульсация «Мой город» ----
             if (isMe) {
                 const pulseRadius = baseRadius * 2 + Math.sin(t * 2) * baseRadius;
                 ctx.strokeStyle = `rgba(74, 158, 255, ${0.6 + Math.sin(t * 2) * 0.3})`;
@@ -897,7 +906,7 @@
                 ctx.stroke();
             }
 
-            // Скрытые города — подпись приглушённая
+            // ---- Подпись с чёрной обводкой ----
             ctx.font = isMe
                 ? '600 11px -apple-system, sans-serif'
                 : '500 10px -apple-system, sans-serif';
@@ -907,15 +916,20 @@
             const labelX = p.x + baseRadius + 5;
             const labelY = p.y;
 
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-            ctx.fillText(city.name, labelX + 1, labelY + 1);
+            // Обводка (контур)
+            ctx.lineWidth = 3;
+            ctx.lineJoin = 'round';
+            ctx.miterLimit = 2;
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.85)';
+            ctx.strokeText(city.name, labelX, labelY);
 
+            // Заливка
             if (isMe) {
                 ctx.fillStyle = '#4a9eff';
             } else if (isVisible) {
-                ctx.fillStyle = isDay ? 'rgba(255, 255, 255, 0.9)' : 'rgba(180, 200, 255, 0.75)';
+                ctx.fillStyle = '#ffffff';
             } else {
-                ctx.fillStyle = 'rgba(180, 180, 180, 0.5)';
+                ctx.fillStyle = 'rgba(200, 200, 200, 0.85)';
             }
             ctx.fillText(city.name, labelX, labelY);
         });
