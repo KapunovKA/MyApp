@@ -1,8 +1,9 @@
 // ============================================================
-//  СПГ — Технологические цепочки (v6)
+//  СПГ — Технологические цепочки (v7)
+//  Переработанная вкладка под ОС: изоляция в окне, классы .spg-*
 //  + новый алгоритм копирования по расписанию
-//  + исправленная логика скрытия/восстановления комментариев
-//  + привязка снимка к исходному файлу (sourceHash)
+//  + корректная логика скрытия/восстановления комментариев
+//  + снимок привязан к исходному файлу (sourceHash)
 // ============================================================
 
 const SPG_MINUTE_TO_X = 2;
@@ -10,7 +11,7 @@ const SPG_PROSTOY_LABEL = 'простой вагона в ожидании';
 const SPG_PEREGON_KEYWORD = 'перегон';
 const SPG_LS_KEY = 'spg_comments_backup_v1';
 
-// Хэш строки (djb2) — для привязки снимка к файлу
+// Хэш строки (djb2) — привязка снимка к файлу
 function spgHashString(str) {
     let hash = 5381;
     for (let i = 0; i < str.length; i++) {
@@ -53,7 +54,8 @@ function createSpgApp() {
                     <div class="spg-section-title">Найденные технологические цепочки</div>
 
                     <!-- Баннер: найден снимок -->
-                    <div class="spg-hidden-banner spg-hidden" id="spgRestoreBanner" style="background:rgba(74,158,255,0.12);color:#4a9eff;border:1px solid rgba(74,158,255,0.35);">
+                    <div class="spg-hidden-banner spg-hidden" id="spgRestoreBanner"
+                         style="background:rgba(74,158,255,0.12);color:#4a9eff;border:1px solid rgba(74,158,255,0.35);">
                         <span>💾</span>
                         <span><b>Найден снимок комментариев</b> в localStorage.</span>
                         <span class="spg-meta" id="spgRestoreBannerMeta"></span>
@@ -69,8 +71,9 @@ function createSpgApp() {
                         <span>Комментарии скрыты.</span>
                         <span class="spg-meta" id="spgBackupMeta"></span>
                         <div class="spg-spacer"></div>
-                        <button type="button" class="spg-btn spg-small spg-primary" id="spgDownloadHiddenBtn" title="Скачать файл без комментариев">⬇ Скачать (без комментариев)</button>
-                        <button type="button" class="spg-btn spg-small spg-success" id="spgRestoreTopBtn">↺ Показать комментарии</button>
+                        <button type="button" class="spg-btn spg-small spg-primary" id="spgApplyChangesBtn" title="Применить изменения и скачать">✚ Применить изменения</button>
+                        <button type="button" class="spg-btn spg-small spg-success" id="spgRestoreTopBtn">↺ Восстановить</button>
+                        <button type="button" class="spg-btn spg-small spg-danger" id="spgDeleteBackupBtn">🗑 Забыть снимок</button>
                     </div>
 
                     <div class="spg-search-row">
@@ -229,7 +232,7 @@ function spgInit(win) {
     // ---------- Состояние ----------
     let sourceData = null;
     let workingData = null;
-    let sourceHash = null;         // хэш исходного JSON — привязка снимка
+    let sourceHash = null;
     let chains = [];
     let selectedIds = {};
     let mainChainId = null;
@@ -245,7 +248,7 @@ function spgInit(win) {
     let nextWindowId = 1;
     let totalCopiesCount = 0;
 
-    // Кэш снимка — чтобы не дёргать localStorage при каждом renderChains
+    // Кэш снимка
     let _snapshotCache = undefined;
     function invalidateSnapshotCache() { _snapshotCache = undefined; }
 
@@ -295,10 +298,6 @@ function spgInit(win) {
     // ============================================================
     //  localStorage — снимок комментариев
     // ============================================================
-
-    // Сохраняем снимок из chains (а не из workingData) — так
-    // даже после скрытия комментариев снимок можно перезаписать
-    // корректно, если пользователь не восстанавливал их.
     function saveCommentsSnapshot() {
         if (!workingData || !sourceHash) return false;
 
@@ -310,7 +309,6 @@ function spgInit(win) {
         };
         let totalSaved = 0;
 
-        // Собираем комментарии из workingData (там всегда полные данные)
         const gd = workingData.graphData;
         if (!gd) return false;
 
@@ -384,7 +382,7 @@ function spgInit(win) {
         } catch (e) {}
     }
 
-    // Копия workingData с удалёнными комментариями — для скачивания
+    // Копия workingData без комментариев
     function buildDataWithoutComments(data) {
         const copy = deepClone(data);
         const gd = copy.graphData;
@@ -403,8 +401,7 @@ function spgInit(win) {
         return copy;
     }
 
-    // Восстановление комментариев в workingData из снимка.
-    // Возвращает { restoredChains, restoredOps } или null.
+    // Восстановление комментариев в workingData из снимка
     function restoreCommentsFromSnapshot() {
         const snap = loadCommentsSnapshot();
         if (!snap) return null;
@@ -609,27 +606,23 @@ function spgInit(win) {
     //  СКРЫТИЕ / ВОССТАНОВЛЕНИЕ КОММЕНТАРИЕВ
     // ============================================================
 
-    // Скрыть комментарии в UI.
-    // workingData и chains НЕ трогаем — только флаг + перерисовка.
-    // Это позволяет позже:
-    //   - восстановить комментарии из workingData (если снимок не нужен);
-    //   - сохранить снимок ещё раз без потери данных.
+    // Скрыть комментарии — только флаг + перерисовка.
+    // workingData и chains НЕ трогаются.
     $('spgHideCommentsBtn').onclick = () => {
-        const ok = saveCommentsSnapshot();
-        if (!ok) {
-            // Нечего сохранять — комментариев нет. Всё равно скрываем.
-        }
+        saveCommentsSnapshot();
         commentsHidden = true;
         renderChains();
         updateCommentsUI();
         updateRestoreBanner();
     };
 
-    // Показать комментарии: восстановить из снимка в workingData,
-    // затем пересобрать chains из workingData.
+    // Показать комментарии — восстановить из снимка в workingData,
+    // пересобрать chains из workingData.
     $('spgRestoreCommentsBtn').onclick = () => doRestoreFromLs();
     $('spgRestoreTopBtn').onclick = () => doRestoreFromLs();
+    $('spgLoadFromLsBtn').onclick = () => doRestoreFromLs();
 
+    // Забыть снимок
     $('spgForgetLsBtn').onclick = () => {
         spgConfirm('Удалить снимок комментариев из localStorage?', () => {
             deleteCommentsSnapshot();
@@ -637,8 +630,54 @@ function spgInit(win) {
             updateCommentsUI();
         });
     };
+    $('spgDeleteBackupBtn').onclick = () => {
+        spgConfirm('Удалить снимок комментариев из localStorage?', () => {
+            deleteCommentsSnapshot();
+            commentsHidden = false;
+            renderChains();
+            updateCommentsUI();
+            updateRestoreBanner();
+        });
+    };
 
-    $('spgLoadFromLsBtn').onclick = () => doRestoreFromLs();
+    // Применить изменения — сформировать текущий вид и показать в результате
+    $('spgApplyChangesBtn').onclick = () => {
+        if (!workingData) { spgAlert('Сначала загрузите файл.'); return; }
+        replicatedData = buildDataWithoutComments(workingData);
+        const cmtCount = countCommentsInData(replicatedData);
+        resultInfo.innerHTML =
+            'Изменения применены. <b>Комментарии скрыты</b>. ' +
+            'Всего операций: <b>' + countOperations(replicatedData) + '</b>, ' +
+            'комментариев: <b>' + cmtCount + '</b>.';
+        resultBox.classList.remove('spg-hidden');
+        renderResultChains();
+        resultBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
+    function countOperations(data) {
+        let n = 0;
+        const rows = (data.graphData && data.graphData.rows) || [];
+        for (let i = 0; i < rows.length; i++) {
+            if (Array.isArray(rows[i].operations)) n += rows[i].operations.length;
+        }
+        return n;
+    }
+
+    function countCommentsInData(data) {
+        let n = 0;
+        const rows = (data.graphData && data.graphData.rows) || [];
+        for (let i = 0; i < rows.length; i++) {
+            const ops = rows[i].operations || [];
+            for (let j = 0; j < ops.length; j++) {
+                if (ops[j].comment != null && String(ops[j].comment).trim() !== '') n++;
+            }
+        }
+        const tcs = (data.graphData && data.graphData.techChains) || [];
+        for (let k = 0; k < tcs.length; k++) {
+            if (tcs[k].comment != null && String(tcs[k].comment).trim() !== '') n++;
+        }
+        return n;
+    }
 
     function doRestoreFromLs() {
         const res = restoreCommentsFromSnapshot();
@@ -653,9 +692,6 @@ function spgInit(win) {
         updateRestoreBanner();
     }
 
-    // Пересборка chains из workingData.
-    // Используется при восстановлении комментариев и при сбросе копий.
-    // ВАЖНО: при скрытии комментариев НЕ вызывается — см. выше.
     function rebuildChainsFromWorkingData() {
         const gd = workingData && workingData.graphData;
         if (!gd) return;
@@ -731,15 +767,13 @@ function spgInit(win) {
             restoreBanner.classList.add('spg-hidden');
             return;
         }
-        // Скрываем баннер, если комментарии и так показаны
         if (commentsHidden) {
             restoreBanner.classList.add('spg-hidden');
             return;
         }
-        // Если снимок от другого файла — предупреждаем
         let mismatchNote = '';
         if (sourceHash && snap.sourceHash && snap.sourceHash !== sourceHash) {
-            mismatchNote = ' <b style="color:#b91c1c">Снимок от другого файла!</b>';
+            mismatchNote = ' <b style="color:#ff3b30">Снимок от другого файла!</b>';
         }
         const dt = new Date(snap.savedAt);
         const dateStr = dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString();
@@ -1534,7 +1568,7 @@ function spgInit(win) {
     }
 
     // ============================================================
-    //  ЛОГИКА КОПИРОВАНИЯ (НОВЫЙ АЛГОРИТМ)
+    //  ЛОГИКА КОПИРОВАНИЯ
     // ============================================================
     function isPeregonOp(op) {
         return String(op.label || '').toLowerCase().indexOf(PEREgon_KEYWORD) !== -1;
@@ -1962,38 +1996,14 @@ function spgInit(win) {
     // ============================================================
     //  КНОПКИ СКАЧИВАНИЯ
     // ============================================================
-
-    // Основная кнопка в блоке «Результат» — скачивает workingData как есть.
-    // Если комментарии скрыты, всё равно скачивает с ними (это полный файл).
     $('spgDownloadFullBtn').onclick = () => {
         if (!workingData) { spgAlert('Сначала примените копирование.'); return; }
         makeDownload('СПГ_with_copies.json', JSON.stringify(workingData));
     };
 
-    // Кнопка в жёлтом баннере — скачивает копию БЕЗ комментариев.
-    // workingData НЕ модифицируется.
-    $('spgDownloadHiddenBtn').onclick = () => {
-        if (!workingData) { spgAlert('Сначала примените копирование.'); return; }
-        const clean = buildDataWithoutComments(workingData);
-        makeDownload('СПГ_no_comments.json', JSON.stringify(clean));
-    };
-
-    // Кнопка в синем баннере — восстанавливает комментарии в workingData,
-    // пересобирает chains и скачивает полный файл.
-    $('spgDownloadRestoredBtn').onclick = () => {
-        if (!workingData) { spgAlert('Сначала примените копирование.'); return; }
-        const res = restoreCommentsFromSnapshot();
-        if (!res) {
-            spgAlert('Снимок комментариев не найден.');
-            return;
-        }
-        rebuildChainsFromWorkingData();
-        commentsHidden = false;
-        renderChains();
-        updateCommentsUI();
-        updateRestoreBanner();
-        makeDownload('СПГ_with_comments.json', JSON.stringify(workingData));
-    };
+    // Скачать без комментариев — формируем копию, workingData не трогаем
+    // (кнопка висит на жёлтом баннере и на «Применить изменения»)
+    // Отдельная кнопка downloadHiddenBtn убрана, её роль выполняет applyChangesBtn
 
     $('spgResetCopiesBtn').onclick = () => {
         if (!sourceData) return;
