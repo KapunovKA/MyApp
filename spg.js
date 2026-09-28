@@ -1,7 +1,9 @@
 // ============================================================
-//  СПГ — Технологические цепочки (v3)
-//  + strokeColor по номеру поезда
-//  Интеграция в macOS-систему (createWindow)
+//  СПГ — Технологические цепочки (v4)
+//  + основная цепочка и основная операция (якорь)
+//  + несколько окон расписания
+//  + проверка перехлёста по строке якоря
+//  + таблица результата
 // ============================================================
 
 const SPG_MINUTE_TO_X = 2;
@@ -23,6 +25,7 @@ function createSpgApp() {
             </div>
 
             <div class="spg-scroll">
+                <!-- ЦЕПОЧКИ -->
                 <div class="spg-section spg-hidden" id="spgChainsBox">
                     <div class="spg-section-title">Найденные технологические цепочки</div>
 
@@ -33,7 +36,7 @@ function createSpgApp() {
                         <div class="spg-spacer"></div>
                         <button type="button" class="spg-btn spg-small spg-primary" id="spgApplyChangesBtn">✚ Применить изменения</button>
                         <button type="button" class="spg-btn spg-small spg-success" id="spgRestoreTopBtn">↺ Восстановить</button>
-                        <button type="button" class="spg-btn spg-small spg-danger" id="spgDeleteBackupBtn" title="Удалить снимок">🗑 Забыть снимок</button>
+                        <button type="button" class="spg-btn spg-small spg-danger" id="spgDeleteBackupBtn">🗑 Забыть снимок</button>
                     </div>
 
                     <div class="spg-search-row">
@@ -48,8 +51,8 @@ function createSpgApp() {
                         <button type="button" class="spg-btn" id="spgExpandAllChainsBtn">Развернуть</button>
                         <button type="button" class="spg-btn" id="spgCollapseAllChainsBtn">Свернуть</button>
                         <div class="spg-spacer"></div>
-                        <button type="button" class="spg-btn spg-warn" id="spgHideCommentsBtn" title="Скрыть комментарии">👁 Скрыть комм.</button>
-                        <button type="button" class="spg-btn spg-success spg-hidden" id="spgRestoreCommentsBtn" title="Восстановить комментарии">↺ Показать комм.</button>
+                        <button type="button" class="spg-btn spg-warn" id="spgHideCommentsBtn">👁 Скрыть комм.</button>
+                        <button type="button" class="spg-btn spg-success spg-hidden" id="spgRestoreCommentsBtn">↺ Показать комм.</button>
                         <span class="spg-info" id="spgSelectedInfo">Выбрано: 0</span>
                     </div>
 
@@ -58,6 +61,7 @@ function createSpgApp() {
                     </div>
                 </div>
 
+                <!-- ПАРАМЕТРЫ КОПИРОВАНИЯ -->
                 <div class="spg-section spg-hidden" id="spgCopyBox">
                     <div class="spg-section-title">Параметры копирования</div>
 
@@ -81,53 +85,50 @@ function createSpgApp() {
                                 <input type="text" id="spgCopyPrefix" value="копия">
                             </div>
                         </div>
+                        <div style="margin-top:16px;">
+                            <button type="button" class="spg-btn spg-primary spg-big" id="spgApplyCountBtn">Применить копирование</button>
+                        </div>
                     </div>
 
                     <div id="spgModeTrainsPanel">
-                        <div class="spg-toolbar">
-                            <label class="spg-label">Загрузить CSV:</label>
-                            <input type="file" id="spgTrainsFileInput" accept=".csv" class="spg-file-inline">
-                            <button type="button" class="spg-btn spg-small" id="spgAddTrainRowBtn">＋ Добавить</button>
-                            <button type="button" class="spg-btn spg-small spg-danger" id="spgClearTrainsBtn">✕ Очистить</button>
+                        <div id="spgCopyWindowsContainer"></div>
+
+                        <div class="spg-copy-window-actions" style="margin-top:16px;">
+                            <button type="button" class="spg-btn spg-small" id="spgAddWindowBtn">＋ Добавить окно расписания</button>
                             <div class="spg-spacer"></div>
-                            <span class="spg-info">Строк: <b id="spgTrainsTotal">0</b>, валидных: <b id="spgTrainsValid">0</b></span>
+                            <span class="spg-info">Всего скопировано: <b id="spgTotalCopiesApplied">0</b></span>
                         </div>
 
-                        <div id="spgTrainsStatus"></div>
-
-                        <div class="spg-table-scroll">
-                            <table class="spg-trains-table" id="spgTrainsPreviewTable">
-                                <thead>
-                                    <tr>
-                                        <th style="width:36px">#</th>
-                                        <th style="width:110px">Поезд-1</th>
-                                        <th style="width:90px">Начало</th>
-                                        <th style="width:90px">Конец</th>
-                                        <th style="width:110px">Поезд-2</th>
-                                        <th style="width:90px">Начало 2</th>
-                                        <th style="width:90px">Конец 2</th>
-                                        <th style="width:70px"></th>
-                                    </tr>
-                                </thead>
-                                <tbody id="spgTrainsPreviewBody"></tbody>
-                            </table>
+                        <div class="spg-info-block spg-blue" id="spgPreviewInfo" style="margin-top:12px;">
+                            Выберите цепочки для настройки.
                         </div>
-                    </div>
-
-                    <div style="margin-top:16px;">
-                        <button type="button" class="spg-btn spg-primary spg-big" id="spgApplyBtn">Применить копирование</button>
-                    </div>
-
-                    <div class="spg-info-block spg-blue" id="spgPreviewInfo" style="margin-top:12px;">
-                        Выберите цепочки для настройки.
                     </div>
                 </div>
 
+                <!-- РЕЗУЛЬТАТ -->
                 <div class="spg-section spg-hidden" id="spgResultBox">
                     <div class="spg-section-title">Результат</div>
                     <div class="spg-info-block spg-green" id="spgResultInfo"></div>
                     <div class="spg-toolbar" style="margin-top:12px;">
                         <button type="button" class="spg-btn spg-primary spg-big" id="spgDownloadFullBtn">⬇ Скачать файл</button>
+                        <button type="button" class="spg-btn" id="spgResetCopiesBtn">↺ Сбросить копии</button>
+                    </div>
+
+                    <div class="spg-section-title" style="margin-top:16px;">Цепочки в итоговом файле</div>
+                    <div class="spg-table-scroll" style="max-height:420px;">
+                        <table class="spg-trains-table" id="spgResultChainsTable">
+                            <thead>
+                                <tr>
+                                    <th style="width:40px">#</th>
+                                    <th>Название</th>
+                                    <th style="width:160px">chainId</th>
+                                    <th style="width:70px">Операций</th>
+                                    <th style="width:140px">Комментарий</th>
+                                    <th style="width:90px">Источник</th>
+                                </tr>
+                            </thead>
+                            <tbody id="spgResultChainsBody"></tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -147,12 +148,12 @@ function createSpgApp() {
 
     const win = createWindow({
         title: 'СПГ — Технологические цепочки',
-        width: 980,
-        height: 780,
+        width: 1100,
+        height: 800,
         content: html,
     });
     win.dataset.app = 'spg';
-    win.style.minWidth = '520px';
+    win.style.minWidth = '640px';
     win.style.minHeight = '500px';
 
     const body = win.querySelector('.window-body');
@@ -172,36 +173,40 @@ function spgInit(win) {
     const LS_KEY = SPG_LS_KEY;
 
     // ---------- DOM ----------
-    const drop              = $('spgDrop');
-    const fileInput         = $('spgFileInput');
-    const fileNameEl        = $('spgFileName');
-    const chainsBox         = $('spgChainsBox');
-    const chainsEl          = $('spgChains');
-    const copyBox           = $('spgCopyBox');
-    const resultBox         = $('spgResultBox');
-    const resultInfo        = $('spgResultInfo');
-    const previewInfo       = $('spgPreviewInfo');
-    const selectedInfo      = $('spgSelectedInfo');
-    const trainsFileInput   = $('spgTrainsFileInput');
-    const trainsStatus      = $('spgTrainsStatus');
-    const trainsPreviewBody = $('spgTrainsPreviewBody');
-    const trainsTotal       = $('spgTrainsTotal');
-    const trainsValid       = $('spgTrainsValid');
-    const hiddenBanner      = $('spgHiddenBanner');
-    const backupMeta        = $('spgBackupMeta');
-    const chainSearchInput  = $('spgChainSearchInput');
-    const chainSearchInfo   = $('spgChainSearchInfo');
+    const drop = $('spgDrop');
+    const fileInput = $('spgFileInput');
+    const fileNameEl = $('spgFileName');
+    const chainsBox = $('spgChainsBox');
+    const chainsEl = $('spgChains');
+    const copyBox = $('spgCopyBox');
+    const resultBox = $('spgResultBox');
+    const resultInfo = $('spgResultInfo');
+    const previewInfo = $('spgPreviewInfo');
+    const selectedInfo = $('spgSelectedInfo');
+    const hiddenBanner = $('spgHiddenBanner');
+    const backupMeta = $('spgBackupMeta');
+    const chainSearchInput = $('spgChainSearchInput');
+    const chainSearchInfo = $('spgChainSearchInfo');
+    const copyWindowsContainer = $('spgCopyWindowsContainer');
+    const totalCopiesApplied = $('spgTotalCopiesApplied');
 
     // ---------- Состояние ----------
     let sourceData = null;
+    let workingData = null;
     let chains = [];
     let selectedIds = {};
+    let mainChainId = null;
+    let mainOpId = null;
     let collapsedChainIds = {};
     let replicatedData = null;
+
     let commentsHidden = false;
     let chainSearchQuery = '';
+
     let copyMode = 'trains';
-    let trainsList = [];
+    let copyWindows = [];
+    let nextWindowId = 1;
+    let totalCopiesCount = 0;
 
     // ============================================================
     //  УТИЛИТЫ
@@ -235,14 +240,6 @@ function spgInit(win) {
         if (n > max) return max;
         return n;
     }
-
-    /**
-     * Возвращает strokeColor по номеру поезда.
-     * 6014-6999 → #008000
-     * 7100-7399 → #0000ff
-     * 7600-7900 → #800080
-     * иначе → null (оставить как в оригинале)
-     */
     function getStrokeColorForTrain(trainNum) {
         if (trainNum == null) return null;
         const s = String(trainNum).trim();
@@ -250,11 +247,17 @@ function spgInit(win) {
         if (!m) return null;
         const n = parseInt(m[1], 10);
         if (isNaN(n)) return null;
-
         if (n >= 6014 && n <= 6999) return '#008000';
         if (n >= 7100 && n <= 7399) return '#0000ff';
         if (n >= 7600 && n <= 7900) return '#800080';
         return null;
+    }
+    function pluralizeRu(n, one, few, many) {
+        const m10 = n % 10;
+        const m100 = n % 100;
+        if (m10 === 1 && m100 !== 11) return one;
+        if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return few;
+        return many;
     }
 
     // ============================================================
@@ -348,6 +351,7 @@ function spgInit(win) {
                 return;
             }
             sourceData = data;
+            workingData = deepClone(data);
             fileNameEl.textContent = '📄 ' + file.name;
             drop.classList.add('uploaded');
             analyze(data);
@@ -363,8 +367,8 @@ function spgInit(win) {
 
         const rows = data.graphData.rows || [];
         const techChains = data.graphData.techChains || [];
-
         const opsByChain = {};
+
         for (let i = 0; i < rows.length; i++) {
             const row = rows[i];
             if (!row.operations || !row.operations.length) continue;
@@ -374,10 +378,9 @@ function spgInit(win) {
                 const key = String(op.chainId);
                 if (!opsByChain[key]) opsByChain[key] = [];
                 opsByChain[key].push({
-                    id: op.id, label: op.label, type: op.type,
-                    x: op.x, duration: op.duration, iconId: op.iconId,
-                    comment: op.comment, strokeColor: op.strokeColor,
-                    rowId: row.id, rowTitle: row.title
+                    id: op.id, label: op.label, type: op.type, x: op.x,
+                    duration: op.duration, iconId: op.iconId, comment: op.comment,
+                    strokeColor: op.strokeColor, rowId: row.id, rowTitle: row.title
                 });
             }
         }
@@ -426,10 +429,17 @@ function spgInit(win) {
         }
 
         selectedIds = {};
+        mainChainId = null;
+        mainOpId = null;
         collapsedChainIds = {};
         replicatedData = null;
         chainSearchQuery = '';
         chainSearchInput.value = '';
+
+        copyWindows = [];
+        nextWindowId = 1;
+        totalCopiesCount = 0;
+        addCopyWindow();
 
         renderChains();
         updateSelectedInfo();
@@ -438,6 +448,8 @@ function spgInit(win) {
         chainsBox.classList.remove('spg-hidden');
         copyBox.classList.remove('spg-hidden');
         resultBox.classList.add('spg-hidden');
+
+        renderResultChains();
 
         const existing = loadCommentsSnapshot();
         if (existing) {
@@ -450,7 +462,7 @@ function spgInit(win) {
     }
 
     // ============================================================
-    //  СКРЫТИЕ / ВОССТАНОВЛЕНИЕ
+    //  СКРЫТИЕ / ВОССТАНОВЛЕНИЕ КОММЕНТАРИЕВ
     // ============================================================
     $('spgHideCommentsBtn').onclick = () => {
         saveCommentsSnapshot();
@@ -483,11 +495,12 @@ function spgInit(win) {
             'Всего операций: <b>' + countOperations(replicatedData) + '</b>, ' +
             'комментариев: <b>' + cmtCount + '</b>.';
         resultBox.classList.remove('spg-hidden');
+        renderResultChains();
         resultBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
 
     function buildCurrentDataWithCommentsHidden() {
-        const data = deepClone(sourceData);
+        const data = deepClone(workingData);
         if (commentsHidden) {
             const gd = data.graphData;
             if (gd) {
@@ -597,8 +610,8 @@ function spgInit(win) {
         showModal(
             'Найден сохранённый снимок комментариев',
             '<p>В localStorage есть снимок от <b>' + dateStr + '</b>:<br>' +
-            'цепочек: <b>' + chainCount + '</b>, комментариев операций: <b>' + totalOps + '</b>.</p>' +
-            '<p>Восстановить комментарии из снимка для цепочек, которые есть в новом файле?</p>',
+            'цепочек: <b>' + chainCount + '</b>, комментариев: <b>' + totalOps + '</b>.</p>' +
+            '<p>Восстановить комментарии из снимка?</p>',
             () => restoreFromBackup(),
             false
         );
@@ -630,41 +643,67 @@ function spgInit(win) {
             visible++;
 
             const selected = !!selectedIds[c.id];
+            const isMain = (mainChainId === c.id);
             const collapsed = !!collapsedChainIds[c.id];
-            const cls = 'spg-chain' + (selected ? ' selected' : '');
+            const cls = 'spg-chain' + (selected ? ' selected' : '') + (isMain ? ' is-main' : '');
             const checkedAttr = selected ? ' checked' : '';
 
-            html += '<div class="' + cls + '">';
+            html += '<div class="' + cls + '" data-chain-id="' + c.id + '">';
             html += '<div class="spg-chain-head" data-id="' + c.id + '">';
-            html += '<span class="spg-caret" data-caret="' + c.id + '" title="Свернуть/развернуть">' +
+            html += '<span class="spg-caret" data-caret="' + c.id + '">' +
                     (collapsed ? '▶' : '▼') + '</span>';
             html += '<input type="checkbox" data-id="' + c.id + '"' + checkedAttr + '>';
+
+            if (selected) {
+                const radioChecked = isMain ? ' checked' : '';
+                html += '<label class="spg-main-radio" title="Сделать основной">' +
+                        '<input type="radio" name="spgMainChain" data-main-radio="' + c.id + '"' + radioChecked + '>' +
+                        '★ Основная</label>';
+            } else {
+                html += '<span class="spg-main-radio off"><input type="radio" disabled>★ Основная</span>';
+            }
+
             html += '<span class="spg-chain-title">' + escapeHtml(c.header) + '</span>';
             html += '<span class="spg-chain-id">[chainId: ' + c.id + ']</span>';
             html += '<span class="spg-chain-meta">' + c.operations.length + ' операций</span>';
             if (c.isLocked) html += '<span class="spg-lock">locked</span>';
             if (!commentsHidden && c.comments && c.comments.length > 0) {
-                html += '<span class="spg-cmt-badge" title="Комментарии">комм.: ' +
-                        escapeHtml(c.comments.join(', ')) + '</span>';
+                html += '<span class="spg-cmt-badge">комм.: ' + escapeHtml(c.comments.join(', ')) + '</span>';
             }
             html += '</div>';
 
+            if (isMain && !collapsed) {
+                html += '<div class="spg-main-op-row">';
+                html += '<span>🎯 Основная операция (якорь):</span>';
+                html += '<select data-main-op-select="' + c.id + '">';
+                for (let oi = 0; oi < c.operations.length; oi++) {
+                    const opm = c.operations[oi];
+                    const opLabel = (opm.label || '') + ' (x=' + (opm.x != null ? opm.x : '?') +
+                                    ', строка "' + (opm.rowTitle || '') + '")';
+                    const selectedAttr = (opm.id === mainOpId) ? ' selected' : '';
+                    html += '<option value="' + opm.id + '"' + selectedAttr + '>' +
+                            escapeHtml(opLabel) + '</option>';
+                }
+                html += '</select>';
+                if (mainOpId == null) {
+                    html += '<span style="color:#ff3b30; font-size:11px;">← выберите операцию</span>';
+                }
+                html += '</div>';
+            }
+
             html += '<div class="spg-chain-body"' + (collapsed ? ' style="display:none"' : '') + '>';
             html += '<div class="spg-chain-table-scroll"><table class="spg-chain-table">';
-            html += '<tr>' +
-                    '<th style="width:36px">#</th>' +
-                    '<th>Строка</th>' +
-                    '<th>Операция</th>' +
-                    '<th>Тип</th>' +
-                    '<th>x (чч:мм)</th>' +
-                    '<th>Длит.</th>' +
-                    '<th>Цвет</th>';
+            html += '<tr><th style="width:36px">#</th><th>Строка</th><th>Операция</th>' +
+                    '<th>Тип</th><th>x (чч:мм)</th><th>Длит.</th><th>Цвет</th>';
             if (!commentsHidden) html += '<th>Комментарий</th>';
             html += '</tr>';
 
             for (let j = 0; j < c.operations.length; j++) {
-                const op = c.operations[j];
-                const sc = op.strokeColor;
+                const op2 = c.operations[j];
+                const isThisMainOp = (isMain && op2.id === mainOpId);
+                const rowCls = isThisMainOp ? ' class="spg-is-main-op"' : '';
+
+                const sc = op2.strokeColor;
                 let strokeCell;
                 if (sc && String(sc).trim() !== '') {
                     strokeCell = '<span class="spg-stroke-swatch" style="background:' + escapeAttr(sc) + '"></span>' +
@@ -673,19 +712,19 @@ function spgInit(win) {
                     strokeCell = '<span class="spg-dash">—</span>';
                 }
 
-                html += '<tr>';
-                html += '<td class="spg-num">' + (j + 1) + '</td>';
-                html += '<td class="spg-row-title">' + escapeHtml(op.rowTitle || '') + '</td>';
-                html += '<td>' + escapeHtml(op.label || '') + '</td>';
-                html += '<td class="spg-num">' + (op.type || '') + '</td>';
-                html += '<td class="spg-xcell">' + (op.x != null ? xToHHMM(op.x) : '') + '</td>';
-                html += '<td class="spg-num">' + (op.duration != null ? op.duration : '') + '</td>';
+                html += '<tr' + rowCls + '>';
+                html += '<td class="spg-num">' + (j + 1) + (isThisMainOp ? ' 🎯' : '') + '</td>';
+                html += '<td class="spg-row-title">' + escapeHtml(op2.rowTitle || '') + '</td>';
+                html += '<td>' + escapeHtml(op2.label || '') + '</td>';
+                html += '<td class="spg-num">' + (op2.type || '') + '</td>';
+                html += '<td class="spg-xcell">' + (op2.x != null ? xToHHMM(op2.x) : '') + '</td>';
+                html += '<td class="spg-num">' + (op2.duration != null ? op2.duration : '') + '</td>';
                 html += '<td class="spg-stroke-cell">' + strokeCell + '</td>';
                 if (!commentsHidden) {
                     html += '<td class="spg-comment-cell">' +
-                            (op.comment != null && String(op.comment).trim() !== ''
-                                ? escapeHtml(String(op.comment))
-                                : '<span class="spg-dash">—</span>') +
+                            (op2.comment != null && String(op2.comment).trim() !== ''
+                              ? escapeHtml(String(op2.comment))
+                              : '<span class="spg-dash">—</span>') +
                             '</td>';
                 }
                 html += '</tr>';
@@ -705,6 +744,13 @@ function spgInit(win) {
             chainsEl.querySelectorAll('.spg-caret').forEach(el => el.addEventListener('click', onCaretClick));
             chainsEl.querySelectorAll('.spg-chain-head').forEach(el => el.addEventListener('click', onHeadClick));
             chainsEl.querySelectorAll('.spg-chain-head input[type=checkbox]').forEach(el => el.addEventListener('click', onCheckboxClick));
+            chainsEl.querySelectorAll('input[data-main-radio]').forEach(el => {
+                el.addEventListener('click', onMainRadioClick);
+                el.addEventListener('change', onMainRadioClick);
+            });
+            chainsEl.querySelectorAll('select[data-main-op-select]').forEach(el => {
+                el.addEventListener('change', onMainOpChange);
+            });
         }
 
         chainSearchInfo.textContent = chainSearchQuery
@@ -726,6 +772,9 @@ function spgInit(win) {
     }
     function onHeadClick(e) {
         if (e.target.classList && e.target.classList.contains('spg-caret')) return;
+        if (e.target.classList && e.target.classList.contains('spg-main-radio')) return;
+        if (e.target.tagName === 'INPUT' && e.target.type === 'radio') return;
+        if (e.target.tagName === 'SELECT') return;
         const id = Number(e.currentTarget.getAttribute('data-id'));
         toggleChain(id);
     }
@@ -734,27 +783,96 @@ function spgInit(win) {
         const id = Number(e.currentTarget.getAttribute('data-id'));
         toggleChain(id);
     }
+    function onMainRadioClick(e) {
+        e.stopPropagation();
+        const id = Number(e.currentTarget.getAttribute('data-main-radio'));
+        if (!selectedIds[id]) return;
+        mainChainId = id;
+        mainOpId = null;
+        autoPickMainOp();
+        renderChains();
+        updateSelectedInfo();
+        updatePreview();
+    }
+    function onMainOpChange(e) {
+        e.stopPropagation();
+        const id = Number(e.currentTarget.getAttribute('data-main-op-select'));
+        const val = Number(e.currentTarget.value);
+        mainChainId = id;
+        mainOpId = val;
+        renderChains();
+        updateSelectedInfo();
+        updatePreview();
+    }
+
+    function autoPickMainOp() {
+        if (mainChainId == null) return;
+        let c = null;
+        for (let i = 0; i < chains.length; i++) {
+            if (chains[i].id === mainChainId) { c = chains[i]; break; }
+        }
+        if (!c || c.operations.length === 0) return;
+
+        for (let j = 0; j < c.operations.length; j++) {
+            if (String(c.operations[j].label || '').trim() === PROSTOY_LABEL) {
+                mainOpId = c.operations[j].id;
+                return;
+            }
+        }
+        let first = null, minX = null;
+        for (let k = 0; k < c.operations.length; k++) {
+            const x = c.operations[k].x;
+            if (typeof x !== 'number') continue;
+            if (minX === null || x < minX) { minX = x; first = c.operations[k]; }
+        }
+        if (first) mainOpId = first.id;
+    }
 
     function toggleChain(id) {
-        if (selectedIds[id]) delete selectedIds[id];
-        else selectedIds[id] = true;
+        if (selectedIds[id]) {
+            delete selectedIds[id];
+            if (mainChainId === id) { mainChainId = null; mainOpId = null; }
+        } else {
+            selectedIds[id] = true;
+            if (mainChainId === null) {
+                mainChainId = id;
+                autoPickMainOp();
+            }
+        }
         renderChains();
         updateSelectedInfo();
         updatePreview();
     }
     function updateSelectedInfo() {
         const n = Object.keys(selectedIds).length;
-        selectedInfo.textContent = 'Выбрано: ' + n + ' из ' + chains.length;
+        let mainName = '';
+        if (mainChainId != null) {
+            for (let i = 0; i < chains.length; i++) {
+                if (chains[i].id === mainChainId) { mainName = ' | Основная: ' + chains[i].header; break; }
+            }
+        }
+        selectedInfo.textContent = 'Выбрано: ' + n + ' из ' + chains.length + mainName;
     }
 
     $('spgSelectAllBtn').onclick = () => {
         for (let i = 0; i < chains.length; i++) {
             if (matchesChainSearch(chains[i])) selectedIds[chains[i].id] = true;
         }
+        if (mainChainId === null) {
+            for (let j = 0; j < chains.length; j++) {
+                if (selectedIds[chains[j].id]) {
+                    mainChainId = chains[j].id;
+                    autoPickMainOp();
+                    break;
+                }
+            }
+        }
         renderChains(); updateSelectedInfo(); updatePreview();
     };
     $('spgClearAllBtn').onclick = () => {
         selectedIds = {};
+        mainChainId = null;
+        mainOpId = null;
         renderChains(); updateSelectedInfo(); updatePreview();
     };
     $('spgExpandAllChainsBtn').onclick = () => { collapsedChainIds = {}; renderChains(); };
@@ -794,67 +912,333 @@ function spgInit(win) {
         }
         return out;
     }
-    function getValidTrainsCount() {
-        let n = 0;
-        for (let i = 0; i < trainsList.length; i++) {
-            if (trainsList[i].status === 'ok') n++;
-        }
-        return n;
-    }
+
     function updatePreview() {
         const selected = getSelectedChains();
         if (selected.length === 0) {
             previewInfo.textContent = 'Выберите хотя бы одну цепочку.';
             return;
         }
-        if (copyMode === 'count') {
-            const count = clampInt($('spgCopyCount').value, 1, 200, 1);
-            const minutes = clampInt($('spgShiftMinutes').value, 1, 1440, 15);
-            const shiftX = minutes * MINUTE_TO_X;
-            const totalCopies = selected.length * count;
+        if (copyMode === 'count') return;
+
+        let mainChain = null;
+        for (let i = 0; i < selected.length; i++) {
+            if (selected[i].id === mainChainId) { mainChain = selected[i]; break; }
+        }
+
+        let totalTrains = 0, validTrains = 0;
+        for (let w = 0; w < copyWindows.length; w++) {
+            const tl = copyWindows[w].trainsList;
+            for (let ti = 0; ti < tl.length; ti++) {
+                totalTrains++;
+                if (tl[ti].status === 'ok') validTrains++;
+            }
+        }
+
+        if (!mainChain) {
             previewInfo.innerHTML =
-                'Режим: <b>по количеству</b>. Копий: <b>' + totalCopies +
-                '</b>. Итог: <b>' + (chains.length + totalCopies) + '</b> цепочек.<br>' +
-                'Сдвиг: <b>' + minutes + ' мин</b> = <b>' + shiftX + ' ед. X</b>.';
+                '<span style="color:#ff3b30">Не выбрана основная цепочка. Кликните ★ у одной из выбранных.</span><br>' +
+                'Окон расписания: <b>' + copyWindows.length + '</b>. Строк всего: <b>' + totalTrains + '</b>.';
             return;
         }
-        const okCount = getValidTrainsCount();
-        const totalCopies2 = selected.length * okCount;
+        if (mainOpId == null) {
+            previewInfo.innerHTML =
+                '<span style="color:#ff3b30">⚠ Не выбрана основная операция. Выберите её в блоке цепочек.</span><br>' +
+                'Основная цепочка: <b>' + escapeHtml(mainChain.header) + '</b>.';
+            return;
+        }
+
+        const auxCount = selected.length - 1;
         previewInfo.innerHTML =
-            'Режим: <b>по расписанию</b>. Строк: <b>' + trainsList.length +
-            '</b>, валидных: <b>' + okCount + '</b>.<br>' +
-            'Копий: <b>' + totalCopies2 + '</b>. Итог: <b>' + (chains.length + totalCopies2) + '</b> цепочек.<br>' +
-            '<b>Поезд-1</b> → comment + strokeColor в первую операцию (по метке «перегон»), ' +
-            '<b>поезд-2</b> → comment + strokeColor в последнюю.';
+            'Основная: <b>' + escapeHtml(mainChain.header) + '</b>. ' +
+            'Вспомогательных: <b>' + auxCount + '</b>.<br>' +
+            'Окон расписания: <b>' + copyWindows.length + '</b>. ' +
+            'Строк всего: <b>' + totalTrains + '</b>, валидных: <b>' + validTrains + '</b>.<br>' +
+            'Проверка: <b>начало копии на строке якорной операции &lt; конец занятости строки</b>.';
     }
-    $('spgCopyCount').oninput = updatePreview;
-    $('spgShiftMinutes').oninput = updatePreview;
 
     // ============================================================
-    //  CSV
+    //  ОКНА РАСПИСАНИЙ
     // ============================================================
-    trainsFileInput.onchange = function () {
-        if (trainsFileInput.files.length === 0) return;
-        const file = trainsFileInput.files[0];
+    function addCopyWindow() {
+        const id = nextWindowId++;
+        copyWindows.push({ id: id, trainsList: [], applied: false, appliedCount: 0 });
+        renderCopyWindows();
+        updatePreview();
+    }
+    function removeCopyWindow(id) {
+        spgConfirm('Удалить это окно расписания? Уже созданные копии не откатываются.', () => {
+            const arr = [];
+            for (let i = 0; i < copyWindows.length; i++) {
+                if (copyWindows[i].id !== id) arr.push(copyWindows[i]);
+            }
+            copyWindows = arr;
+            renderCopyWindows();
+            updatePreview();
+        });
+    }
+    $('spgAddWindowBtn').onclick = () => { addCopyWindow(); };
+
+    function renderCopyWindows() {
+        let html = '';
+        for (let i = 0; i < copyWindows.length; i++) {
+            const w = copyWindows[i];
+            let okCount = 0;
+            for (let t = 0; t < w.trainsList.length; t++) {
+                if (w.trainsList[t].status === 'ok') okCount++;
+            }
+            const appliedCls = w.applied ? ' applied' : '';
+            const appliedBadge = w.applied
+                ? '<span class="spg-applied-badge">✔ Применено (' + w.appliedCount + ')</span>' : '';
+
+            html += '<div class="spg-copy-window' + appliedCls + '" data-window-id="' + w.id + '">';
+            html += '<div class="spg-copy-window-header">';
+            html += '<span class="spg-copy-window-title">Расписание #' + w.id + '</span>';
+            html += appliedBadge;
+            html += '<div class="spg-spacer"></div>';
+            html += '<span class="spg-copy-window-stats">Строк: <b>' + w.trainsList.length +
+                    '</b>, валидных: <b>' + okCount + '</b></span>';
+            html += '<input type="file" accept=".csv" data-csv-window="' + w.id + '" class="spg-file-inline">';
+            html += '<button type="button" class="spg-btn spg-small" data-add-row="' + w.id + '">＋ Строка</button>';
+            html += '<button type="button" class="spg-btn spg-small spg-danger" data-clear-window="' + w.id + '">✕ Очистить</button>';
+            html += '<button type="button" class="spg-btn spg-small spg-danger" data-remove-window="' + w.id + '">🗑</button>';
+            html += '</div>';
+
+            html += '<div class="spg-table-scroll">';
+            html += '<table class="spg-trains-table" data-table="' + w.id + '">';
+            html += '<thead><tr>' +
+                    '<th style="width:36px">#</th>' +
+                    '<th style="width:110px">Поезд-1</th>' +
+                    '<th style="width:90px">Начало</th>' +
+                    '<th style="width:90px">Конец</th>' +
+                    '<th style="width:110px">Поезд-2</th>' +
+                    '<th style="width:90px">Начало 2</th>' +
+                    '<th style="width:90px">Конец 2</th>' +
+                    '<th style="width:60px">✕</th>' +
+                    '</tr></thead>';
+            html += '<tbody data-body="' + w.id + '">';
+
+            if (w.trainsList.length === 0) {
+                html += '<tr><td colspan="8" class="spg-empty-cell">' +
+                        'Таблица пуста. Нажмите «＋ Строка» или загрузите CSV.</td></tr>';
+            } else {
+                for (let k = 0; k < w.trainsList.length; k++) {
+                    const t = w.trainsList[k];
+                    const trCls = (t.status === 'text') ? ' class="spg-err"' : '';
+                    html += '<tr' + trCls + ' data-row-idx="' + k + '">';
+                    html += '<td class="spg-num">' + (k + 1) + '</td>';
+                    html += '<td><input type="text" class="spg-cell-input spg-train-input" value="' +
+                            escapeAttr(t.train1) + '" data-win="' + w.id + '" data-idx="' + k + '" data-field="train1"></td>';
+                    html += '<td><input type="text" class="spg-cell-input spg-time-input" value="' +
+                            escapeAttr(t.start1) + '" data-win="' + w.id + '" data-idx="' + k + '" data-field="start1" placeholder="чч:мм"></td>';
+                    html += '<td><input type="text" class="spg-cell-input spg-time-input" value="' +
+                            escapeAttr(t.end1) + '" data-win="' + w.id + '" data-idx="' + k + '" data-field="end1" placeholder="чч:мм"></td>';
+                    html += '<td><input type="text" class="spg-cell-input spg-train-input" value="' +
+                            escapeAttr(t.train2) + '" data-win="' + w.id + '" data-idx="' + k + '" data-field="train2"></td>';
+                    html += '<td><input type="text" class="spg-cell-input spg-time-input" value="' +
+                            escapeAttr(t.start2) + '" data-win="' + w.id + '" data-idx="' + k + '" data-field="start2" placeholder="чч:мм"></td>';
+                    html += '<td><input type="text" class="spg-cell-input spg-time-input" value="' +
+                            escapeAttr(t.end2) + '" data-win="' + w.id + '" data-idx="' + k + '" data-field="end2" placeholder="чч:мм"></td>';
+                    html += '<td><button type="button" class="spg-btn spg-small spg-danger" data-del-row="' + w.id + '" data-idx="' + k + '">✕</button></td>';
+                    html += '</tr>';
+                }
+            }
+            html += '</tbody></table></div>';
+
+            html += '<div class="spg-copy-window-actions">';
+            html += '<button type="button" class="spg-btn spg-primary" data-apply-window="' + w.id + '">' +
+                    (w.applied ? '↻ Применить ещё раз' : '✚ Применить это расписание') + '</button>';
+            html += '</div>';
+
+            html += '</div>';
+        }
+        copyWindowsContainer.innerHTML = html;
+
+        copyWindowsContainer.querySelectorAll('input[data-csv-window]').forEach(el => el.addEventListener('change', onCsvLoad));
+        copyWindowsContainer.querySelectorAll('button[data-add-row]').forEach(el => el.addEventListener('click', onAddRow));
+        copyWindowsContainer.querySelectorAll('button[data-clear-window]').forEach(el => el.addEventListener('click', onClearWindow));
+        copyWindowsContainer.querySelectorAll('button[data-remove-window]').forEach(el => el.addEventListener('click', onRemoveWindow));
+        copyWindowsContainer.querySelectorAll('button[data-del-row]').forEach(el => el.addEventListener('click', onDelRow));
+        copyWindowsContainer.querySelectorAll('button[data-apply-window]').forEach(el => el.addEventListener('click', onApplyWindow));
+        copyWindowsContainer.querySelectorAll('input.spg-cell-input').forEach(inp => {
+            inp.addEventListener('input', onCellInput);
+            inp.addEventListener('blur', onCellBlur);
+            inp.addEventListener('keydown', onCellKeydown);
+        });
+
+        totalCopiesApplied.textContent = totalCopiesCount;
+    }
+
+    function findWindowById(id) {
+        for (let i = 0; i < copyWindows.length; i++) {
+            if (copyWindows[i].id === id) return copyWindows[i];
+        }
+        return null;
+    }
+
+    function onCsvLoad(e) {
+        const wId = parseInt(e.currentTarget.getAttribute('data-csv-window'), 10);
+        const w = findWindowById(wId);
+        if (!w) return;
+        const file = e.currentTarget.files[0];
+        if (!file) return;
         if (!file.name.toLowerCase().endsWith('.csv')) {
-            trainsStatus.innerHTML = '<div class="spg-info-block spg-red">Только CSV-файл.</div>';
+            spgAlert('Только CSV-файл.');
             return;
         }
-        trainsStatus.innerHTML = '<div class="spg-info-block spg-blue">Читаю: ' + escapeHtml(file.name) + '</div>';
         const reader = new FileReader();
-        reader.onerror = () => { trainsStatus.innerHTML = '<div class="spg-info-block spg-red">Ошибка чтения</div>'; };
-        reader.onload = (e) => {
+        const inputEl = e.currentTarget;
+        reader.onerror = () => spgAlert('Ошибка чтения');
+        reader.onload = (ev) => {
             try {
-                const rows = parseCsv(e.target.result);
-                processTrainRows(rows);
-                trainsStatus.innerHTML = '<div class="spg-info-block spg-blue">Загружено: ' + escapeHtml(file.name) + '</div>';
+                const rows = parseCsv(ev.target.result);
+                processTrainRowsAppend(w, rows);
+                w.applied = false;
+                renderCopyWindows();
+                updatePreview();
+                inputEl.value = '';
             } catch (err) {
-                trainsStatus.innerHTML = '<div class="spg-info-block spg-red">Ошибка CSV: ' + escapeHtml(err.message) + '</div>';
+                spgAlert('Ошибка CSV: ' + err.message);
             }
         };
         reader.readAsText(file, 'UTF-8');
-    };
+    }
 
+    function onAddRow(e) {
+        const wId = parseInt(e.currentTarget.getAttribute('data-add-row'), 10);
+        const w = findWindowById(wId);
+        if (!w) return;
+        w.trainsList.push({
+            train1: '', start1: '', end1: '', start2: '', end2: '', train2: '',
+            s1m: null, e1m: null, s2m: null, e2m: null, status: 'text'
+        });
+        w.applied = false;
+        renderCopyWindows();
+        updatePreview();
+        const lastIdx = w.trainsList.length - 1;
+        setTimeout(() => {
+            const inp = copyWindowsContainer.querySelector(
+                'input.spg-train-input[data-win="' + wId + '"][data-idx="' + lastIdx + '"]');
+            if (inp) inp.focus();
+        }, 50);
+    }
+
+    function onClearWindow(e) {
+        const wId = parseInt(e.currentTarget.getAttribute('data-clear-window'), 10);
+        const w = findWindowById(wId);
+        if (!w) return;
+        if (w.trainsList.length === 0) return;
+        spgConfirm('Очистить расписание #' + wId + '?', () => {
+            w.trainsList = [];
+            w.applied = false;
+            renderCopyWindows();
+            updatePreview();
+        });
+    }
+
+    function onRemoveWindow(e) {
+        const wId = parseInt(e.currentTarget.getAttribute('data-remove-window'), 10);
+        removeCopyWindow(wId);
+    }
+
+    function onDelRow(e) {
+        const wId = parseInt(e.currentTarget.getAttribute('data-del-row'), 10);
+        const idx = parseInt(e.currentTarget.getAttribute('data-idx'), 10);
+        const w = findWindowById(wId);
+        if (!w || isNaN(idx)) return;
+        w.trainsList.splice(idx, 1);
+        w.applied = false;
+        renderCopyWindows();
+        updatePreview();
+    }
+
+    function onCellInput(e) {
+        const input = e.currentTarget;
+        const wId = parseInt(input.getAttribute('data-win'), 10);
+        const idx = parseInt(input.getAttribute('data-idx'), 10);
+        const field = input.getAttribute('data-field');
+        const w = findWindowById(wId);
+        if (!w || isNaN(idx) || !w.trainsList[idx]) return;
+        w.trainsList[idx][field] = input.value;
+        if (field === 'start1' || field === 'end1' || field === 'start2' || field === 'end2') {
+            recalcTrainRow(w.trainsList[idx]);
+        }
+        const row = input.parentElement.parentElement;
+        if (row) {
+            row.classList.remove('spg-err');
+            if (w.trainsList[idx].status === 'text') row.classList.add('spg-err');
+        }
+        w.applied = false;
+        updatePreview();
+    }
+    function onCellBlur(e) {}
+    function onCellKeydown(e) {
+        if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); }
+    }
+
+    function recalcTrainRow(t) {
+        t.s1m = parseTimeString(t.start1);
+        t.e1m = parseTimeString(t.end1);
+        t.s2m = parseTimeString(t.start2);
+        t.e2m = parseTimeString(t.end2);
+        const valid = t.s1m != null && t.e1m != null && t.s2m != null && t.e2m != null
+                    && t.e1m > t.s1m && t.e2m > t.s2m;
+        t.status = valid ? 'ok' : 'text';
+    }
+
+    function onApplyWindow(e) {
+        const wId = parseInt(e.currentTarget.getAttribute('data-apply-window'), 10);
+        const w = findWindowById(wId);
+        if (!w) return;
+
+        if (Object.keys(selectedIds).length === 0) { spgAlert('Выберите хотя бы одну цепочку.'); return; }
+        if (mainChainId == null) { spgAlert('Выберите основную цепочку (★).'); return; }
+        if (mainOpId == null) {
+            showModal(
+                'Выберите основную операцию',
+                '<p>Для применения копирования по расписанию нужно указать <b>основную операцию</b> ' +
+                'в основной цепочке.</p>' +
+                '<p>Как правило, это <b>«простой вагона в ожидании»</b> или другая ключевая операция.</p>',
+                null, true
+            );
+            return;
+        }
+
+        let okCount = 0;
+        for (let i = 0; i < w.trainsList.length; i++) {
+            if (w.trainsList[i].status === 'ok') okCount++;
+        }
+        if (okCount === 0) { spgAlert('В расписании #' + wId + ' нет валидных строк.'); return; }
+
+        try {
+            applyReplicationForWindow(w, (res) => {
+                const failed = res.failedTrains || [];
+                w.applied = true;
+                w.appliedCount = res.totalCopies;
+                totalCopiesCount += res.totalCopies;
+
+                let msg = 'Расписание #' + wId + ': создано копий <b>' + res.totalCopies + '</b>.';
+                if (failed.length > 0) {
+                    msg += ' <span style="color:#ff3b30">Пропущено поездов: <b>' + failed.length + '</b>.</span>';
+                }
+                msg += ' Всего по всем расписаниям: <b>' + totalCopiesCount + '</b>.';
+
+                resultInfo.innerHTML = msg;
+                resultBox.classList.remove('spg-hidden');
+
+                renderCopyWindows();
+                renderResultChains();
+                updatePreview();
+            });
+        } catch (err) {
+            spgAlert('Ошибка: ' + err.message);
+            console.error(err);
+        }
+    }
+
+    // ============================================================
+    //  CSV ПАРСИНГ
+    // ============================================================
     function parseCsv(text) {
         if (text.charCodeAt(0) === 0xFEFF) text = text.substring(1);
         const lines = text.split(/\r?\n/);
@@ -879,9 +1263,8 @@ function spgInit(win) {
             || joined.indexOf('время') !== -1 || joined.indexOf('начал') !== -1;
     }
 
-    function processTrainRows(rows) {
-        trainsList = [];
-        const skippedIncomplete = [];
+    function processTrainRowsAppend(w, rows) {
+        const skipped = [];
         for (let i = 0; i < rows.length; i++) {
             const r = rows[i];
             if (!r || r.length < 2) continue;
@@ -894,14 +1277,12 @@ function spgInit(win) {
             const train2 = r.length >= 6 ? String(r[5] == null ? '' : r[5]).trim() : '';
 
             if (train1 && s1 && e1 && train2 && s2 && e2) {
-                trainsList.push(buildTrainRow(train1, s1, e1, s2, e2, train2));
+                w.trainsList.push(buildTrainRow(train1, s1, e1, s2, e2, train2));
             } else {
-                skippedIncomplete.push({ train1, start1: s1, end1: e1, train2, reason: 'неполные данные' });
+                skipped.push({ train1, start1: s1, end1: e1, train2 });
             }
         }
-        renderTrainsPreview();
-        updatePreview();
-        if (skippedIncomplete.length > 0) showSkippedIncomplete(skippedIncomplete);
+        if (skipped.length > 0) showSkippedIncomplete(skipped);
     }
 
     function buildTrainRow(train1, start1, end1, start2, end2, train2) {
@@ -943,116 +1324,8 @@ function spgInit(win) {
     }
 
     // ============================================================
-    //  ОТРИСОВКА РАСПИСАНИЯ
+    //  МОДАЛЬНЫЕ ОКНА (специальные)
     // ============================================================
-    function renderTrainsPreview() {
-        let okCount = 0;
-        let html = '';
-        for (let i = 0; i < trainsList.length; i++) {
-            const t = trainsList[i];
-            if (t.status === 'ok') okCount++;
-            const trCls = t.status === 'text' ? ' class="spg-err"' : '';
-            html += '<tr' + trCls + ' data-idx="' + i + '">';
-            html += '<td class="spg-num">' + (i + 1) + '</td>';
-            html += '<td><input type="text" class="spg-cell-input spg-train-input" value="' +
-                    escapeAttr(t.train1) + '" data-idx="' + i + '" data-field="train1"></td>';
-            html += '<td><input type="text" class="spg-cell-input spg-time-input" value="' +
-                    escapeAttr(t.start1) + '" data-idx="' + i + '" data-field="start1" placeholder="чч:мм"></td>';
-            html += '<td><input type="text" class="spg-cell-input spg-time-input" value="' +
-                    escapeAttr(t.end1) + '" data-idx="' + i + '" data-field="end1" placeholder="чч:мм"></td>';
-            html += '<td><input type="text" class="spg-cell-input spg-train-input" value="' +
-                    escapeAttr(t.train2) + '" data-idx="' + i + '" data-field="train2"></td>';
-            html += '<td><input type="text" class="spg-cell-input spg-time-input" value="' +
-                    escapeAttr(t.start2) + '" data-idx="' + i + '" data-field="start2" placeholder="чч:мм"></td>';
-            html += '<td><input type="text" class="spg-cell-input spg-time-input" value="' +
-                    escapeAttr(t.end2) + '" data-idx="' + i + '" data-field="end2" placeholder="чч:мм"></td>';
-            html += '<td><button type="button" class="spg-btn spg-small spg-danger" data-action="del" data-idx="' + i + '" title="Удалить">✕</button></td>';
-            html += '</tr>';
-        }
-        if (trainsList.length === 0) {
-            html = '<tr><td colspan="8" class="spg-empty-cell">Таблица пуста. Нажмите «＋ Добавить» или загрузите CSV.</td></tr>';
-        }
-        trainsPreviewBody.innerHTML = html;
-        trainsTotal.textContent = trainsList.length;
-        trainsValid.textContent = okCount;
-
-        trainsPreviewBody.querySelectorAll('input.spg-cell-input').forEach(inp => {
-            inp.addEventListener('input', onCellInput);
-            inp.addEventListener('blur', onCellBlur);
-            inp.addEventListener('keydown', onCellKeydown);
-        });
-        trainsPreviewBody.querySelectorAll('button[data-action="del"]').forEach(btn => {
-            btn.addEventListener('click', onDeleteRow);
-        });
-    }
-
-    function onCellInput(e) {
-        const input = e.currentTarget;
-        const idx = parseInt(input.getAttribute('data-idx'), 10);
-        const field = input.getAttribute('data-field');
-        if (isNaN(idx) || !trainsList[idx]) return;
-        trainsList[idx][field] = input.value;
-        if (field === 'start1' || field === 'end1' || field === 'start2' || field === 'end2') recalcTrainRow(idx);
-        updateRowClass(idx);
-        updatePreview();
-    }
-    function onCellBlur(e) {
-        const input = e.currentTarget;
-        const idx = parseInt(input.getAttribute('data-idx'), 10);
-        if (isNaN(idx) || !trainsList[idx]) return;
-        updateRowClass(idx);
-    }
-    function onCellKeydown(e) {
-        if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); }
-    }
-
-    function recalcTrainRow(idx) {
-        const t = trainsList[idx];
-        t.s1m = parseTimeString(t.start1);
-        t.e1m = parseTimeString(t.end1);
-        t.s2m = parseTimeString(t.start2);
-        t.e2m = parseTimeString(t.end2);
-        const valid = t.s1m != null && t.e1m != null && t.s2m != null && t.e2m != null
-                    && t.e1m > t.s1m && t.e2m > t.s2m;
-        t.status = valid ? 'ok' : 'text';
-    }
-
-    function updateRowClass(idx) {
-        const row = trainsPreviewBody.querySelector('tr[data-idx="' + idx + '"]');
-        if (!row) return;
-        row.classList.remove('spg-err');
-        if (trainsList[idx].status === 'text') row.classList.add('spg-err');
-    }
-
-    function onDeleteRow(e) {
-        const idx = parseInt(e.currentTarget.getAttribute('data-idx'), 10);
-        if (isNaN(idx)) return;
-        trainsList.splice(idx, 1);
-        renderTrainsPreview();
-        updatePreview();
-    }
-
-    $('spgAddTrainRowBtn').onclick = () => {
-        trainsList.push({
-            train1: '', start1: '', end1: '', start2: '', end2: '', train2: '',
-            s1m: null, e1m: null, s2m: null, e2m: null, status: 'text'
-        });
-        renderTrainsPreview();
-        updatePreview();
-        const lastIdx = trainsList.length - 1;
-        const inp = trainsPreviewBody.querySelector('input.spg-train-input[data-idx="' + lastIdx + '"]');
-        if (inp) inp.focus();
-    };
-
-    $('spgClearTrainsBtn').onclick = () => {
-        if (trainsList.length === 0) return;
-        spgConfirm('Удалить все строки расписания?', () => {
-            trainsList = [];
-            renderTrainsPreview();
-            updatePreview();
-        });
-    };
-
     function showSkippedIncomplete(items) {
         let rowsHtml = '';
         for (let i = 0; i < items.length; i++) {
@@ -1063,7 +1336,7 @@ function spgInit(win) {
                 '<td>' + escapeHtml(it.start1) + '</td>' +
                 '<td>' + escapeHtml(it.end1) + '</td>' +
                 '<td>' + escapeHtml(it.train2) + '</td>' +
-                '<td style="color:#92400e">' + escapeHtml(it.reason) + '</td>' +
+                '<td style="color:#b8860b">неполные данные</td>' +
                 '</tr>';
         }
         const html =
@@ -1072,6 +1345,54 @@ function spgInit(win) {
             '<thead><tr><th>#</th><th>Поезд-1</th><th>Начало</th><th>Конец</th><th>Поезд-2</th><th>Причина</th></tr></thead>' +
             '<tbody>' + rowsHtml + '</tbody></table>';
         showModal('Пропущенные строки', html, null, true);
+    }
+
+    function showCollisionDialog(pendingTrains, onResult) {
+        let rowsHtml = '';
+        for (let i = 0; i < pendingTrains.length; i++) {
+            const t = pendingTrains[i];
+            rowsHtml += '<tr>' +
+                '<td class="spg-num">' + (i + 1) + '</td>' +
+                '<td>' + escapeHtml(t.train1) + '</td>' +
+                '<td>' + escapeHtml(t.start1) + '</td>' +
+                '<td>' + escapeHtml(t.train2) + '</td>' +
+                '</tr>';
+        }
+        const html =
+            '<p>Следующие поезда <b>нельзя разместить без нахлёста</b> ' +
+            'ни по одной из выбранных цепочек:</p>' +
+            '<table class="spg-trains-table" style="margin-top:12px;">' +
+            '<thead><tr><th style="width:40px">#</th><th>Поезд-1</th><th>Начало</th><th>Поезд-2</th></tr></thead>' +
+            '<tbody>' + rowsHtml + '</tbody></table>' +
+            '<p style="margin-top:12px; font-size:13px; color:var(--popup-text-muted);">' +
+            'Если подтвердить — операции будут скопированы <b>с нахлёстом</b> по основной цепочке. ' +
+            'Если отменить — поезда будут пропущены.' +
+            '</p>';
+
+        $('spgModalTitle').textContent = 'Поезда с перехлёстом';
+        $('spgModalText').innerHTML = html;
+
+        const okBtn = $('spgModalOk');
+        const cancelBtn = $('spgModalCancel');
+        const okTextOrig = okBtn.textContent;
+        const cancelTextOrig = cancelBtn.textContent;
+
+        okBtn.textContent = 'Да, разместить с перехлёстом';
+        cancelBtn.textContent = 'Нет, пропустить';
+
+        $('spgModalBackdrop').classList.remove('spg-hidden');
+        cancelBtn.style.display = '';
+
+        function cleanup() {
+            $('spgModalBackdrop').classList.add('spg-hidden');
+            okBtn.textContent = okTextOrig;
+            cancelBtn.textContent = cancelTextOrig;
+            okBtn.onclick = null;
+            cancelBtn.onclick = null;
+        }
+
+        okBtn.onclick = function () { cleanup(); onResult(true); };
+        cancelBtn.onclick = function () { cleanup(); onResult(false); };
     }
 
     // ============================================================
@@ -1123,10 +1444,8 @@ function spgInit(win) {
         const K = MINUTE_TO_X;
         const s1 = trainRow.s1m, e1 = trainRow.e1m, s2 = trainRow.s2m, e2 = trainRow.e2m;
         const train1 = trainRow.train1, train2 = trainRow.train2;
-
         const sc1 = getStrokeColorForTrain(train1);
         const sc2 = getStrokeColorForTrain(train2);
-
         const anchors = findChainAnchors(chain);
         const firstOpId = anchors.firstOpId, lastOpId = anchors.lastOpId, prostoyId = anchors.prostoyId;
 
@@ -1152,79 +1471,148 @@ function spgInit(win) {
             const dur = (typeof op.duration === 'number') ? op.duration : 0;
 
             if (opId === firstOpId) {
-                result.push({
-                    opSrc: op,
-                    newX: s1 * K,
-                    newDuration: e1 - s1,
-                    newComment: train1,
-                    newStrokeColor: sc1,
-                    isAnchor: 'first'
-                });
+                result.push({ opSrc: op, newX: s1 * K, newDuration: e1 - s1,
+                              newComment: train1, newStrokeColor: sc1, isAnchor: 'first' });
                 continue;
             }
             if (opId === lastOpId && opId !== firstOpId) {
-                result.push({
-                    opSrc: op,
-                    newX: s2 * K,
-                    newDuration: e2 - s2,
-                    newComment: train2,
-                    newStrokeColor: sc2,
-                    isAnchor: 'last'
-                });
+                result.push({ opSrc: op, newX: s2 * K, newDuration: e2 - s2,
+                              newComment: train2, newStrokeColor: sc2, isAnchor: 'last' });
                 continue;
             }
             if (opId === prostoyId) {
-                result.push({
-                    opSrc: op,
-                    newX: e1 * K,
-                    newDuration: s2 - e1,
-                    newComment: null,
-                    newStrokeColor: null,
-                    isAnchor: null
-                });
+                result.push({ opSrc: op, newX: e1 * K, newDuration: s2 - e1,
+                              newComment: null, newStrokeColor: null, isAnchor: null });
                 continue;
             }
             if (j < prostoySortedIdx) {
-                result.push({
-                    opSrc: op,
-                    newX: e1 * K - dur * K,
-                    newDuration: dur,
-                    newComment: null,
-                    newStrokeColor: null,
-                    isAnchor: null
-                });
+                result.push({ opSrc: op, newX: e1 * K - dur * K, newDuration: dur,
+                              newComment: null, newStrokeColor: null, isAnchor: null });
             } else {
-                result.push({
-                    opSrc: op,
-                    newX: s2 * K,
-                    newDuration: dur,
-                    newComment: null,
-                    newStrokeColor: null,
-                    isAnchor: null
-                });
+                result.push({ opSrc: op, newX: s2 * K, newDuration: dur,
+                              newComment: null, newStrokeColor: null, isAnchor: null });
             }
         }
         return result;
     }
 
-    function applyReplication() {
-        const data = deepClone(sourceData);
+    function layoutHasCollision(layout, mainRowId, data) {
+        let newStart = null;
+        for (let i = 0; i < layout.length; i++) {
+            const item = layout[i];
+            if (item.opSrc.rowId !== mainRowId) continue;
+            if (newStart === null || item.newX < newStart) newStart = item.newX;
+        }
+        if (newStart === null) return false;
+
+        let occupiedEnd = null;
+        const rows = (data.graphData && data.graphData.rows) || [];
+        for (let r = 0; r < rows.length; r++) {
+            if (rows[r].id !== mainRowId) continue;
+            const ops = rows[r].operations || [];
+            for (let k = 0; k < ops.length; k++) {
+                const op = ops[k];
+                if (typeof op.x !== 'number') continue;
+                const dur = (typeof op.duration === 'number') ? op.duration : 0;
+                const end = op.x + dur * MINUTE_TO_X;
+                if (occupiedEnd === null || end > occupiedEnd) occupiedEnd = end;
+            }
+            break;
+        }
+
+        if (occupiedEnd === null) return false;
+        return newStart < occupiedEnd;
+    }
+
+    function applyLayoutToRows(data, layout, newChainId, nextIdFn) {
+        const gd = data.graphData;
+        const rows = gd.rows || [];
+        for (let i = 0; i < layout.length; i++) {
+            const item = layout[i];
+            const opSrc = item.opSrc;
+            let targetRow = null;
+            for (let r = 0; r < rows.length; r++) {
+                if (rows[r].id === opSrc.rowId) { targetRow = rows[r]; break; }
+            }
+            if (!targetRow) continue;
+            if (!Array.isArray(targetRow.operations)) targetRow.operations = [];
+
+            let originalOp = null;
+            for (let k = 0; k < targetRow.operations.length; k++) {
+                if (targetRow.operations[k].id === opSrc.id) { originalOp = targetRow.operations[k]; break; }
+            }
+            if (!originalOp) continue;
+
+            const newOp = deepClone(originalOp);
+            newOp.id = nextIdFn();
+            newOp.chainId = newChainId;
+            newOp.x = item.newX;
+            if (item.newDuration != null) newOp.duration = item.newDuration;
+
+            if (item.newComment != null && String(item.newComment).trim() !== '') {
+                newOp.comment = item.newComment;
+            } else {
+                delete newOp.comment;
+            }
+
+            if (item.isAnchor === 'first' || item.isAnchor === 'last') {
+                if (item.newStrokeColor != null) {
+                    newOp.strokeColor = item.newStrokeColor;
+                }
+            } else {
+                delete newOp.strokeColor;
+            }
+
+            targetRow.operations.push(newOp);
+        }
+    }
+
+    function findMainOpRowId() {
+        if (mainChainId == null || mainOpId == null) return null;
+        let c = null;
+        for (let i = 0; i < chains.length; i++) {
+            if (chains[i].id === mainChainId) { c = chains[i]; break; }
+        }
+        if (!c) return null;
+        for (let j = 0; j < c.operations.length; j++) {
+            if (c.operations[j].id === mainOpId) return c.operations[j].rowId;
+        }
+        return null;
+    }
+
+    function applyReplicationForWindow(w, onDone) {
+        if (!workingData) workingData = deepClone(sourceData);
+        const data = workingData;
         const gd = data.graphData;
         if (!gd) throw new Error('Не найден graphData');
-        const rows = gd.rows || [];
-        const techChains = gd.techChains || [];
+
         const selected = getSelectedChains();
+        let mainChain = null;
+        for (let i = 0; i < selected.length; i++) {
+            if (selected[i].id === mainChainId) { mainChain = selected[i]; break; }
+        }
+        if (!mainChain) throw new Error('Не выбрана основная цепочка.');
+
+        const mainRowId = findMainOpRowId();
+        if (mainRowId == null) throw new Error('Не найдена строка основной операции.');
+
+        const chainOrder = [mainChain];
+        for (let j = 0; j < selected.length; j++) {
+            if (selected[j].id !== mainChainId) chainOrder.push(selected[j]);
+        }
 
         const existingIds = {};
-        for (let i = 0; i < rows.length; i++) {
-            if (!rows[i].operations) continue;
-            for (let j = 0; j < rows[i].operations.length; j++) {
-                const op = rows[i].operations[j];
+        const rows = gd.rows || [];
+        const techChains = gd.techChains || [];
+        for (let r = 0; r < rows.length; r++) {
+            if (!rows[r].operations) continue;
+            for (let o = 0; o < rows[r].operations.length; o++) {
+                const op = rows[r].operations[o];
                 if (op.id != null) existingIds[op.id] = true;
                 if (op.chainId != null) existingIds[op.chainId] = true;
             }
         }
-        for (let i = 0; i < techChains.length; i++) existingIds[techChains[i].id] = true;
+        for (let t = 0; t < techChains.length; t++) existingIds[techChains[t].id] = true;
 
         let baseId = Date.now();
         function nextId() {
@@ -1234,128 +1622,226 @@ function spgInit(win) {
         }
 
         let totalCopies = 0;
+        const failedTrains = [];
+        const pendingCollisions = [];
 
-        if (copyMode === 'count') {
-            const count = clampInt($('spgCopyCount').value, 1, 200, 1);
-            const minutes = clampInt($('spgShiftMinutes').value, 1, 1440, 15);
-            const shiftX = minutes * MINUTE_TO_X;
-            const prefix = ($('spgCopyPrefix').value || 'копия').trim() || 'копия';
-            for (let s = 0; s < selected.length; s++) {
-                const chain = selected[s];
-                for (let k = 1; k <= count; k++) {
-                    const newChainId = nextId();
-                    techChains.push({
-                        header: chain.header + ' (' + prefix + ' ' + k + ')',
-                        isLocked: chain.isLocked, id: newChainId
-                    });
-                    for (let oi = 0; oi < chain.operations.length; oi++) {
-                        const opSrc = chain.operations[oi];
-                        const targetRow = findRowById(rows, opSrc.rowId);
-                        if (!targetRow) continue;
-                        if (!targetRow.operations) targetRow.operations = [];
-                        const originalOp = findOpById(targetRow.operations, opSrc.id);
-                        if (!originalOp) continue;
-                        const newOp = deepClone(originalOp);
-                        newOp.id = nextId();
-                        newOp.chainId = newChainId;
-                        if (typeof newOp.x === 'number') newOp.x = newOp.x + shiftX * k;
-                        targetRow.operations.push(newOp);
-                    }
-                    totalCopies++;
-                }
+        for (let ti = 0; ti < w.trainsList.length; ti++) {
+            const tr = w.trainsList[ti];
+            if (tr.status !== 'ok') continue;
+
+            let placed = false;
+            for (let ci = 0; ci < chainOrder.length; ci++) {
+                const ch = chainOrder[ci];
+                const layout = layoutChainOperations(ch, tr);
+
+                if (layoutHasCollision(layout, mainRowId, data)) continue;
+
+                const newChainId = nextId();
+                data.graphData.techChains.push({
+                    header: ch.header + ' — ' + tr.train1 + ' / ' + tr.train2,
+                    isLocked: ch.isLocked,
+                    id: newChainId,
+                    comment: tr.train1 + ' / ' + tr.train2
+                });
+
+                applyLayoutToRows(data, layout, newChainId, nextId);
+                totalCopies++;
+                placed = true;
+                break;
             }
+
+            if (!placed) pendingCollisions.push(tr);
+        }
+
+        if (pendingCollisions.length > 0) {
+            showCollisionDialog(pendingCollisions, (confirmed) => {
+                if (confirmed) {
+                    for (let pi = 0; pi < pendingCollisions.length; pi++) {
+                        const ptr = pendingCollisions[pi];
+                        const mainLayout = layoutChainOperations(mainChain, ptr);
+                        const newChainId2 = nextId();
+                        data.graphData.techChains.push({
+                            header: mainChain.header + ' — ' + ptr.train1 + ' / ' + ptr.train2,
+                            isLocked: mainChain.isLocked,
+                            id: newChainId2,
+                            comment: ptr.train1 + ' / ' + ptr.train2
+                        });
+                        applyLayoutToRows(data, mainLayout, newChainId2, nextId);
+                        totalCopies++;
+                    }
+                    onDone({ totalCopies: totalCopies, failedTrains: failedTrains, pending: pendingCollisions });
+                } else {
+                    for (let fi = 0; fi < pendingCollisions.length; fi++) {
+                        failedTrains.push({
+                            train1: pendingCollisions[fi].train1,
+                            train2: pendingCollisions[fi].train2,
+                            start1: pendingCollisions[fi].start1
+                        });
+                    }
+                    onDone({ totalCopies: totalCopies, failedTrains: failedTrains, pending: pendingCollisions });
+                }
+            });
         } else {
-            for (let s2i = 0; s2i < selected.length; s2i++) {
-                const chain2 = selected[s2i];
-                for (let ti = 0; ti < trainsList.length; ti++) {
-                    const t = trainsList[ti];
-                    if (t.status !== 'ok') continue;
-                    const newChainId2 = nextId();
-                    const headerText = chain2.header + ' — ' + t.train1 + ' / ' + t.train2;
-                    techChains.push({
-                        header: headerText, isLocked: chain2.isLocked, id: newChainId2,
-                        comment: t.train1 + ' / ' + t.train2
-                    });
-                    const layout = layoutChainOperations(chain2, t);
-                    for (let li = 0; li < layout.length; li++) {
-                        const item = layout[li];
-                        const opSrc2 = item.opSrc;
-                        const targetRow2 = findRowById(rows, opSrc2.rowId);
-                        if (!targetRow2) continue;
-                        if (!targetRow2.operations) targetRow2.operations = [];
-                        const originalOp2 = findOpById(targetRow2.operations, opSrc2.id);
-                        if (!originalOp2) continue;
-                        const newOp2 = deepClone(originalOp2);
-                        newOp2.id = nextId();
-                        newOp2.chainId = newChainId2;
-                        newOp2.x = item.newX;
-                        if (item.newDuration != null) newOp2.duration = item.newDuration;
+            onDone({ totalCopies: totalCopies, failedTrains: failedTrains, pending: [] });
+        }
+    }
 
-                        // Комментарий
-                        if (item.newComment != null && String(item.newComment).trim() !== '') {
-                            newOp2.comment = item.newComment;
-                        } else {
-                            delete newOp2.comment;
-                        }
+    function applyCountMode() {
+        if (!workingData) workingData = deepClone(sourceData);
+        const data = workingData;
+        const gd = data.graphData;
+        if (!gd) throw new Error('Не найден graphData');
+        const selected = getSelectedChains();
+        const count = clampInt($('spgCopyCount').value, 1, 200, 1);
+        const minutes = clampInt($('spgShiftMinutes').value, 1, 1440, 15);
+        const shiftX = minutes * MINUTE_TO_X;
+        const prefix = ($('spgCopyPrefix').value || 'копия').trim() || 'копия';
 
-                        // strokeColor
-                        if (item.isAnchor === 'first' || item.isAnchor === 'last') {
-                            if (item.newStrokeColor != null) {
-                                newOp2.strokeColor = item.newStrokeColor;
-                            }
-                            // null → оставляем strokeColor из оригинала
-                        } else {
-                            delete newOp2.strokeColor;
-                        }
-
-                        targetRow2.operations.push(newOp2);
-                    }
-                    totalCopies++;
-                }
+        const existingIds = {};
+        const rows = gd.rows || [];
+        const techChains = gd.techChains || [];
+        for (let r = 0; r < rows.length; r++) {
+            if (!rows[r].operations) continue;
+            for (let o = 0; o < rows[r].operations.length; o++) {
+                const op = rows[r].operations[o];
+                if (op.id != null) existingIds[op.id] = true;
+                if (op.chainId != null) existingIds[op.chainId] = true;
             }
         }
-        return { data, totalCopies, selectedCount: selected.length };
-    }
+        for (let t = 0; t < techChains.length; t++) existingIds[techChains[t].id] = true;
 
-    function findRowById(rows, id) {
-        for (let i = 0; i < rows.length; i++) if (rows[i].id === id) return rows[i];
-        return null;
-    }
-    function findOpById(ops, id) {
-        for (let i = 0; i < ops.length; i++) if (ops[i].id === id) return ops[i];
-        return null;
-    }
-
-    // ============================================================
-    //  ПРИМЕНЕНИЕ
-    // ============================================================
-    $('spgApplyBtn').onclick = () => {
-        if (Object.keys(selectedIds).length === 0) { spgAlert('Выберите хотя бы одну цепочку.'); return; }
-        if (copyMode === 'trains') {
-            const okCount = getValidTrainsCount();
-            if (okCount === 0) { spgAlert('Добавьте строки в расписание или загрузите CSV.'); return; }
+        let baseId = Date.now();
+        function nextId() {
+            while (existingIds[baseId]) baseId++;
+            existingIds[baseId] = true;
+            return baseId;
         }
-        doApply();
-    };
 
-    function doApply() {
+        let totalCopies = 0;
+        for (let s = 0; s < selected.length; s++) {
+            const chain = selected[s];
+            for (let k = 1; k <= count; k++) {
+                const newChainId = nextId();
+                techChains.push({
+                    header: chain.header + ' (' + prefix + ' ' + k + ')',
+                    isLocked: chain.isLocked, id: newChainId
+                });
+                for (let oi = 0; oi < chain.operations.length; oi++) {
+                    const opSrc = chain.operations[oi];
+                    let targetRow = null;
+                    for (let ri = 0; ri < rows.length; ri++) {
+                        if (rows[ri].id === opSrc.rowId) { targetRow = rows[ri]; break; }
+                    }
+                    if (!targetRow) continue;
+                    if (!targetRow.operations) targetRow.operations = [];
+                    let originalOp = null;
+                    for (let oi2 = 0; oi2 < targetRow.operations.length; oi2++) {
+                        if (targetRow.operations[oi2].id === opSrc.id) { originalOp = targetRow.operations[oi2]; break; }
+                    }
+                    if (!originalOp) continue;
+                    const newOp = deepClone(originalOp);
+                    newOp.id = nextId();
+                    newOp.chainId = newChainId;
+                    if (typeof newOp.x === 'number') newOp.x = newOp.x + shiftX * k;
+                    targetRow.operations.push(newOp);
+                }
+                totalCopies++;
+            }
+        }
+        return { totalCopies: totalCopies, failedTrains: [] };
+    }
+
+    // ============================================================
+    //  РЕЗУЛЬТАТ И СБРОС
+    // ============================================================
+    $('spgApplyCountBtn').onclick = () => {
+        if (Object.keys(selectedIds).length === 0) { spgAlert('Выберите хотя бы одну цепочку.'); return; }
         try {
-            const res = applyReplication();
-            replicatedData = res.data;
+            const res = applyCountMode();
+            totalCopiesCount += res.totalCopies;
             resultInfo.innerHTML =
-                'Готово! Создано копий: <b>' + res.totalCopies + '</b>. ' +
-                'Цепочек было: <b>' + chains.length + '</b>, стало: <b>' + (chains.length + res.totalCopies) + '</b>.';
+                'По количеству: создано копий <b>' + res.totalCopies + '</b>. ' +
+                'Всего по всем расписаниям: <b>' + totalCopiesCount + '</b>.';
             resultBox.classList.remove('spg-hidden');
-            resultBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            renderCopyWindows();
+            renderResultChains();
+            updatePreview();
         } catch (err) {
             spgAlert('Ошибка: ' + err.message);
             console.error(err);
         }
+    };
+
+    function renderResultChains() {
+        const tbody = $('spgResultChainsBody');
+        if (!tbody) return;
+        if (!workingData) {
+            tbody.innerHTML = '<tr><td colspan="6" class="spg-empty-cell">Пока ничего не создано</td></tr>';
+            return;
+        }
+        const gd = workingData.graphData || {};
+        const techChains = gd.techChains || [];
+        const rows = gd.rows || [];
+        const opsCount = {};
+        for (let i = 0; i < rows.length; i++) {
+            const ops = rows[i].operations || [];
+            for (let j = 0; j < ops.length; j++) {
+                const cid = String(ops[j].chainId);
+                opsCount[cid] = (opsCount[cid] || 0) + 1;
+            }
+        }
+        const originalIds = {};
+        if (sourceData && sourceData.graphData && sourceData.graphData.techChains) {
+            const srcTc = sourceData.graphData.techChains;
+            for (let s = 0; s < srcTc.length; s++) originalIds[String(srcTc[s].id)] = true;
+        }
+        let html = '';
+        for (let k = 0; k < techChains.length; k++) {
+            const tc = techChains[k];
+            const idStr = String(tc.id);
+            const isOriginal = !!originalIds[idStr];
+            const srcLabel = isOriginal
+                ? '<span style="color:#34c759; font-weight:600;">оригинал</span>'
+                : '<span style="color:#4a9eff; font-weight:600;">копия</span>';
+            const cmt = tc.comment != null && String(tc.comment).trim() !== ''
+                ? escapeHtml(String(tc.comment))
+                : '<span class="spg-dash">—</span>';
+            html += '<tr>';
+            html += '<td class="spg-num">' + (k + 1) + '</td>';
+            html += '<td>' + escapeHtml(tc.header || '') + '</td>';
+            html += '<td class="spg-num">' + escapeHtml(idStr) + '</td>';
+            html += '<td class="spg-num">' + (opsCount[idStr] || 0) + '</td>';
+            html += '<td>' + cmt + '</td>';
+            html += '<td>' + srcLabel + '</td>';
+            html += '</tr>';
+        }
+        if (techChains.length === 0) {
+            html = '<tr><td colspan="6" class="spg-empty-cell">Цепочек нет</td></tr>';
+        }
+        tbody.innerHTML = html;
     }
 
-    // ============================================================
-    //  СКАЧИВАНИЕ
-    // ============================================================
+    $('spgDownloadFullBtn').onclick = () => {
+        if (!workingData) { spgAlert('Сначала примените копирование.'); return; }
+        makeDownload('СПГ_with_copies.json', JSON.stringify(workingData));
+    };
+
+    $('spgResetCopiesBtn').onclick = () => {
+        if (!sourceData) return;
+        spgConfirm('Сбросить все созданные копии? Вернётся исходное состояние.', () => {
+            workingData = deepClone(sourceData);
+            totalCopiesCount = 0;
+            for (let i = 0; i < copyWindows.length; i++) {
+                copyWindows[i].applied = false;
+                copyWindows[i].appliedCount = 0;
+            }
+            resultBox.classList.add('spg-hidden');
+            renderCopyWindows();
+            renderResultChains();
+            updatePreview();
+        });
+    };
+
     function makeDownload(filename, content, mimeType) {
         const blob = new Blob([content], { type: mimeType || 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -1368,14 +1854,9 @@ function spgInit(win) {
         setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
 
-    $('spgDownloadFullBtn').onclick = () => {
-        if (!replicatedData) { spgAlert('Сначала нажмите «Применить копирование».'); return; }
-        makeDownload('СПГ_with_copies.json', JSON.stringify(replicatedData));
-    };
-
     // ============================================================
     //  СТАРТ
     // ============================================================
-    renderTrainsPreview();
     updateCommentsUI();
+    renderResultChains();
 }
