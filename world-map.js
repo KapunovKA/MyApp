@@ -582,13 +582,16 @@
             || 'metric';
         const tempUnit = units === 'imperial' ? 'fahrenheit' : 'celsius';
 
-        const url = 'https://api.open-meteo.com/v1/forecast' +
-            `?latitude=${lats}` +
-            `&longitude=${lons}` +
-            '&current=temperature_2m,weather_code,is_day,apparent_temperature,relative_humidity_2m,wind_speed_10m' +
-            `&temperature_unit=${tempUnit}` +
-            '&wind_speed_unit=ms' +
-            '&timezone=auto';
+        const rawUrl = 'https://api.open-meteo.com/v1/forecast' +
+        `?latitude=${lats}` +
+        `&longitude=${lons}` +
+        '&current=temperature_2m,weather_code,is_day,apparent_temperature,relative_humidity_2m,wind_speed_10m' +
+        `&temperature_unit=${tempUnit}` +
+        '&wind_speed_unit=ms' +
+        '&timezone=auto';
+
+// Через allorigins — публичный CORS-прокси
+        const url = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(rawUrl);
 
         try {
             const resp = await fetch(url);
