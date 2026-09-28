@@ -1,15 +1,24 @@
 // ============================================================
-//  СПГ — Технологические цепочки (v5)
+//  СПГ — Технологические цепочки (v6)
 //  + новый алгоритм копирования по расписанию
-//    (якоря: перегоны + простой вагона в ожидании)
-//  + проверка перехлёста по строке якорной операции
-//  + цвет обводки поезда по номеру
+//  + исправленная логика скрытия/восстановления комментариев
+//  + привязка снимка к исходному файлу (sourceHash)
 // ============================================================
 
 const SPG_MINUTE_TO_X = 2;
 const SPG_PROSTOY_LABEL = 'простой вагона в ожидании';
 const SPG_PEREGON_KEYWORD = 'перегон';
 const SPG_LS_KEY = 'spg_comments_backup_v1';
+
+// Хэш строки (djb2) — для привязки снимка к файлу
+function spgHashString(str) {
+    let hash = 5381;
+    for (let i = 0; i < str.length; i++) {
+        hash = ((hash << 5) + hash) + str.charCodeAt(i);
+        hash = hash & 0xffffffff;
+    }
+    return (hash >>> 0).toString(16);
+}
 
 // Цвет обводки поезда по номеру
 function spgGetStrokeColorForTrain(trainNum) {
@@ -43,14 +52,25 @@ function createSpgApp() {
                 <div class="spg-section spg-hidden" id="spgChainsBox">
                     <div class="spg-section-title">Найденные технологические цепочки</div>
 
+                    <!-- Баннер: найден снимок -->
+                    <div class="spg-hidden-banner spg-hidden" id="spgRestoreBanner" style="background:rgba(74,158,255,0.12);color:#4a9eff;border:1px solid rgba(74,158,255,0.35);">
+                        <span>💾</span>
+                        <span><b>Найден снимок комментариев</b> в localStorage.</span>
+                        <span class="spg-meta" id="spgRestoreBannerMeta"></span>
+                        <div class="spg-spacer"></div>
+                        <button type="button" class="spg-btn spg-small spg-primary" id="spgDownloadRestoredBtn" title="Применить снимок и скачать файл">⬇ Скачать (с комментариями)</button>
+                        <button type="button" class="spg-btn spg-small spg-success" id="spgLoadFromLsBtn">↺ Загрузить комментарии</button>
+                        <button type="button" class="spg-btn spg-small spg-danger" id="spgForgetLsBtn">🗑 Забыть снимок</button>
+                    </div>
+
+                    <!-- Баннер: комментарии скрыты -->
                     <div class="spg-hidden-banner spg-hidden" id="spgHiddenBanner">
                         <span>👁</span>
                         <span>Комментарии скрыты.</span>
                         <span class="spg-meta" id="spgBackupMeta"></span>
                         <div class="spg-spacer"></div>
-                        <button type="button" class="spg-btn spg-small spg-primary" id="spgApplyChangesBtn">✚ Применить изменения</button>
-                        <button type="button" class="spg-btn spg-small spg-success" id="spgRestoreTopBtn">↺ Восстановить</button>
-                        <button type="button" class="spg-btn spg-small spg-danger" id="spgDeleteBackupBtn">🗑 Забыть снимок</button>
+                        <button type="button" class="spg-btn spg-small spg-primary" id="spgDownloadHiddenBtn" title="Скачать файл без комментариев">⬇ Скачать (без комментариев)</button>
+                        <button type="button" class="spg-btn spg-small spg-success" id="spgRestoreTopBtn">↺ Показать комментарии</button>
                     </div>
 
                     <div class="spg-search-row">
@@ -199,6 +219,8 @@ function spgInit(win) {
     const selectedInfo = $('spgSelectedInfo');
     const hiddenBanner = $('spgHiddenBanner');
     const backupMeta = $('spgBackupMeta');
+    const restoreBanner = $('spgRestoreBanner');
+    const restoreBannerMeta = $('spgRestoreBannerMeta');
     const chainSearchInput = $('spgChainSearchInput');
     const chainSearchInfo = $('spgChainSearchInfo');
     const copyWindowsContainer = $('spgCopyWindowsContainer');
@@ -207,6 +229,7 @@ function spgInit(win) {
     // ---------- Состояние ----------
     let sourceData = null;
     let workingData = null;
+    let sourceHash = null;         // хэш исходного JSON — привязка снимка
     let chains = [];
     let selectedIds = {};
     let mainChainId = null;
@@ -221,6 +244,10 @@ function spgInit(win) {
     let copyWindows = [];
     let nextWindowId = 1;
     let totalCopiesCount = 0;
+
+    // Кэш снимка — чтобы не дёргать localStorage при каждом renderChains
+    let _snapshotCache = undefined;
+    function invalidateSnapshotCache() { _snapshotCache = undefined; }
 
     // ============================================================
     //  УТИЛИТЫ
@@ -254,7 +281,6 @@ function spgInit(win) {
         if (n > max) return max;
         return n;
     }
-    // Цвет обводки поезда — используем общий хелпер
     function getStrokeColorForTrain(trainNum) {
         return spgGetStrokeColorForTrain(trainNum);
     }
@@ -269,46 +295,162 @@ function spgInit(win) {
     // ============================================================
     //  localStorage — снимок комментариев
     // ============================================================
+
+    // Сохраняем снимок из chains (а не из workingData) — так
+    // даже после скрытия комментариев снимок можно перезаписать
+    // корректно, если пользователь не восстанавливал их.
     function saveCommentsSnapshot() {
-        const snapshot = { version: 1, savedAt: new Date().toISOString(), chains: {} };
+        if (!workingData || !sourceHash) return false;
+
+        const snapshot = {
+            version: 1,
+            savedAt: new Date().toISOString(),
+            sourceHash: sourceHash,
+            chains: {}
+        };
         let totalSaved = 0;
-        for (let i = 0; i < chains.length; i++) {
-            const c = chains[i];
-            const opsComments = {};
-            const ops = c.operations;
+
+        // Собираем комментарии из workingData (там всегда полные данные)
+        const gd = workingData.graphData;
+        if (!gd) return false;
+
+        const techChains = gd.techChains || [];
+        const rows = gd.rows || [];
+
+        const opsByChain = {};
+        for (let i = 0; i < rows.length; i++) {
+            const ops = rows[i].operations || [];
             for (let j = 0; j < ops.length; j++) {
-                const cmt = ops[j].comment;
-                if (cmt != null && String(cmt).trim() !== '') {
-                    opsComments[String(ops[j].id)] = String(cmt).trim();
+                const op = ops[j];
+                if (op.chainId == null) continue;
+                const key = String(op.chainId);
+                if (!opsByChain[key]) opsByChain[key] = {};
+                if (op.comment != null && String(op.comment).trim() !== '') {
+                    opsByChain[key][String(op.id)] = String(op.comment).trim();
                     totalSaved++;
                 }
             }
-            const hasChainComment = c.comments && c.comments.length > 0;
-            const hasOpComments = Object.keys(opsComments).length > 0;
-            if (hasChainComment || hasOpComments) {
-                snapshot.chains[String(c.id)] = {
-                    chainComment: hasChainComment ? c.comments.join(' | ') : null,
-                    operations: opsComments
+        }
+
+        for (let k = 0; k < techChains.length; k++) {
+            const tc = techChains[k];
+            const idStr = String(tc.id);
+            const chainComment = (tc.comment != null && String(tc.comment).trim() !== '')
+                ? String(tc.comment).trim()
+                : null;
+            const opCmts = opsByChain[idStr] || {};
+            if (chainComment || Object.keys(opCmts).length > 0) {
+                snapshot.chains[idStr] = {
+                    chainComment: chainComment,
+                    operations: opCmts
                 };
             }
         }
-        if (totalSaved === 0 && Object.keys(snapshot.chains).length === 0) return false;
+
+        if (Object.keys(snapshot.chains).length === 0) return false;
+
         try {
             localStorage.setItem(LS_KEY, JSON.stringify(snapshot));
+            invalidateSnapshotCache();
             return true;
-        } catch (e) { console.error(e); return false; }
+        } catch (e) {
+            console.error(e);
+            return false;
+        }
     }
+
     function loadCommentsSnapshot() {
+        if (_snapshotCache !== undefined) return _snapshotCache;
         try {
             const raw = localStorage.getItem(LS_KEY);
-            if (!raw) return null;
+            if (!raw) { _snapshotCache = null; return null; }
             const data = JSON.parse(raw);
-            if (!data || data.version !== 1 || !data.chains) return null;
+            if (!data || data.version !== 1 || !data.chains) {
+                _snapshotCache = null;
+                return null;
+            }
+            _snapshotCache = data;
             return data;
-        } catch (e) { return null; }
+        } catch (e) {
+            _snapshotCache = null;
+            return null;
+        }
     }
+
     function deleteCommentsSnapshot() {
-        try { localStorage.removeItem(LS_KEY); } catch (e) {}
+        try {
+            localStorage.removeItem(LS_KEY);
+            invalidateSnapshotCache();
+        } catch (e) {}
+    }
+
+    // Копия workingData с удалёнными комментариями — для скачивания
+    function buildDataWithoutComments(data) {
+        const copy = deepClone(data);
+        const gd = copy.graphData;
+        if (!gd) return copy;
+        const rows = gd.rows || [];
+        for (let i = 0; i < rows.length; i++) {
+            const ops = rows[i].operations || [];
+            for (let j = 0; j < ops.length; j++) {
+                if (ops[j].comment !== undefined) delete ops[j].comment;
+            }
+        }
+        const tcs = gd.techChains || [];
+        for (let k = 0; k < tcs.length; k++) {
+            if (tcs[k].comment !== undefined) delete tcs[k].comment;
+        }
+        return copy;
+    }
+
+    // Восстановление комментариев в workingData из снимка.
+    // Возвращает { restoredChains, restoredOps } или null.
+    function restoreCommentsFromSnapshot() {
+        const snap = loadCommentsSnapshot();
+        if (!snap) return null;
+        if (!workingData) return null;
+        const gd = workingData.graphData;
+        if (!gd) return null;
+
+        const allOpComments = {};
+        const allChainComments = {};
+        for (const cid in snap.chains) {
+            if (!snap.chains.hasOwnProperty(cid)) continue;
+            const saved = snap.chains[cid];
+            if (saved.chainComment) allChainComments[cid] = saved.chainComment;
+            for (const opId in saved.operations) {
+                if (saved.operations.hasOwnProperty(opId)) {
+                    allOpComments[opId] = saved.operations[opId];
+                }
+            }
+        }
+
+        let restoredChains = 0;
+        let restoredOps = 0;
+
+        const tcs = gd.techChains || [];
+        for (let k = 0; k < tcs.length; k++) {
+            const idStr = String(tcs[k].id);
+            if (allChainComments[idStr]) {
+                tcs[k].comment = allChainComments[idStr];
+                restoredChains++;
+            }
+        }
+
+        const rows = gd.rows || [];
+        for (let i = 0; i < rows.length; i++) {
+            const ops = rows[i].operations || [];
+            for (let j = 0; j < ops.length; j++) {
+                const op = ops[j];
+                const opIdStr = String(op.id);
+                if (allOpComments[opIdStr]) {
+                    op.comment = allOpComments[opIdStr];
+                    restoredOps++;
+                }
+            }
+        }
+
+        return { restoredChains: restoredChains, restoredOps: restoredOps };
     }
 
     // ============================================================
@@ -358,6 +500,7 @@ function spgInit(win) {
             }
             sourceData = data;
             workingData = deepClone(data);
+            sourceHash = spgHashString(JSON.stringify(data));
             fileNameEl.textContent = '📄 ' + file.name;
             drop.classList.add('uploaded');
             analyze(data);
@@ -447,6 +590,8 @@ function spgInit(win) {
         totalCopiesCount = 0;
         addCopyWindow();
 
+        commentsHidden = false;
+
         renderChains();
         updateSelectedInfo();
         updatePreview();
@@ -456,138 +601,115 @@ function spgInit(win) {
         resultBox.classList.add('spg-hidden');
 
         renderResultChains();
-
-        const existing = loadCommentsSnapshot();
-        if (existing) {
-            commentsHidden = false;
-            askRestoreFromBackup(existing);
-        } else {
-            commentsHidden = false;
-        }
         updateCommentsUI();
+        updateRestoreBanner();
     }
 
     // ============================================================
     //  СКРЫТИЕ / ВОССТАНОВЛЕНИЕ КОММЕНТАРИЕВ
     // ============================================================
+
+    // Скрыть комментарии в UI.
+    // workingData и chains НЕ трогаем — только флаг + перерисовка.
+    // Это позволяет позже:
+    //   - восстановить комментарии из workingData (если снимок не нужен);
+    //   - сохранить снимок ещё раз без потери данных.
     $('spgHideCommentsBtn').onclick = () => {
-        saveCommentsSnapshot();
-        for (let i = 0; i < chains.length; i++) {
-            chains[i].comments = [];
-            chains[i].chainComment = null;
-            const ops = chains[i].operations;
-            for (let j = 0; j < ops.length; j++) ops[j].comment = null;
+        const ok = saveCommentsSnapshot();
+        if (!ok) {
+            // Нечего сохранять — комментариев нет. Всё равно скрываем.
         }
         commentsHidden = true;
         renderChains();
         updateCommentsUI();
+        updateRestoreBanner();
     };
-    $('spgRestoreCommentsBtn').onclick = () => restoreFromBackup();
-    $('spgRestoreTopBtn').onclick = () => restoreFromBackup();
 
-    $('spgDeleteBackupBtn').onclick = () => {
+    // Показать комментарии: восстановить из снимка в workingData,
+    // затем пересобрать chains из workingData.
+    $('spgRestoreCommentsBtn').onclick = () => doRestoreFromLs();
+    $('spgRestoreTopBtn').onclick = () => doRestoreFromLs();
+
+    $('spgForgetLsBtn').onclick = () => {
         spgConfirm('Удалить снимок комментариев из localStorage?', () => {
             deleteCommentsSnapshot();
-            commentsHidden = false;
+            updateRestoreBanner();
             updateCommentsUI();
         });
     };
 
-    $('spgApplyChangesBtn').onclick = () => {
-        replicatedData = buildCurrentDataWithCommentsHidden();
-        const cmtCount = countCommentsInData(replicatedData);
-        resultInfo.innerHTML =
-            'Изменения применены. <b>Комментарии скрыты</b>. ' +
-            'Всего операций: <b>' + countOperations(replicatedData) + '</b>, ' +
-            'комментариев: <b>' + cmtCount + '</b>.';
-        resultBox.classList.remove('spg-hidden');
-        renderResultChains();
-        resultBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    };
+    $('spgLoadFromLsBtn').onclick = () => doRestoreFromLs();
 
-    function buildCurrentDataWithCommentsHidden() {
-        const data = deepClone(workingData);
-        if (commentsHidden) {
-            const gd = data.graphData;
-            if (gd) {
-                const rows = gd.rows || [];
-                for (let i = 0; i < rows.length; i++) {
-                    const ops = rows[i].operations;
-                    if (!Array.isArray(ops)) continue;
-                    for (let j = 0; j < ops.length; j++) {
-                        if (ops[j].comment !== undefined) delete ops[j].comment;
-                    }
-                }
-                const tcs = gd.techChains || [];
-                for (let k = 0; k < tcs.length; k++) {
-                    if (tcs[k].comment !== undefined) delete tcs[k].comment;
-                }
-            }
+    function doRestoreFromLs() {
+        const res = restoreCommentsFromSnapshot();
+        if (!res) {
+            spgAlert('Снимок комментариев не найден в localStorage.');
+            return;
         }
-        return data;
-    }
-
-    function countOperations(data) {
-        let n = 0;
-        const rows = (data.graphData && data.graphData.rows) || [];
-        for (let i = 0; i < rows.length; i++) {
-            if (Array.isArray(rows[i].operations)) n += rows[i].operations.length;
-        }
-        return n;
-    }
-
-    function countCommentsInData(data) {
-        let n = 0;
-        const rows = (data.graphData && data.graphData.rows) || [];
-        for (let i = 0; i < rows.length; i++) {
-            const ops = rows[i].operations || [];
-            for (let j = 0; j < ops.length; j++) {
-                if (ops[j].comment != null && String(ops[j].comment).trim() !== '') n++;
-            }
-        }
-        const tcs = (data.graphData && data.graphData.techChains) || [];
-        for (let k = 0; k < tcs.length; k++) {
-            if (tcs[k].comment != null && String(tcs[k].comment).trim() !== '') n++;
-        }
-        return n;
-    }
-
-    function restoreFromBackup() {
-        const snap = loadCommentsSnapshot();
-        if (!snap) { spgAlert('Снимок комментариев не найден.'); return; }
-
-        for (let i = 0; i < chains.length; i++) {
-            const c = chains[i];
-            const saved = snap.chains[String(c.id)];
-            if (!saved) continue;
-            if (saved.chainComment) {
-                c.comments = [saved.chainComment];
-                c.chainComment = saved.chainComment;
-            } else {
-                c.comments = [];
-                c.chainComment = null;
-            }
-            const ops = c.operations;
-            for (let j = 0; j < ops.length; j++) {
-                const cmt = saved.operations && saved.operations[String(ops[j].id)];
-                if (cmt != null) {
-                    ops[j].comment = cmt;
-                    if (!saved.chainComment && c.comments.indexOf(cmt) === -1) c.comments.push(cmt);
-                }
-            }
-        }
-
+        rebuildChainsFromWorkingData();
         commentsHidden = false;
         renderChains();
         updateCommentsUI();
+        updateRestoreBanner();
+    }
+
+    // Пересборка chains из workingData.
+    // Используется при восстановлении комментариев и при сбросе копий.
+    // ВАЖНО: при скрытии комментариев НЕ вызывается — см. выше.
+    function rebuildChainsFromWorkingData() {
+        const gd = workingData && workingData.graphData;
+        if (!gd) return;
+
+        const rows = gd.rows || [];
+        const techChains = gd.techChains || [];
+
+        const opsByChain = {};
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            const ops = row.operations || [];
+            for (let j = 0; j < ops.length; j++) {
+                const op = ops[j];
+                if (op.chainId == null) continue;
+                const key = String(op.chainId);
+                if (!opsByChain[key]) opsByChain[key] = [];
+                opsByChain[key].push({
+                    id: op.id, label: op.label, type: op.type, x: op.x,
+                    duration: op.duration, iconId: op.iconId, comment: op.comment,
+                    strokeColor: op.strokeColor, rowId: row.id, rowTitle: row.title
+                });
+            }
+        }
+
+        for (let i = 0; i < chains.length; i++) {
+            const c = chains[i];
+            const key = String(c.id);
+            const ops = opsByChain[key] || [];
+            c.operations = ops;
+            c.chainComment = null;
+            for (let tcIdx = 0; tcIdx < techChains.length; tcIdx++) {
+                if (techChains[tcIdx].id === c.id) {
+                    if (techChains[tcIdx].comment != null && String(techChains[tcIdx].comment).trim() !== '') {
+                        c.chainComment = String(techChains[tcIdx].comment).trim();
+                    }
+                    break;
+                }
+            }
+            const cmts = {};
+            if (c.chainComment) cmts[c.chainComment] = true;
+            for (let oi = 0; oi < ops.length; oi++) {
+                const cmt = ops[oi].comment;
+                if (cmt != null && String(cmt).trim() !== '') cmts[String(cmt).trim()] = true;
+            }
+            c.comments = Object.keys(cmts);
+        }
     }
 
     function updateCommentsUI() {
-        const snap = loadCommentsSnapshot();
         if (commentsHidden) {
             hiddenBanner.classList.remove('spg-hidden');
             $('spgHideCommentsBtn').classList.add('spg-hidden');
             $('spgRestoreCommentsBtn').classList.remove('spg-hidden');
+            const snap = loadCommentsSnapshot();
             if (snap && snap.savedAt) {
                 const dt = new Date(snap.savedAt);
                 const dateStr = dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString();
@@ -603,7 +725,22 @@ function spgInit(win) {
         }
     }
 
-    function askRestoreFromBackup(snap) {
+    function updateRestoreBanner() {
+        const snap = loadCommentsSnapshot();
+        if (!snap || !snap.savedAt) {
+            restoreBanner.classList.add('spg-hidden');
+            return;
+        }
+        // Скрываем баннер, если комментарии и так показаны
+        if (commentsHidden) {
+            restoreBanner.classList.add('spg-hidden');
+            return;
+        }
+        // Если снимок от другого файла — предупреждаем
+        let mismatchNote = '';
+        if (sourceHash && snap.sourceHash && snap.sourceHash !== sourceHash) {
+            mismatchNote = ' <b style="color:#b91c1c">Снимок от другого файла!</b>';
+        }
         const dt = new Date(snap.savedAt);
         const dateStr = dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString();
         const chainCount = Object.keys(snap.chains || {}).length;
@@ -613,14 +750,9 @@ function spgInit(win) {
                 totalOps += Object.keys(snap.chains[cid].operations || {}).length;
             }
         }
-        showModal(
-            'Найден сохранённый снимок комментариев',
-            '<p>В localStorage есть снимок от <b>' + dateStr + '</b>:<br>' +
-            'цепочек: <b>' + chainCount + '</b>, комментариев: <b>' + totalOps + '</b>.</p>' +
-            '<p>Восстановить комментарии из снимка?</p>',
-            () => restoreFromBackup(),
-            false
-        );
+        restoreBannerMeta.innerHTML = '(от ' + dateStr + ': цепочек ' + chainCount +
+            ', комментариев ' + totalOps + ')' + mismatchNote;
+        restoreBanner.classList.remove('spg-hidden');
     }
 
     // ============================================================
@@ -1305,7 +1437,6 @@ function spgInit(win) {
         };
     }
 
-    // Расширенный парсер времени: "чч:мм", "чч-мм", "чч.мм", "чч ч мм", "чч"
     function parseTimeString(s) {
         s = String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
         if (!s) return null;
@@ -1409,7 +1540,6 @@ function spgInit(win) {
         return String(op.label || '').toLowerCase().indexOf(PEREgon_KEYWORD) !== -1;
     }
 
-    // Поиск якорей: first/last перегон + простой
     function findChainAnchors(chain) {
         const ops = chain.operations;
         const peregonOps = [];
@@ -1448,7 +1578,6 @@ function spgInit(win) {
         return { firstOpId, lastOpId, prostoyId };
     }
 
-    // Новая раскладка: две точки привязки (поезд-1, поезд-2) + простой между ними
     function layoutChainOperations(chain, trainRow) {
         const K = MINUTE_TO_X;
         const s1 = trainRow.s1m, e1 = trainRow.e1m, s2 = trainRow.s2m, e2 = trainRow.e2m;
@@ -1505,7 +1634,6 @@ function spgInit(win) {
         return result;
     }
 
-    // Проверка коллизии по строке якорной операции
     function layoutHasCollision(layout, mainRowId, data) {
         let newStart = null;
         for (let i = 0; i < layout.length; i++) {
@@ -1534,7 +1662,6 @@ function spgInit(win) {
         return newStart < occupiedEnd;
     }
 
-    // Применение раскладки к строкам: комментарий + цвет обводки только для якорей
     function applyLayoutToRows(data, layout, newChainId, nextIdFn) {
         const gd = data.graphData;
         const rows = gd.rows || [];
@@ -1607,7 +1734,6 @@ function spgInit(win) {
         const mainRowId = findMainOpRowId();
         if (mainRowId == null) throw new Error('Не найдена строка основной операции.');
 
-        // Основная цепочка — первой, остальные по порядку
         const chainOrder = [mainChain];
         for (let j = 0; j < selected.length; j++) {
             if (selected[j].id !== mainChainId) chainOrder.push(selected[j]);
@@ -1833,9 +1959,40 @@ function spgInit(win) {
         tbody.innerHTML = html;
     }
 
+    // ============================================================
+    //  КНОПКИ СКАЧИВАНИЯ
+    // ============================================================
+
+    // Основная кнопка в блоке «Результат» — скачивает workingData как есть.
+    // Если комментарии скрыты, всё равно скачивает с ними (это полный файл).
     $('spgDownloadFullBtn').onclick = () => {
         if (!workingData) { spgAlert('Сначала примените копирование.'); return; }
         makeDownload('СПГ_with_copies.json', JSON.stringify(workingData));
+    };
+
+    // Кнопка в жёлтом баннере — скачивает копию БЕЗ комментариев.
+    // workingData НЕ модифицируется.
+    $('spgDownloadHiddenBtn').onclick = () => {
+        if (!workingData) { spgAlert('Сначала примените копирование.'); return; }
+        const clean = buildDataWithoutComments(workingData);
+        makeDownload('СПГ_no_comments.json', JSON.stringify(clean));
+    };
+
+    // Кнопка в синем баннере — восстанавливает комментарии в workingData,
+    // пересобирает chains и скачивает полный файл.
+    $('spgDownloadRestoredBtn').onclick = () => {
+        if (!workingData) { spgAlert('Сначала примените копирование.'); return; }
+        const res = restoreCommentsFromSnapshot();
+        if (!res) {
+            spgAlert('Снимок комментариев не найден.');
+            return;
+        }
+        rebuildChainsFromWorkingData();
+        commentsHidden = false;
+        renderChains();
+        updateCommentsUI();
+        updateRestoreBanner();
+        makeDownload('СПГ_with_comments.json', JSON.stringify(workingData));
     };
 
     $('spgResetCopiesBtn').onclick = () => {
@@ -1847,6 +2004,8 @@ function spgInit(win) {
                 copyWindows[i].applied = false;
                 copyWindows[i].appliedCount = 0;
             }
+            chains = [];
+            analyze(workingData);
             resultBox.classList.add('spg-hidden');
             renderCopyWindows();
             renderResultChains();
@@ -1863,12 +2022,13 @@ function spgInit(win) {
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
     }
 
     // ============================================================
     //  СТАРТ
     // ============================================================
     updateCommentsUI();
+    updateRestoreBanner();
     renderResultChains();
 }
