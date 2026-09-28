@@ -1,7 +1,7 @@
 // ============================================================
 //  ЖИВАЯ ЗАСТАВКА: КАРТА МИРА ИЗ ТОЧЕК (в стиле Apple Watch)
 //  + день/ночь, терминатор, города, часы
-//  + погода через Open-Meteo (CORS разрешён, ключ не нужен)
+//  + погода через Open-Meteo (через CORS-прокси на Cloudflare Worker)
 //  + панель погоды показывает только города с visible !== false
 //  + читаемые подписи городов (белая обводка)
 // ============================================================
@@ -18,6 +18,11 @@
     let weatherData = {};
     let weatherTimer = null;
     const WEATHER_CACHE_TTL = 10 * 60 * 1000;
+
+    // --------------------------------------------------------
+    //  CORS-прокси (Cloudflare Worker)
+    // --------------------------------------------------------
+    const WEATHER_PROXY_URL = 'https://weather-proxy.kapunovk.workers.dev';
 
     // --------------------------------------------------------
     //  ГОРОДА
@@ -544,7 +549,7 @@
     }
 
     // ============================================================
-    //  🌤️ Погода — Open-Meteo
+    //  🌤️ Погода — Open-Meteo через Cloudflare Worker (CORS-прокси)
     // ============================================================
     function startWeatherUpdates() {
         if (weatherTimer) clearInterval(weatherTimer);
@@ -583,15 +588,15 @@
         const tempUnit = units === 'imperial' ? 'fahrenheit' : 'celsius';
 
         const rawUrl = 'https://api.open-meteo.com/v1/forecast' +
-        `?latitude=${lats}` +
-        `&longitude=${lons}` +
-        '&current=temperature_2m,weather_code,is_day,apparent_temperature,relative_humidity_2m,wind_speed_10m' +
-        `&temperature_unit=${tempUnit}` +
-        '&wind_speed_unit=ms' +
-        '&timezone=auto';
+            `?latitude=${lats}` +
+            `&longitude=${lons}` +
+            '&current=temperature_2m,weather_code,is_day,apparent_temperature,relative_humidity_2m,wind_speed_10m' +
+            `&temperature_unit=${tempUnit}` +
+            '&wind_speed_unit=ms' +
+            '&timezone=auto';
 
-// Через allorigins — публичный CORS-прокси
-        const url = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(rawUrl);
+        // Через CORS-прокси на Cloudflare Worker
+        const url = WEATHER_PROXY_URL + '?url=' + encodeURIComponent(rawUrl);
 
         try {
             const resp = await fetch(url);
