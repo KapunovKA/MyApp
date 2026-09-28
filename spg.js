@@ -1,15 +1,29 @@
 // ============================================================
-//  СПГ — Технологические цепочки (v4)
-//  + основная цепочка и основная операция (якорь)
-//  + несколько окон расписания
-//  + проверка перехлёста по строке якоря
-//  + таблица результата
+//  СПГ — Технологические цепочки (v5)
+//  + новый алгоритм копирования по расписанию
+//    (якоря: перегоны + простой вагона в ожидании)
+//  + проверка перехлёста по строке якорной операции
+//  + цвет обводки поезда по номеру
 // ============================================================
 
 const SPG_MINUTE_TO_X = 2;
 const SPG_PROSTOY_LABEL = 'простой вагона в ожидании';
 const SPG_PEREGON_KEYWORD = 'перегон';
 const SPG_LS_KEY = 'spg_comments_backup_v1';
+
+// Цвет обводки поезда по номеру
+function spgGetStrokeColorForTrain(trainNum) {
+    if (trainNum == null) return null;
+    const s = String(trainNum).trim();
+    const m = s.match(/^(\d+)/);
+    if (!m) return null;
+    const n = parseInt(m[1], 10);
+    if (isNaN(n)) return null;
+    if (n >= 6014 && n <= 6999) return '#008000';
+    if (n >= 7100 && n <= 7399) return '#0000ff';
+    if (n >= 7600 && n <= 7900) return '#800080';
+    return null;
+}
 
 function createSpgApp() {
     const html = `
@@ -240,17 +254,9 @@ function spgInit(win) {
         if (n > max) return max;
         return n;
     }
+    // Цвет обводки поезда — используем общий хелпер
     function getStrokeColorForTrain(trainNum) {
-        if (trainNum == null) return null;
-        const s = String(trainNum).trim();
-        const m = s.match(/^(\d+)/);
-        if (!m) return null;
-        const n = parseInt(m[1], 10);
-        if (isNaN(n)) return null;
-        if (n >= 6014 && n <= 6999) return '#008000';
-        if (n >= 7100 && n <= 7399) return '#0000ff';
-        if (n >= 7600 && n <= 7900) return '#800080';
-        return null;
+        return spgGetStrokeColorForTrain(trainNum);
     }
     function pluralizeRu(n, one, few, many) {
         const m10 = n % 10;
@@ -1299,6 +1305,7 @@ function spgInit(win) {
         };
     }
 
+    // Расширенный парсер времени: "чч:мм", "чч-мм", "чч.мм", "чч ч мм", "чч"
     function parseTimeString(s) {
         s = String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
         if (!s) return null;
@@ -1396,12 +1403,13 @@ function spgInit(win) {
     }
 
     // ============================================================
-    //  ЛОГИКА КОПИРОВАНИЯ
+    //  ЛОГИКА КОПИРОВАНИЯ (НОВЫЙ АЛГОРИТМ)
     // ============================================================
     function isPeregonOp(op) {
         return String(op.label || '').toLowerCase().indexOf(PEREgon_KEYWORD) !== -1;
     }
 
+    // Поиск якорей: first/last перегон + простой
     function findChainAnchors(chain) {
         const ops = chain.operations;
         const peregonOps = [];
@@ -1440,6 +1448,7 @@ function spgInit(win) {
         return { firstOpId, lastOpId, prostoyId };
     }
 
+    // Новая раскладка: две точки привязки (поезд-1, поезд-2) + простой между ними
     function layoutChainOperations(chain, trainRow) {
         const K = MINUTE_TO_X;
         const s1 = trainRow.s1m, e1 = trainRow.e1m, s2 = trainRow.s2m, e2 = trainRow.e2m;
@@ -1496,6 +1505,7 @@ function spgInit(win) {
         return result;
     }
 
+    // Проверка коллизии по строке якорной операции
     function layoutHasCollision(layout, mainRowId, data) {
         let newStart = null;
         for (let i = 0; i < layout.length; i++) {
@@ -1524,6 +1534,7 @@ function spgInit(win) {
         return newStart < occupiedEnd;
     }
 
+    // Применение раскладки к строкам: комментарий + цвет обводки только для якорей
     function applyLayoutToRows(data, layout, newChainId, nextIdFn) {
         const gd = data.graphData;
         const rows = gd.rows || [];
@@ -1596,6 +1607,7 @@ function spgInit(win) {
         const mainRowId = findMainOpRowId();
         if (mainRowId == null) throw new Error('Не найдена строка основной операции.');
 
+        // Основная цепочка — первой, остальные по порядку
         const chainOrder = [mainChain];
         for (let j = 0; j < selected.length; j++) {
             if (selected[j].id !== mainChainId) chainOrder.push(selected[j]);
