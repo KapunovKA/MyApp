@@ -40,7 +40,7 @@
             <button class="app-btn" data-app="salary">Зарплата</button>
             <button class="app-btn" data-app="games">Игры</button>
             <button class="app-btn" data-app="spg">СПГ</button>
-			<button class="app-btn" data-app="jsoneditor">JSON-редактор</button>
+            <button class="app-btn" data-app="jsoneditor">JSON-редактор</button>
         </div>
         <div class="menu-right">
             <div class="currency-widget" id="currencyWidget">
@@ -125,15 +125,12 @@
             WEATHER_UNITS: 'metric',
             WEATHER_LANG: 'ru',
 
-            // ─── Погода ────────────────────────────────────────
-            // Провайдер: 'weatherapi' или 'open-meteo'
-            WEATHER_PROVIDER: 'weatherapi',
-
-            // 🔑 API-ключ WeatherAPI.com
-            // Получить бесплатно: https://www.weatherapi.com/ → Sign Up → Dashboard → API Key
+            // ─── Погода: Яндекс.Погода (GraphQL API v3) ────────
+            // 🔑 Получить ключ: https://yandex.ru/pogoda/b2b/smarthome
+            //    → Зарегистрироваться → скопировать API-ключ
             // Вставь ключ МЕЖДУ кавычками. Не удаляй кавычки!
-            // Пример: WEATHER_API_KEY: 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6',
-            WEATHER_API_KEY: '6bf6a550ae614cca97b103843262509',   // ← вставь сюда свой ключ
+            // Пример: YANDEX_WEATHER_KEY: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+            YANDEX_WEATHER_KEY: 'ВСТАВЬ_СЮДА_СВОЙ_КЛЮЧ',
         };
     </script>
 
@@ -146,7 +143,7 @@
     <script src="settings.js"></script>
     <script src="games.js"></script>
     <script src="spg.js"></script>
-	<script src="json-editor.js"></script>
+    <script src="json-editor.js"></script>
     <script src="world-map.js"></script>
     <script src="script.js"></script>
 </body>
