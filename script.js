@@ -866,7 +866,7 @@ async function fetchWelcomeQuote() {
 
         throw new Error('Пустой ответ');
     } catch (e) {
-        console.warn('[Welcome] Ошибка загрузки цитаты, использую фолбэк:', e.message);
+        // Тихо игнорируем — используем фолбэк-цитату
         welcomeQuoteFetched = true;
         welcomeQuoteData = null;
         return null;
