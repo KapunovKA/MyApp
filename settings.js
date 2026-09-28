@@ -191,7 +191,8 @@ function createSettingsApp() {
                                    placeholder="3" step="1" min="-12" max="14" value="3">
                         </div>
                         <div class="city-form-hint">
-                            💡 Координаты легко найти на <a href="https://www.timeserver.ru/"_blank">timeserver.ru</a>
+                            💡 Координаты легко найти на <a href="https://yandex.ru/maps" target="_blank">Яндекс.Картах</a> —
+                            правый клик по городу → «Что здесь?».
                         </div>
                         <div class="city-form-actions">
                             <button class="city-form-btn secondary" id="cityCancelBtn">Отмена</button>
@@ -203,6 +204,29 @@ function createSettingsApp() {
                 <div class="settings-section">
                     <div class="settings-section-title">📋 Популярные города</div>
                     <div class="city-presets" id="cityPresets"></div>
+                </div>
+
+                <div class="settings-section">
+                    <div class="settings-section-title">🔑 Ключ Яндекс.Погоды</div>
+                    <div class="wallpaper-mode-hint" style="margin-bottom: 8px;">
+                        Получить ключ: <a href="https://yandex.ru/pogoda/b2b/smarthome" target="_blank">yandex.ru/pogoda/b2b/smarthome</a>
+                        → зарегистрироваться → скопировать API-ключ.
+                    </div>
+                    <div class="cloud-token-row" style="margin-bottom: 8px;">
+                        <input type="password" class="cloud-input" id="yandexWeatherKeyInput"
+                               placeholder="Введите API-ключ Яндекс.Погоды" autocomplete="off">
+                        <button class="cloud-btn primary" id="yandexWeatherKeySave">💾 Сохранить</button>
+                    </div>
+                    <div class="city-form-actions" style="justify-content: flex-start;">
+                        <button class="cloud-btn secondary" id="yandexWeatherKeyCheck">🔍 Проверить</button>
+                        <button class="cloud-btn danger" id="yandexWeatherKeyReset">🗑️ Сбросить</button>
+                    </div>
+                    <div class="cloud-status" style="margin-top: 10px;">
+                        <div class="cloud-status-row">
+                            <span class="label">Статус ключа</span>
+                            <span class="value" id="yandexWeatherKeyStatus">—</span>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="settings-section">
@@ -269,14 +293,12 @@ function createSettingsApp() {
 }
 
 function initSettingsApp(win) {
-    // Вкладки
     const tabs = win.querySelectorAll('.settings-tab');
     const panels = win.querySelectorAll('.settings-panel');
 
     tabs.forEach(tab => {
         tab.addEventListener('click', () => {
             const target = tab.dataset.tab;
-
             tabs.forEach(t => t.classList.toggle('active', t === tab));
             panels.forEach(p => {
                 p.classList.toggle('active', p.id === `panel-${target}`);
@@ -299,7 +321,6 @@ function initWallpapersPanel(win) {
     const nameInput = win.querySelector('#welcomeNameInput');
     if (!grid) return;
 
-    // ---- Переключатель фона: карта ↔ обои ----
     const bgModeBtns = win.querySelectorAll('.background-mode-btn');
 
     function updateBgModeUI() {
@@ -314,15 +335,12 @@ function initWallpapersPanel(win) {
     bgModeBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             const mode = btn.dataset.bgmode;
-
             if (typeof window.setBackgroundMode === 'function') {
                 window.setBackgroundMode(mode);
             } else {
                 localStorage.setItem('desktopBackgroundMode', mode);
             }
-
             updateBgModeUI();
-
             if (window.showNotification) {
                 window.showNotification({
                     title: mode === 'map' ? 'Карта включена' : 'Обои включены',
@@ -339,15 +357,8 @@ function initWallpapersPanel(win) {
 
     updateBgModeUI();
 
-    // ---- Имя пользователя ----
     if (nameInput) {
         nameInput.value = localStorage.getItem('welcomeUsername') || '';
-        nameInput.addEventListener('focus', () => {
-            nameInput.style.borderColor = '#4a9eff';
-        });
-        nameInput.addEventListener('blur', () => {
-            nameInput.style.borderColor = 'var(--app-input-border)';
-        });
         nameInput.addEventListener('input', () => {
             const val = nameInput.value.trim();
             if (val) {
@@ -698,7 +709,7 @@ function initCloudPanel(win) {
 }
 
 // ------------------------------------------------------------
-//  Панель карты — управление городами
+//  Панель карты
 // ------------------------------------------------------------
 function initMapPanel(win) {
     const list        = win.querySelector('#citiesList');
@@ -717,7 +728,6 @@ function initMapPanel(win) {
 
     if (!list) return;
 
-    // -1 = не редактируем, иначе — индекс редактируемого города
     let editingIndex = -1;
 
     function getCities() {
@@ -733,7 +743,6 @@ function initMapPanel(win) {
         }
     }
 
-    // ---- Отрисовка списка городов ----
     function renderCities() {
         const cities = getCities();
         list.innerHTML = '';
@@ -771,7 +780,6 @@ function initMapPanel(win) {
                 <button class="city-remove" title="Удалить">🗑️</button>
             `;
 
-            // Звёздочка
             item.querySelector('.city-star').addEventListener('click', (e) => {
                 e.stopPropagation();
                 const cities = getCities();
@@ -792,7 +800,6 @@ function initMapPanel(win) {
                 }
             });
 
-            // Тумблер видимости
             item.querySelector('.city-visible').addEventListener('click', (e) => {
                 e.stopPropagation();
                 const cities = getCities();
@@ -814,14 +821,12 @@ function initMapPanel(win) {
                 }
             });
 
-            // Редактирование
             item.querySelector('.city-edit').addEventListener('click', (e) => {
                 e.stopPropagation();
                 editingIndex = idx;
                 openCityForm(city);
             });
 
-            // Удаление
             item.querySelector('.city-remove').addEventListener('click', (e) => {
                 e.stopPropagation();
                 const cities = getCities();
@@ -845,7 +850,6 @@ function initMapPanel(win) {
         });
     }
 
-    // ---- Форма: открыть для добавления или редактирования ----
     function openCityForm(cityToEdit) {
         addForm.classList.add('visible');
         addBtn.style.display = 'none';
@@ -891,7 +895,6 @@ function initMapPanel(win) {
         if (titleEl) titleEl.textContent = '➕ Новый город';
     }
 
-    // ---- Пресеты ----
     const PRESET_CITIES = [
         { name: 'Москва',        lat: 55.75, lon: 37.62,  tz: 3 },
         { name: 'Санкт-Петербург', lat: 59.93, lon: 30.34, tz: 3 },
@@ -960,7 +963,6 @@ function initMapPanel(win) {
         });
     }
 
-    // ---- Форма ----
     function showForm() {
         editingIndex = -1;
         openCityForm(null);
@@ -1024,7 +1026,6 @@ function initMapPanel(win) {
             const wasMy = cities[editingIndex].my;
             const wasVisible = cities[editingIndex].visible !== false;
             cities[editingIndex] = { name, lat, lon, tz, my: wasMy, visible: wasVisible };
-
             saveCities(cities);
             renderCities();
             renderPresets();
@@ -1040,7 +1041,6 @@ function initMapPanel(win) {
             const makeMy = cities.length === 0;
             cities.push({ name, lat, lon, tz, my: makeMy, visible: true });
             saveCities(cities);
-
             renderCities();
             renderPresets();
             closeCityForm();
@@ -1061,7 +1061,6 @@ function initMapPanel(win) {
         });
     });
 
-    // ---- Сброс ----
     resetBtn.addEventListener('click', () => {
         if (!confirm('Вернуть стандартный список городов?')) return;
 
@@ -1089,7 +1088,6 @@ function initMapPanel(win) {
         }
     });
 
-    // ---- Удалить все ----
     clearBtn.addEventListener('click', () => {
         if (!confirm('Удалить все города с карты?')) return;
 
@@ -1106,7 +1104,174 @@ function initMapPanel(win) {
         }
     });
 
-    // ---- Погода на главном экране ----
+    // ============================================================
+    //  КЛЮЧ ЯНДЕКС.ПОГОДЫ
+    // ============================================================
+    const yandexKeyInput = win.querySelector('#yandexWeatherKeyInput');
+    const yandexKeySave = win.querySelector('#yandexWeatherKeySave');
+    const yandexKeyCheck = win.querySelector('#yandexWeatherKeyCheck');
+    const yandexKeyReset = win.querySelector('#yandexWeatherKeyReset');
+    const yandexKeyStatus = win.querySelector('#yandexWeatherKeyStatus');
+
+    const YANDEX_WEATHER_KEY_LS = 'yandexWeatherKey';
+
+    function getYandexWeatherKey() {
+        return localStorage.getItem(YANDEX_WEATHER_KEY_LS) || '';
+    }
+
+    function setYandexWeatherKey(key) {
+        if (key) {
+            localStorage.setItem(YANDEX_WEATHER_KEY_LS, key);
+        } else {
+            localStorage.removeItem(YANDEX_WEATHER_KEY_LS);
+        }
+    }
+
+    function maskKey(key) {
+        if (!key) return '';
+        if (key.length <= 12) return '••••';
+        return key.slice(0, 6) + '…' + key.slice(-4);
+    }
+
+    function refreshYandexKeyStatus() {
+        const key = getYandexWeatherKey();
+        if (key) {
+            yandexKeyStatus.textContent = '✅ ' + maskKey(key);
+            yandexKeyStatus.className = 'value ok';
+        } else {
+            yandexKeyStatus.textContent = '❌ не задан';
+            yandexKeyStatus.className = 'value error';
+        }
+    }
+
+    if (yandexKeyInput && yandexKeySave) {
+        const existing = getYandexWeatherKey();
+        if (existing) {
+            yandexKeyInput.placeholder = maskKey(existing) + ' — введите новый для замены';
+        }
+
+        refreshYandexKeyStatus();
+
+        yandexKeySave.addEventListener('click', () => {
+            const key = yandexKeyInput.value.trim();
+            if (!key) {
+                if (window.showNotification) window.showNotification({
+                    title: 'Ошибка', message: 'Введите API-ключ',
+                    type: 'error', icon: '⚠️', duration: 2500
+                });
+                return;
+            }
+            setYandexWeatherKey(key);
+            yandexKeyInput.value = '';
+            yandexKeyInput.placeholder = maskKey(key) + ' — введите новый для замены';
+            refreshYandexKeyStatus();
+
+            if (typeof window.reloadWeather === 'function') {
+                window.reloadWeather();
+            }
+
+            if (window.showNotification) window.showNotification({
+                title: 'Ключ сохранён',
+                message: 'Ключ Яндекс.Погоды записан в localStorage',
+                type: 'success', icon: '🔑', duration: 3000
+            });
+        });
+
+        yandexKeyInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') yandexKeySave.click();
+        });
+
+        yandexKeyCheck.addEventListener('click', async () => {
+            const key = yandexKeyInput.value.trim() || getYandexWeatherKey();
+            if (!key) {
+                if (window.showNotification) window.showNotification({
+                    title: 'Ошибка', message: 'Сначала введите ключ',
+                    type: 'warning', icon: '⚠️', duration: 2500
+                });
+                return;
+            }
+
+            yandexKeyCheck.disabled = true;
+            const oldText = yandexKeyCheck.textContent;
+            yandexKeyCheck.textContent = '⏳ Проверка…';
+
+            try {
+                const query = `
+                    query testWeather($lat: Float!, $lon: Float!) {
+                        weatherByPoint(request: {lat: $lat, lon: $lon}) {
+                            now { temperature condition }
+                        }
+                    }
+                `;
+                const resp = await fetch('https://api.weather.yandex.ru/graphql/query', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Yandex-Weather-Key': key
+                    },
+                    body: JSON.stringify({
+                        query: query,
+                        variables: { lat: 55.75, lon: 37.62 }
+                    })
+                });
+
+                if (!resp.ok) {
+                    throw new Error(`HTTP ${resp.status}`);
+                }
+                const data = await resp.json();
+                if (data.errors && data.errors.length > 0) {
+                    throw new Error(data.errors[0].message || 'GraphQL error');
+                }
+                const temp = data.data?.weatherByPoint?.now?.temperature;
+
+                if (window.showNotification) window.showNotification({
+                    title: 'Ключ работает',
+                    message: `Тест: Москва, ${temp}°C`,
+                    type: 'success', icon: '✅', duration: 3500
+                });
+            } catch (err) {
+                if (window.showNotification) window.showNotification({
+                    title: 'Ошибка проверки',
+                    message: String(err.message || err).slice(0, 100),
+                    type: 'error', icon: '❌', duration: 5000
+                });
+            } finally {
+                yandexKeyCheck.disabled = false;
+                yandexKeyCheck.textContent = oldText;
+            }
+        });
+
+        yandexKeyReset.addEventListener('click', () => {
+            if (!getYandexWeatherKey()) {
+                if (window.showNotification) window.showNotification({
+                    title: 'Ключа нет',
+                    message: 'Нечего сбрасывать',
+                    type: 'info', icon: 'ℹ️', duration: 2000
+                });
+                return;
+            }
+            if (!confirm('Сбросить ключ Яндекс.Погоды?')) return;
+
+            setYandexWeatherKey(null);
+            yandexKeyInput.value = '';
+            yandexKeyInput.placeholder = 'Введите API-ключ Яндекс.Погоды';
+            refreshYandexKeyStatus();
+
+            if (typeof window.reloadWeather === 'function') {
+                window.reloadWeather();
+            }
+
+            if (window.showNotification) window.showNotification({
+                title: 'Ключ сброшен',
+                message: 'Погода будет показывать ⚠️ н/д',
+                type: 'warning', icon: '🗑️', duration: 3000
+            });
+        });
+    }
+
+    // ============================================================
+    //  ПОГОДА НА ГЛАВНОМ ЭКРАНЕ
+    // ============================================================
     const weatherShowToggle = win.querySelector('#weatherShowToggle');
     const weatherStyleSelect = win.querySelector('#weatherStyleSelect');
     const weatherUnitsSelect = win.querySelector('#weatherUnitsSelect');
@@ -1114,7 +1279,7 @@ function initMapPanel(win) {
     if (weatherShowToggle) {
         weatherShowToggle.checked = localStorage.getItem('weatherShow') !== '0';
         weatherStyleSelect.value = localStorage.getItem('weatherStyle') || 'icon-temp-desc';
-        weatherUnitsSelect.value = (window.APP_CONFIG && window.APP_CONFIG.WEATHER_UNITS) || 'metric';
+        weatherUnitsSelect.value = localStorage.getItem('weatherUnits') || 'metric';
 
         weatherShowToggle.addEventListener('change', () => {
             localStorage.setItem('weatherShow', weatherShowToggle.checked ? '1' : '0');
@@ -1159,8 +1324,7 @@ function initMapPanel(win) {
 
         weatherUnitsSelect.addEventListener('change', () => {
             const units = weatherUnitsSelect.value;
-            if (!window.APP_CONFIG) window.APP_CONFIG = {};
-            window.APP_CONFIG.WEATHER_UNITS = units;
+            localStorage.setItem('weatherUnits', units);
 
             if (typeof window.reloadWeather === 'function') {
                 window.reloadWeather();
