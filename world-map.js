@@ -963,15 +963,36 @@
 
         layoutCityLabels();
         for (const {city, p, box} of cityLabels) {
+            const selected = city === activeCity;
             const x=box.x+3, y=box.y+box.h/2;
+            ctx.save();
+            if (selected) {
+                ctx.shadowColor = '#4adfff';
+                ctx.shadowBlur = 14;
+                ctx.strokeStyle = '#74e8ff';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 8, 0, Math.PI*2);
+                ctx.stroke();
+                ctx.fillStyle = '#d5faff';
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 4, 0, Math.PI*2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = 'rgba(5,30,48,0.96)';
+                ctx.fillRect(box.x-2, box.y-2, box.w+4, box.h+4);
+                ctx.strokeStyle = 'rgba(116,232,255,0.8)';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(box.x-2, box.y-2, box.w+4, box.h+4);
+            }
             const anchorX=Math.max(box.x,Math.min(p.x,box.x+box.w));
             const anchorY=Math.max(box.y,Math.min(p.y,box.y+box.h));
             if (Math.hypot(anchorX-p.x,anchorY-p.y)>14) {
                 ctx.beginPath();
                 ctx.moveTo(p.x,p.y);
                 ctx.lineTo(anchorX,anchorY);
-                ctx.strokeStyle='rgba(170,195,225,0.45)';
-                ctx.lineWidth=0.7;
+                ctx.strokeStyle=selected ? '#74e8ff' : 'rgba(170,195,225,0.45)';
+                ctx.lineWidth=selected ? 1.8 : 0.7;
                 ctx.stroke();
             }
             ctx.font=city.my ? '600 11px -apple-system, sans-serif' :
@@ -982,9 +1003,10 @@
             ctx.lineJoin='round';
             ctx.strokeStyle='rgba(0,0,0,0.85)';
             ctx.strokeText(city.name,x,y,box.w-6);
-            ctx.fillStyle=city.my ? '#4a9eff' : city.visible!==false ?
+            ctx.fillStyle=selected ? '#d5faff' : city.my ? '#4a9eff' : city.visible!==false ?
                 '#ffffff' : 'rgba(200,200,200,0.85)';
             ctx.fillText(city.name,x,y,box.w-6);
+            ctx.restore();
         }
     }
 
