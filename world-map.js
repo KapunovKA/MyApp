@@ -40,7 +40,60 @@
         { name: 'Сан-Паулу',    lat: -23.55, lon: -46.63, tz: -3, my: false, visible: true },
     ];
 
+    let activeCity = null;
+    let cityLabels = [];
     let CITIES = loadCities();
+
+    function overlaps(a, b) {
+        return a.x < b.x + b.w && a.x + a.w > b.x &&
+            a.y < b.y + b.h && a.y + a.h > b.y;
+    }
+
+    function layoutCityLabels() {
+        const points = CITIES.map(city => ({city, ...project(city.lon, city.lat)}))
+            .filter(p => p.x >= 0 && p.x <= W && p.y >= 0 && p.y <= H);
+        const priority = city => city === activeCity ? 3 :
+            (city.my || city.name === 'Москва' || city.name === 'Иркутск' ? 2 : 0);
+        points.sort((a, b) => priority(b.city) - priority(a.city));
+        const occupied = points.map(p => ({x:p.x-6,y:p.y-6,w:12,h:12}));
+        cityLabels = [];
+        for (const p of points) {
+            ctx.font = p.city.my ? '600 11px -apple-system, sans-serif' :
+                '500 10px -apple-system, sans-serif';
+            const w = Math.min(W - 16, ctx.measureText(p.city.name).width + 6);
+            if (w <= 0) continue;
+            const candidates = [];
+            for (const distance of [0, 18, 36, 54, 78, 108, 144]) {
+                for (const side of [1, -1]) {
+                    for (const dy of distance ? [-distance, distance, 0] : [0]) {
+                        candidates.push({x:side === 1 ? p.x+10+distance : p.x-10-distance-w,
+                            y:p.y+dy-9,w,h:18});
+                    }
+                }
+            }
+            // Important and selected cities may use any free row on a small screen.
+            if (priority(p.city)) {
+                for (let y=8; y+18<=H-8; y+=20) {
+                    candidates.push({x:Math.max(8,Math.min(W-w-8,p.x+10)),y,w,h:18});
+                }
+            }
+            const box = candidates.find(b => b.x>=8 && b.y>=8 &&
+                b.x+b.w<=W-8 && b.y+b.h<=H-8 &&
+                !occupied.some(other => overlaps(b, other)));
+            if (box) { occupied.push(box); cityLabels.push({city:p.city, p, box}); }
+        }
+    }
+
+    function pickCity(event) {
+        const rect = canvas.getBoundingClientRect();
+        const x = event.clientX-rect.left, y=event.clientY-rect.top;
+        const hits = CITIES.map(city => {
+            const p=project(city.lon,city.lat);
+            return {city,d:Math.hypot(x-p.x,y-p.y)};
+        }).filter(p=>p.d<=16).sort((a,b)=>a.d-b.d);
+        return hits[0]?.city || cityLabels.find(l =>
+            x>=l.box.x && x<=l.box.x+l.box.w && y>=l.box.y && y<=l.box.y+l.box.h)?.city || null;
+    }
 
     function loadCities() {
         try {
@@ -353,6 +406,17 @@
 
         updateVisibleRange();
         resize();
+        // Listen on the desktop: the decorative canvas may have pointer-events:none.
+        const desktop = document.getElementById('desktop');
+        const overMap = event => !event.target.closest('.window, .world-clock-panel, button, input, select');
+        desktop.addEventListener('pointermove', event => {
+            if (event.pointerType === 'touch' || !isMapVisible) return;
+            activeCity = overMap(event) ? pickCity(event) : null;
+        });
+        desktop.addEventListener('pointerleave', () => { activeCity = null; });
+        desktop.addEventListener('click', event => {
+            if (isMapVisible && overMap(event)) activeCity = pickCity(event);
+        });
 
         window.addEventListener('resize', () => {
             updateVisibleRange();
@@ -895,30 +959,33 @@
                 ctx.stroke();
             }
 
-            ctx.font = isMe
-                ? '600 11px -apple-system, sans-serif'
-                : '500 10px -apple-system, sans-serif';
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'middle';
-
-            const labelX = p.x + baseRadius + 5;
-            const labelY = p.y;
-
-            ctx.lineWidth = 3;
-            ctx.lineJoin = 'round';
-            ctx.miterLimit = 2;
-            ctx.strokeStyle = 'rgba(0, 0, 0, 0.85)';
-            ctx.strokeText(city.name, labelX, labelY);
-
-            if (isMe) {
-                ctx.fillStyle = '#4a9eff';
-            } else if (isVisible) {
-                ctx.fillStyle = '#ffffff';
-            } else {
-                ctx.fillStyle = 'rgba(200, 200, 200, 0.85)';
-            }
-            ctx.fillText(city.name, labelX, labelY);
         });
+
+        layoutCityLabels();
+        for (const {city, p, box} of cityLabels) {
+            const x=box.x+3, y=box.y+box.h/2;
+            const anchorX=Math.max(box.x,Math.min(p.x,box.x+box.w));
+            const anchorY=Math.max(box.y,Math.min(p.y,box.y+box.h));
+            if (Math.hypot(anchorX-p.x,anchorY-p.y)>14) {
+                ctx.beginPath();
+                ctx.moveTo(p.x,p.y);
+                ctx.lineTo(anchorX,anchorY);
+                ctx.strokeStyle='rgba(170,195,225,0.45)';
+                ctx.lineWidth=0.7;
+                ctx.stroke();
+            }
+            ctx.font=city.my ? '600 11px -apple-system, sans-serif' :
+                '500 10px -apple-system, sans-serif';
+            ctx.textAlign='left';
+            ctx.textBaseline='middle';
+            ctx.lineWidth=3;
+            ctx.lineJoin='round';
+            ctx.strokeStyle='rgba(0,0,0,0.85)';
+            ctx.strokeText(city.name,x,y,box.w-6);
+            ctx.fillStyle=city.my ? '#4a9eff' : city.visible!==false ?
+                '#ffffff' : 'rgba(200,200,200,0.85)';
+            ctx.fillText(city.name,x,y,box.w-6);
+        }
     }
 
     // --------------------------------------------------------
