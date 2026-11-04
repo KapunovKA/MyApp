@@ -50,38 +50,16 @@
     }
 
     function layoutCityLabels() {
-        const points = CITIES.map(city => ({city, ...project(city.lon, city.lat)}))
-            .filter(p => p.x >= 0 && p.x <= W && p.y >= 0 && p.y <= H);
-        const priority = city => city === activeCity ? 3 :
-            (city.my || city.name === 'Москва' || city.name === 'Иркутск' ? 2 : 0);
-        points.sort((a, b) => priority(b.city) - priority(a.city));
-        const occupied = points.map(p => ({x:p.x-6,y:p.y-6,w:12,h:12}));
         cityLabels = [];
-        for (const p of points) {
-            ctx.font = p.city.my ? '600 11px -apple-system, sans-serif' :
-                '500 10px -apple-system, sans-serif';
-            const w = Math.min(W - 16, ctx.measureText(p.city.name).width + 6);
-            if (w <= 0) continue;
-            const candidates = [];
-            for (const distance of [0, 18, 36, 54, 78, 108, 144]) {
-                for (const side of [1, -1]) {
-                    for (const dy of distance ? [-distance, distance, 0] : [0]) {
-                        candidates.push({x:side === 1 ? p.x+10+distance : p.x-10-distance-w,
-                            y:p.y+dy-9,w,h:18});
-                    }
-                }
-            }
-            // Important and selected cities may use any free row on a small screen.
-            if (priority(p.city)) {
-                for (let y=8; y+18<=H-8; y+=20) {
-                    candidates.push({x:Math.max(8,Math.min(W-w-8,p.x+10)),y,w,h:18});
-                }
-            }
-            const box = candidates.find(b => b.x>=8 && b.y>=8 &&
-                b.x+b.w<=W-8 && b.y+b.h<=H-8 &&
-                !occupied.some(other => overlaps(b, other)));
-            if (box) { occupied.push(box); cityLabels.push({city:p.city, p, box}); }
-        }
+        if (!activeCity || !CITIES.includes(activeCity)) return;
+        const p = project(activeCity.lon, activeCity.lat);
+        if (p.x < 0 || p.x > W || p.y < 0 || p.y > H || W < 32 || H < 40) return;
+        ctx.font = activeCity.my ? '600 11px -apple-system, sans-serif' :
+            '500 10px -apple-system, sans-serif';
+        const w = Math.min(W - 20, ctx.measureText(activeCity.name).width + 6);
+        const x = Math.max(10, Math.min(W - w - 10, p.x + 14));
+        const y = Math.max(10, Math.min(H - 28, p.y - 28));
+        cityLabels.push({city: activeCity, p, box: {x, y, w, h: 18}});
     }
 
     function pickCity(event) {
@@ -984,16 +962,6 @@
                 ctx.strokeStyle = 'rgba(116,232,255,0.8)';
                 ctx.lineWidth = 1;
                 ctx.strokeRect(box.x-2, box.y-2, box.w+4, box.h+4);
-            }
-            const anchorX=Math.max(box.x,Math.min(p.x,box.x+box.w));
-            const anchorY=Math.max(box.y,Math.min(p.y,box.y+box.h));
-            if (Math.hypot(anchorX-p.x,anchorY-p.y)>14) {
-                ctx.beginPath();
-                ctx.moveTo(p.x,p.y);
-                ctx.lineTo(anchorX,anchorY);
-                ctx.strokeStyle=selected ? '#74e8ff' : 'rgba(170,195,225,0.45)';
-                ctx.lineWidth=selected ? 1.8 : 0.7;
-                ctx.stroke();
             }
             ctx.font=city.my ? '600 11px -apple-system, sans-serif' :
                 '500 10px -apple-system, sans-serif';
